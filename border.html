@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profesyonel Fotoğraf Editörü ve Kolaj</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://css.gg/css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1a202c;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-section { padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.2); }
+        .focus-ring:focus { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.5); outline: none; }
+        .mode-btn, .fit-btn, .layout-btn { background-color: rgba(0, 0, 0, 0.1); color: #e2e8f0; transition: all 0.2s ease-in-out; }
+        .mode-btn:hover, .fit-btn:hover, .layout-btn:hover { background-color: rgba(0, 0, 0, 0.2); }
+        .mode-btn.active, .fit-btn.active, .layout-btn.active { background-color: rgba(20, 10, 50, 0.6); color: white; box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.2); }
+        .upload-area { transition: all 0.2s ease-in-out; border-color: rgba(255, 255, 255, 0.3);}
+        .upload-area.drag-over { border-color: #a78bfa; background-color: rgba(167, 139, 250, 0.2); }
+
+        select, input[type="text"], input[type="number"] { background-color: rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); color: white; }
+        select option { background: #2d3748; color: white; }
+        ::placeholder { color: #a0aec0; }
+        
+        input[type="color"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 100%; height: 40px; padding: 0; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0.5rem; background-color: transparent; cursor: pointer; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 4px; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 0.375rem; }
+
+        input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #f7fafc; cursor: pointer; margin-top: -7px; box-shadow: 0 0 5px rgba(0,0,0,0.3); transition: transform .1s ease-in-out; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        input[type=range]::-moz-range-track { width: 100%; height: 6px; cursor: pointer; background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
+        input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: #f7fafc; cursor: pointer; }
+
+        .peer:checked ~ label { background-color: rgba(20, 10, 50, 0.6); color: white; border-color: transparent; }
+
+        /* Modal Stilleri */
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease; }
+        
+        /* Toast Bildirim Stilleri */
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            transition: bottom 0.5s ease-in-out; z-index: 100;
+        }
+        #toast.show { bottom: 30px; }
+
+        /* Kolaj Sıralama ve Silme Stilleri */
+        #collageThumbnailsContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 0.5rem;
+            background-color: rgba(0,0,0,0.1);
+        }
+        .thumbnail-item {
+            position: relative;
+            cursor: grab;
+            border: 2px solid transparent;
+            border-radius: 0.375rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .thumbnail-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 0.25rem;
+            display: block;
+        }
+        .thumbnail-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.1);
+            border-color: #a78bfa;
+        }
+        .thumbnail-item.drag-over-thumb {
+            border-color: #c4b5fd;
+        }
+        .delete-thumb-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 10;
+        }
+        .thumbnail-item:hover .delete-thumb-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="p-4 lg:p-8">
+
+    <div class="w-full max-w-8xl mx-auto grid grid-cols-1 lg:grid-cols-2 lg:gap-8 xl:gap-12">
+        
+        <div class="w-full glass-card rounded-2xl shadow-xl p-6 md:p-8 h-max">
+            <div class="space-y-6">
+                <div class="text-center">
+                    <h1 class="text-3xl md:text-4xl font-bold text-white">Profesyonel Editör</h1>
+                    <p class="mt-2 text-gray-300">Fotoğraflarınıza sanatsal dokunuşlar katın.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 p-1 bg-black/10 rounded-lg">
+                     <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold">Tek Fotoğraf</button>
+                     <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold">Kolaj</button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label id="imageLoaderLabel" class="block text-sm font-medium text-gray-200 mb-2">1. Fotoğraf Seçin</label>
+                        <div id="singleUploader" class="upload-area p-4 border-2 border-dashed rounded-lg text-center">
+                             <input type="file" id="imageLoader" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-violet-500/30 file:text-violet-50 hover:file:bg-violet-500/50 cursor-pointer focus-ring rounded-lg">
+                        </div>
+                        <div id="collageUploader" class="hidden">
+                            <div class="upload-area p-4 border-2 border-dashed rounded-lg text-center mb-4">
+                                <input type="file" id="collageImageLoader" accept="image/*" multiple class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-500/30 file:text-purple-50 hover:file:bg-purple-500/50 cursor-pointer focus-ring rounded-lg">
+                            </div>
+                            <div id="collageThumbnailsWrapper" class="hidden">
+                                <label class="block text-sm font-medium text-gray-200 mb-2">Resimleri Sırala (Sürükle) veya Sil (X)</label>
+                                <div id="collageThumbnailsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settingsPanel" class="pt-4">
+                        <h2 class="text-lg font-semibold text-gray-100 mb-4 text-center">2. Düzenleme Araçları</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="sizePreset" class="text-xs text-gray-300 mb-2 block">Kanvas Boyutu</label>
+                                <select id="sizePreset" class="w-full h-12 px-3 rounded-lg focus-ring">
+                                    <option value="original">Orijinal Boyut</option>
+                                    <optgroup label="Sosyal Medya">
+                                        <option value="square" selected>Kare Post (1:1 - 1080x1080)</option>
+                                        <option value="portrait45">Dikey Post (4:5 - 1080x1350)</option>
+                                        <option value="story">Hikaye/Reels (9:16 - 1080x1920)</option>
+                                        <option value="horizontal">Yatay Post (1.91:1 - 1080x566)</option>
+                                        <option value="profile">Profil Fotoğrafı (1:1 - 320x320)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div id="fitFillContainer">
+                                <label class="text-xs text-gray-300 mb-2 block">Fotoğraf Yerleşimi</label>
+                                <div class="grid grid-cols-2 gap-2 p-1 bg-black/10 rounded-lg h-12 items-center">
+                                     <button id="fitContainBtn" class="fit-btn active py-2 rounded-md font-semibold text-sm">Sığdır</button>
+                                     <button id="fitCoverBtn" class="fit-btn py-2 rounded-md font-semibold text-sm">Doldur</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-section">
+                            <label class="block text-sm font-medium text-gray-200 mb-2">Arkaplan Stili</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div><input type="radio" name="bgType" id="bgSolid" value="solid" checked class="hidden peer"><label for="bgSolid" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Düz Renk</label></div>
+                                <div><input type="radio" name="bgType" id="bgGradient" value="gradient" class="hidden peer"><label for="bgGradient" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Gradyan</label></div>
+                                <div><input type="radio" name="bgType" id="bgBlur" value="blur" class="hidden peer"><label for="bgBlur" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Bulanık</label></div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-4">
+                                <input type="color" id="color1" value="#000000">
+                                <input type="color" id="color2" value="#4a5568" class="hidden">
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                             <label class="block text-sm font-medium text-gray-200">Dış Kenar Boşlukları (Padding)</label>
+                             <div class="flex items-center justify-start mt-2 mb-4"><input type="checkbox" id="syncPadding" checked class="h-4 w-4 rounded border-gray-500 text-violet-400 bg-transparent focus:ring-violet-500"><label for="syncPadding" class="ml-2 block text-sm text-gray-200">Tümünü eşitle</label></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                                <div><div class="flex justify-between items-center mb-1"><label for="paddingTop" class="text-xs text-gray-300">Üst</label><span id="paddingTopValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingTop" value="0" min="0" max="300" class="padding-slider w-full"></div>
+                                <div><div class="flex justify-between items-center mb-1"><label for="paddingRight" class="text-xs text-gray-300">Sağ</label><span id="paddingRightValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingRight" value="0" min="0" max="300" class="padding-slider w-full"></div>
+                                <div><div class="flex justify-between items-center mb-1"><label for="paddingBottom" class="text-xs text-gray-300">Alt</label><span id="paddingBottomValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingBottom" value="0" min="0" max="300" class="padding-slider w-full"></div>
+                                <div><div class="flex justify-between items-center mb-1"><label for="paddingLeft" class="text-xs text-gray-300">Sol</label><span id="paddingLeftValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingLeft" value="0" min="0" max="300" class="padding-slider w-full"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="collageSettings" class="hidden control-section">
+                             <label class="block text-sm font-medium text-gray-200 mb-4">Kolaj Ayarları</label>
+                             <div class="grid grid-cols-1 gap-6 text-gray-300 text-xs">
+                                <div>
+                                    <label class="mb-1 block">İç Boşluk (Gap)</label>
+                                    <input type="range" id="collageGap" value="10" min="0" max="100" class="w-full">
+                                </div>
+                                <div>
+                                    <label class="mb-1 block">Köşe Yumuşatma</label>
+                                    <input type="range" id="cornerRadius" min="0" max="100" value="0" class="w-full">
+                                </div>
+                                <div>
+                                    <label class="mb-2 block">Kolaj Yerleşimi</label>
+                                    <div class="flex flex-wrap gap-2" id="collageLayoutContainer">
+                                        <button data-layout="auto" class="layout-btn active text-sm px-3 py-1 rounded">Oto</button>
+                                        <button data-layout="grid" class="layout-btn text-sm px-3 py-1 rounded">Izgara</button>
+                                        <button data-layout="hero" class="layout-btn text-sm px-3 py-1 rounded">Hero</button>
+                                        <button data-layout="columns" class="layout-btn text-sm px-3 py-1 rounded">Sütun</button>
+                                        <button data-layout="rows" class="layout-btn text-sm px-3 py-1 rounded">Sıra</button>
+                                        <button data-layout="mosaic" class="layout-btn text-sm px-3 py-1 rounded">Mozaik</button>
+                                        <button data-layout="center-focus" class="layout-btn text-sm px-3 py-1 rounded">Odak</button>
+                                        <button data-layout="overlap" class="layout-btn text-sm px-3 py-1 rounded">Üst Üste</button>
+                                        <button data-layout="diagonal" class="layout-btn text-sm px-3 py-1 rounded">Çapraz</button>
+                                        <button data-layout="three-stack" class="layout-btn text-sm px-3 py-1 rounded">Üçlü Yığın</button>
+                                        <button data-layout="pano" class="layout-btn text-sm px-3 py-1 rounded">Panoramik</button>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="control-section">
+                            <label class="block text-sm font-medium text-gray-200 mb-2">Metin Ekle</label>
+                            <input type="text" id="textInput" placeholder="Metninizi buraya yazın..." class="w-full p-2 rounded-lg">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                <input type="color" id="textColor" value="#FFFFFF" title="Metin Rengi">
+                                <input type="number" id="textSize" value="48" title="Metin Boyutu" class="w-full p-2 rounded-lg">
+                                <select id="textFont" class="w-full p-2 rounded-lg">
+                                    <option value="Inter">Inter</option>
+                                    <option value="Playfair Display">Playfair</option>
+                                    <option value="Roboto Mono">Mono</option>
+                                </select>
+                                <select id="textPosition" class="w-full p-2 rounded-lg">
+                                    <option value="bottom-center">Alt-Orta</option>
+                                    <option value="top-center">Üst-Orta</option>
+                                    <option value="center-center">Orta</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <label class="block text-sm font-medium text-gray-200 mb-2">Filigran (Watermark)</label>
+                            <input type="file" id="watermarkLoader" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-500/30 file:text-teal-50 hover:file:bg-teal-500/50 cursor-pointer rounded-lg">
+                            <div id="watermarkControls" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-xs text-gray-300">
+                                 <div><label>Opaklık</label><input type="range" id="watermarkOpacity" min="0" max="100" value="50" class="w-full"></div>
+                                 <div><label>Boyut</label><input type="range" id="watermarkSize" min="5" max="100" value="20" class="w-full"></div>
+                                 <select id="watermarkPosition" class="w-full p-2 rounded-lg col-span-2">
+                                    <option value="bottom-right">Sağ Alt</option>
+                                    <option value="bottom-left">Sol Alt</option>
+                                    <option value="top-right">Sağ Üst</option>
+                                    <option value="top-left">Sol Üst</option>
+                                    <option value="center">Orta</option>
+                                 </select>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-white/20 mt-6">
+                    <div class="flex gap-2">
+                        <button id="undoBtn" disabled title="Geri Al" class="bg-black/20 text-white font-bold p-3 rounded-lg hover:bg-black/30 disabled:opacity-50 disabled:cursor-not-allowed"><i class="gg-undo"></i></button>
+                        <button id="redoBtn" disabled title="İleri Al" class="bg-black/20 text-white font-bold p-3 rounded-lg hover:bg-black/30 disabled:opacity-50 disabled:cursor-not-allowed"><i class="gg-redo"></i></button>
+                    </div>
+                    <div class="flex-grow flex gap-2 w-full sm:w-auto">
+                        <button id="saveProjectBtn" class="w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-700 disabled:bg-gray-500 disabled:cursor-not-allowed">Projeyi Kaydet</button>
+                        <button id="loadProjectBtn" class="w-full bg-sky-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-700">Projelerim</button>
+                    </div>
+                    <button id="downloadBtn" disabled class="w-full sm:w-auto bg-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-400 transition-all duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed shadow-lg shadow-violet-500/50">
+                        İndir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:sticky lg:top-8 h-max">
+            <div id="previewArea" class="glass-card rounded-2xl shadow-xl p-4 min-h-[400px] lg:min-h-[calc(100vh-4rem)] flex items-center justify-center">
+                <div id="previewPlaceholder" class="text-center text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l-1-1m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <p class="font-semibold text-lg mt-4">Önizleme Alanı</p>
+                    <p class="text-sm">Bir fotoğraf yüklediğinizde burada görünecektir.</p>
+                </div>
+                <div id="canvasWrapper" class="hidden w-full h-full items-center justify-center">
+                    <canvas id="canvas" class="max-w-full max-h-full"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+<div id="projectsModal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content glass-card w-full max-w-4xl rounded-2xl shadow-2xl p-6 md:p-8 transform scale-95">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Projelerim</h2>
+                <button id="closeModalBtn" class="text-gray-300 hover:text-white text-3xl font-bold">&times;</button>
+            </div>
+            <div id="projectList" class="max-h-[60vh] overflow-y-auto pr-2">
+                
+
+</div>
+        </div>
+    </div>
+    
+    
+<div id="toast" class="px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg shadow-lg">
+        <p id="toastMessage"></p>
+    </div>
+
+    <script>
+        // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
+        // --- YENİ: İndirme sırasında kaydırılmış görüntülerin yanlış pozisyonda olma hatası düzeltildi. ---
+        
+        const imageLoader = document.getElementById('imageLoader');
+        const collageImageLoader = document.getElementById('collageImageLoader');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const saveProjectBtn = document.getElementById('saveProjectBtn');
+        const loadProjectBtn = document.getElementById('loadProjectBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const allUIInputs = document.querySelectorAll('input, select');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const projectsModal = document.getElementById('projectsModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const projectListContainer = document.getElementById('projectList');
+        const collageUploaderDiv = document.getElementById('collageUploader');
+        const collageThumbnailsWrapper = document.getElementById('collageThumbnailsWrapper');
+        const collageThumbnailsContainer = document.getElementById('collageThumbnailsContainer');
+        
+        let db;
+        let state = {};
+        let history = [];
+        let historyIndex = -1;
+        let mainImage = null;
+        let collageImages = [];
+        let watermarkImage = null;
+        let originalFileName = 'fotoğraf';
+        
+        let isPanning = false;
+        let isModifierDown = false;
+        let panStart = { x: 0, y: 0 };
+        let activePanTarget = { type: null, index: -1 };
+        let initialImageOffset = { x: 0, y: 0 }; 
+        let draggedThumbnailIndex = null;
+
+        const presets = {
+            'original': null, 
+            'square': { width: 1080, height: 1080 }, 
+            'portrait45': { width: 1080, height: 1350 },
+            'story': { width: 1080, height: 1920 },
+            'horizontal': { width: 1080, height: 566 },
+            'profile': { width: 320, height: 320 }
+        };
+
+        function getDefaultState() {
+            return {
+                mode: 'single', fit: 'contain', sizePreset: 'square',
+                padding: { top: 0, right: 0, bottom: 0, left: 0 }, syncPadding: true,
+                bgType: 'solid', color1: '#000000', color2: '#4a5568',
+                imageOffset: { x: 0, y: 0 },
+                collage: { 
+                    gap: 10, 
+                    layout: 'auto',
+                    cornerRadius: 0,
+                    imageOffsets: []
+                },
+                text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
+                watermark: { opacity: 50, size: 20, position: 'bottom-right' }
+            };
+        }
+        
+        function syncStateWithUI() {
+            const newFit = document.getElementById('fitContainBtn').classList.contains('active') ? 'contain' : 'cover';
+            if (state.fit !== newFit) state.imageOffset = { x: 0, y: 0 };
+            state.fit = newFit;
+            
+            const newPreset = document.getElementById('sizePreset').value;
+             if (state.sizePreset !== newPreset) {
+                state.imageOffset = { x: 0, y: 0 };
+                if(state.collage.imageOffsets) {
+                    state.collage.imageOffsets.forEach(offset => { offset.x = 0; offset.y = 0; });
+                }
+            }
+            state.sizePreset = newPreset;
+
+            state.mode = document.getElementById('singleModeBtn').classList.contains('active') ? 'single' : 'collage';
+            state.syncPadding = document.getElementById('syncPadding').checked;
+            state.padding = {
+                top: parseInt(document.getElementById('paddingTop').value, 10),
+                right: parseInt(document.getElementById('paddingRight').value, 10),
+                bottom: parseInt(document.getElementById('paddingBottom').value, 10),
+                left: parseInt(document.getElementById('paddingLeft').value, 10)
+            };
+            state.bgType = document.querySelector('input[name="bgType"]:checked').value;
+            state.color1 = document.getElementById('color1').value;
+            state.color2 = document.getElementById('color2').value;
+            
+            state.collage.gap = parseInt(document.getElementById('collageGap').value, 10);
+            state.collage.cornerRadius = parseInt(document.getElementById('cornerRadius').value, 10);
+            state.collage.layout = document.querySelector('#collageLayoutContainer .active').dataset.layout;
+            
+            state.text = {
+                content: document.getElementById('textInput').value,
+                color: document.getElementById('textColor').value,
+                size: parseInt(document.getElementById('textSize').value, 10),
+                font: document.getElementById('textFont').value,
+                position: document.getElementById('textPosition').value,
+            };
+            state.watermark = {
+                opacity: parseInt(document.getElementById('watermarkOpacity').value, 10),
+                size: parseInt(document.getElementById('watermarkSize').value, 10),
+                position: document.getElementById('watermarkPosition').value,
+            };
+        }
+
+        function updateUIFromState(s) {
+            document.getElementById('singleModeBtn').classList.toggle('active', s.mode === 'single');
+            document.getElementById('collageModeBtn').classList.toggle('active', s.mode === 'collage');
+            document.getElementById('fitContainBtn').classList.toggle('active', s.fit === 'contain');
+            document.getElementById('fitCoverBtn').classList.toggle('active', s.fit === 'cover');
+            document.getElementById('sizePreset').value = s.sizePreset;
+            
+            document.getElementById('paddingTop').value = s.padding.top; 
+            document.getElementById('paddingRight').value = s.padding.right; 
+            document.getElementById('paddingBottom').value = s.padding.bottom; 
+            document.getElementById('paddingLeft').value = s.padding.left;
+            document.querySelectorAll('.padding-slider').forEach(sl => {
+                document.getElementById(sl.id + 'Value').textContent = `${sl.value}px`;
+            });
+
+            document.getElementById('syncPadding').checked = s.syncPadding;
+            document.getElementById('bgSolid').checked = s.bgType === 'solid'; 
+            document.getElementById('bgGradient').checked = s.bgType === 'gradient'; 
+            document.getElementById('bgBlur').checked = s.bgType === 'blur';
+            document.getElementById('color1').value = s.color1; 
+            document.getElementById('color2').value = s.color2;
+            
+            document.getElementById('collageGap').value = s.collage.gap;
+            document.getElementById('cornerRadius').value = s.collage.cornerRadius;
+            document.querySelectorAll('#collageLayoutContainer button').forEach(b => b.classList.toggle('active', b.dataset.layout === s.collage.layout));
+            
+            document.getElementById('textInput').value = s.text.content; 
+            document.getElementById('textColor').value = s.text.color; 
+            document.getElementById('textSize').value = s.text.size; 
+            document.getElementById('textFont').value = s.text.font; 
+            document.getElementById('textPosition').value = s.text.position;
+            document.getElementById('watermarkOpacity').value = s.watermark.opacity; 
+            document.getElementById('watermarkSize').value = s.watermark.size; 
+            document.getElementById('watermarkPosition').value = s.watermark.position;
+            
+            document.getElementById('singleUploader').style.display = s.mode === 'single' ? 'block' : 'none';
+            collageUploaderDiv.style.display = s.mode === 'collage' ? 'block' : 'none';
+            document.getElementById('fitFillContainer').style.visibility = s.mode === 'single' ? 'visible' : 'hidden';
+            document.getElementById('collageSettings').style.display = s.mode === 'collage' ? 'block' : 'none';
+            document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
+            document.getElementById('imageLoaderLabel').textContent = `1. ${s.mode === 'single' ? 'Ana' : 'Kolaj'} Fotoğraf(lar)ı Seçin`;
+            document.querySelector('#sizePreset option[value="original"]').disabled = s.mode === 'collage';
+        }
+
+        function updateAndDraw(saveToHistory = true) {
+            syncStateWithUI(); 
+            if (saveToHistory) {
+                saveStateToHistory();
+            }
+            drawPreview();
+
+            const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+            saveProjectBtn.disabled = !hasImage;
+            downloadBtn.disabled = !hasImage;
+        }
+
+        function saveStateToHistory() {
+            history = history.slice(0, historyIndex + 1);
+            history.push(JSON.parse(JSON.stringify(state)));
+            historyIndex++;
+            updateUndoRedoButtons();
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                state = JSON.parse(JSON.stringify(history[historyIndex]));
+                updateUIFromState(state);
+                drawPreview();
+                if(state.mode === 'collage') displayCollageThumbnails();
+                updateUndoRedoButtons();
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                state = JSON.parse(JSON.stringify(history[historyIndex]));
+                updateUIFromState(state);
+                drawPreview();
+                if(state.mode === 'collage') displayCollageThumbnails();
+                updateUndoRedoButtons();
+            }
+        }
+        
+        function updateUndoRedoButtons() {
+            undoBtn.disabled = historyIndex <= 0;
+            redoBtn.disabled = historyIndex >= history.length - 1;
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('singleModeBtn').addEventListener('click', () => { if (state.mode === 'collage') switchMode('single'); });
+            document.getElementById('collageModeBtn').addEventListener('click', () => { if (state.mode === 'single') switchMode('collage'); });
+            
+            document.getElementById('fitContainBtn').addEventListener('click', () => { setFitMode('contain'); });
+            document.getElementById('fitCoverBtn').addEventListener('click', () => { setFitMode('cover'); });
+            
+            document.querySelectorAll('.padding-slider').forEach(s => s.addEventListener('input', handlePaddingSlider));
+            document.getElementById('syncPadding').addEventListener('change', () => updateAndDraw());
+
+            document.querySelectorAll('input[name="bgType"]').forEach(radio => radio.addEventListener('change', () => updateAndDraw()));
+
+            document.querySelectorAll('#collageLayoutContainer button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelector('#collageLayoutContainer .active').classList.remove('active');
+                    e.currentTarget.classList.add('active');
+                    updateAndDraw();
+                });
+            });
+
+            allUIInputs.forEach(el => {
+                const eventType = (el.type === 'range' || el.type === 'color') ? 'input' : 'change';
+                 if (!el.classList.contains('padding-slider')) {
+                    el.addEventListener(eventType, () => updateAndDraw(el.type !== 'range'));
+                }
+            });
+            
+            imageLoader.addEventListener('change', (e) => handleImageUpload(e.target.files[0]));
+            collageImageLoader.addEventListener('change', (e) => handleCollageUpload(e.target.files));
+            document.getElementById('watermarkLoader').addEventListener('change', handleWatermarkUpload);
+
+            document.querySelector('#collageUploader .upload-area').addEventListener('drop', e => {
+                e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over');
+                handleCollageUpload(e.dataTransfer.files);
+            });
+            document.querySelector('#singleUploader').addEventListener('drop', e => {
+                 e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over');
+                handleImageUpload(e.dataTransfer.files[0]);
+            });
+            
+            downloadBtn.addEventListener('click', downloadImage);
+            saveProjectBtn.addEventListener('click', saveProject);
+            loadProjectBtn.addEventListener('click', showProjectsModal);
+            closeModalBtn.addEventListener('click', hideProjectsModal);
+            projectsModal.addEventListener('click', (e) => { if(e.target === projectsModal) hideProjectsModal(); });
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            
+            window.addEventListener('keydown', e => { if (e.key === 'Meta' || e.key === 'Control') { isModifierDown = true; updateCursor(); } });
+            window.addEventListener('keyup', e => { if (e.key === 'Meta' || e.key === 'Control') { isModifierDown = false; updateCursor(); } });
+            
+            canvasWrapper.addEventListener('mousedown', e => {
+                if (!isModifierDown) return;
+                const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+                if (!hasImage) return;
+
+                panStart = { x: e.clientX, y: e.clientY };
+                const canvasRect = canvas.getBoundingClientRect();
+                const mouse = {
+                    x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width),
+                    y: (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height)
+                };
+
+                if (state.mode === 'single') {
+                    isPanning = true;
+                    activePanTarget = { type: 'single', index: -1 };
+                    initialImageOffset = { ...state.imageOffset };
+                } else { 
+                    const p = state.padding;
+                    const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
+                    const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
+                    const clickedIndex = layout.findIndex(rect => mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h);
+                    if (clickedIndex > -1) {
+                        isPanning = true;
+                        activePanTarget = { type: 'collage', index: clickedIndex };
+                        initialImageOffset = { ...state.collage.imageOffsets[clickedIndex] };
+                    }
+                }
+                 if(isPanning) canvasWrapper.style.cursor = 'grabbing';
+            });
+            
+            window.addEventListener('mousemove', e => {
+                if (!isPanning) return;
+                e.preventDefault();
+
+                const previewRect = canvas.getBoundingClientRect();
+                if (previewRect.width === 0) return;
+
+                const previewScale = canvas.width / previewRect.width;
+                const dx_canvas = (e.clientX - panStart.x) * previewScale;
+                const dy_canvas = (e.clientY - panStart.y) * previewScale;
+                
+                let targetImage, container;
+
+                if (activePanTarget.type === 'single') {
+                    targetImage = mainImage;
+                    const p = state.padding;
+                    container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
+                } else if (activePanTarget.type === 'collage') {
+                    const p = state.padding;
+                    const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
+                    const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
+                    container = layout[activePanTarget.index];
+                    targetImage = collageImages[activePanTarget.index];
+                } else {
+                    return;
+                }
+
+                if (!targetImage || !container || container.w <= 0) return;
+
+                const imgRatio = targetImage.width / targetImage.height;
+                const areaRatio = container.w / container.h;
+                
+                let renderScale;
+                if (imgRatio > areaRatio) { 
+                    renderScale = container.h / targetImage.height;
+                } else { 
+                    renderScale = container.w / targetImage.width;
+                }
+
+                const dx_source = dx_canvas / renderScale;
+                const dy_source = dy_canvas / renderScale;
+                
+                let newOffset = {
+                    x: initialImageOffset.x - dx_source,
+                    y: initialImageOffset.y - dy_source,
+                };
+                
+                let sW, sH;
+                if(imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; }
+                else { sW = targetImage.width; sH = sW / areaRatio; }
+                const maxOffsetX = Math.max(0, (targetImage.width - sW) / 2);
+                const maxOffsetY = Math.max(0, (targetImage.height - sH) / 2);
+
+                newOffset.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffset.x));
+                newOffset.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffset.y));
+
+                if (activePanTarget.type === 'single') {
+                    state.imageOffset = newOffset;
+                } else {
+                    state.collage.imageOffsets[activePanTarget.index] = newOffset;
+                }
+
+                drawPreview();
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isPanning) {
+                    isPanning = false;
+                    activePanTarget = { type: null, index: -1 };
+                    updateCursor();
+                    saveStateToHistory();
+                }
+            });
+            canvasWrapper.addEventListener('mouseenter', updateCursor);
+            canvasWrapper.addEventListener('mouseleave', () => { canvasWrapper.style.cursor = 'default'; });
+            
+            collageThumbnailsContainer.addEventListener('click', (e) => {
+                if(e.target.classList.contains('delete-thumb-btn')) {
+                    const indexToDelete = parseInt(e.target.dataset.index, 10);
+                    deleteCollageImage(indexToDelete);
+                }
+            });
+        }
+        
+        function switchMode(mode) {
+            mainImage = null;
+            collageImages = [];
+            state.imageOffset = { x: 0, y: 0 };
+            state.collage.imageOffsets = [];
+            imageLoader.value = null; 
+            collageImageLoader.value = null;
+            collageThumbnailsContainer.innerHTML = '';
+            collageThumbnailsWrapper.classList.add('hidden');
+            
+            previewPlaceholder.classList.remove('hidden');
+            canvasWrapper.classList.add('hidden');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            state.mode = mode;
+            updateUIFromState(state);
+            updateAndDraw(); 
+            saveStateToHistory();
+        }
+
+        function setFitMode(fit) {
+            document.getElementById('fitContainBtn').classList.toggle('active', fit === 'contain');
+            document.getElementById('fitCoverBtn').classList.toggle('active', fit === 'cover');
+            updateAndDraw();
+        }
+
+        function updateCursor() {
+            const canPanSingle = state.mode === 'single' && mainImage && state.fit === 'cover';
+            const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
+            if (isPanning) {
+                 canvasWrapper.style.cursor = 'grabbing';
+            } else if (isModifierDown && (canPanSingle || canPanCollage)) {
+                canvasWrapper.style.cursor = 'grab';
+            } else {
+                canvasWrapper.style.cursor = 'default';
+            }
+        }
+
+        function handlePaddingSlider(e) {
+            const value = e.target.value;
+            if (document.getElementById('syncPadding').checked) {
+                document.querySelectorAll('.padding-slider').forEach(s => s.value = value);
+            }
+            updateAndDraw(false); 
+        }
+        document.querySelectorAll('.padding-slider').forEach(s => s.addEventListener('change', () => updateAndDraw(true)));
+
+
+        function handleImageUpload(file) {
+            if (!file) return;
+            originalFileName = file.name.split('.').slice(0, -1).join('.') || 'fotoğraf';
+            const reader = new FileReader();
+            reader.onload = e => {
+                mainImage = new Image();
+                mainImage.onload = () => {
+                    previewPlaceholder.classList.add('hidden');
+                    canvasWrapper.style.display = 'flex';
+                    canvasWrapper.classList.remove('hidden');
+                    state.imageOffset = { x: 0, y: 0 };
+                    updateAndDraw();
+                };
+                mainImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function handleCollageUpload(files) {
+            if (!files || files.length === 0) return;
+            originalFileName = 'kolaj';
+            const readers = Array.from(files).map(file => {
+                return new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+            Promise.all(readers).then(images => {
+                collageImages = collageImages.concat(images);
+                const newOffsets = images.map(() => ({ x: 0, y: 0 }));
+                state.collage.imageOffsets = state.collage.imageOffsets.concat(newOffsets);
+
+                if (collageImages.length > 0) {
+                    previewPlaceholder.classList.add('hidden');
+                    canvasWrapper.style.display = 'flex';
+                    canvasWrapper.classList.remove('hidden');
+                    displayCollageThumbnails();
+                    updateAndDraw();
+                }
+            });
+        }
+        
+        function deleteCollageImage(index) {
+            if (index > -1 && index < collageImages.length) {
+                collageImages.splice(index, 1);
+                state.collage.imageOffsets.splice(index, 1);
+                
+                if (collageImages.length === 0) {
+                    previewPlaceholder.classList.remove('hidden');
+                    canvasWrapper.classList.add('hidden');
+                }
+                
+                displayCollageThumbnails();
+                updateAndDraw();
+                saveStateToHistory();
+            }
+        }
+
+        function displayCollageThumbnails() {
+            collageThumbnailsWrapper.classList.toggle('hidden', collageImages.length === 0);
+            collageThumbnailsContainer.innerHTML = '';
+            collageImages.forEach((img, index) => {
+                const thumbItem = document.createElement('div');
+                thumbItem.className = 'thumbnail-item';
+                thumbItem.dataset.index = index;
+                thumbItem.draggable = true;
+                thumbItem.innerHTML = `
+                    <img src="${img.src}" alt="Kolaj resmi ${index + 1}">
+                    <button class="delete-thumb-btn" data-index="${index}" title="Resmi Sil">&times;</button>
+                `;
+                collageThumbnailsContainer.appendChild(thumbItem);
+            });
+            addDragDropListenersToThumbnails();
+        }
+
+        function addDragDropListenersToThumbnails() {
+            const thumbnails = document.querySelectorAll('.thumbnail-item');
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('dragstart', handleDragStart);
+                thumb.addEventListener('dragend', handleDragEnd);
+                thumb.addEventListener('dragover', handleDragOver);
+                thumb.addEventListener('dragleave', handleDragLeave);
+                thumb.addEventListener('drop', handleDrop);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedThumbnailIndex = parseInt(e.target.closest('.thumbnail-item').dataset.index);
+            e.target.closest('.thumbnail-item').classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.closest('.thumbnail-item').classList.remove('dragging');
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            const targetItem = e.target.closest('.thumbnail-item');
+            if (targetItem) targetItem.classList.add('drag-over-thumb');
+        }
+
+        function handleDragLeave(e) {
+             const targetItem = e.target.closest('.thumbnail-item');
+            if (targetItem) targetItem.classList.remove('drag-over-thumb');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetItem = e.target.closest('.thumbnail-item');
+            if (!targetItem) return;
+            targetItem.classList.remove('drag-over-thumb');
+            const droppedOnIndex = parseInt(targetItem.dataset.index);
+
+            if (draggedThumbnailIndex === droppedOnIndex) return;
+
+            const draggedImage = collageImages.splice(draggedThumbnailIndex, 1)[0];
+            const draggedOffset = state.collage.imageOffsets.splice(draggedThumbnailIndex, 1)[0];
+            
+            collageImages.splice(droppedOnIndex, 0, draggedImage);
+            state.collage.imageOffsets.splice(droppedOnIndex, 0, draggedOffset);
+            
+            displayCollageThumbnails();
+            updateAndDraw();
+        }
+
+        function handleWatermarkUpload(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                watermarkImage = null;
+                document.getElementById('watermarkControls').classList.add('hidden');
+                updateAndDraw(); return;
+            }
+            const reader = new FileReader();
+            reader.onload = res => {
+                watermarkImage = new Image();
+                watermarkImage.onload = () => {
+                    document.getElementById('watermarkControls').classList.remove('hidden');
+                    updateAndDraw();
+                }
+                watermarkImage.src = res.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function drawPreview() {
+            const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+            if (!hasImage) {
+                previewPlaceholder.classList.remove('hidden');
+                canvasWrapper.classList.add('hidden');
+                return;
+            };
+            const preset = presets[state.sizePreset];
+            if (state.sizePreset === 'original' && mainImage) {
+                canvas.width = mainImage.width + state.padding.left + state.padding.right;
+                canvas.height = mainImage.height + state.padding.top + state.padding.bottom;
+            } else if (preset) {
+                canvas.width = preset.width;
+                canvas.height = preset.height;
+            } else { return; }
+            drawBackground(ctx, canvas.width, canvas.height);
+            drawMainContent(ctx, canvas.width, canvas.height);
+            drawTextAndWatermark(ctx, canvas.width, canvas.height);
+        }
+
+        function drawBackground(targetCtx, w, h) {
+            targetCtx.save();
+            if (state.bgType === 'solid') {
+                targetCtx.fillStyle = state.color1;
+                targetCtx.fillRect(0, 0, w, h);
+            } else if (state.bgType === 'gradient') {
+                const gradient = targetCtx.createLinearGradient(0, 0, w, h);
+                gradient.addColorStop(0, state.color1);
+                gradient.addColorStop(1, state.color2);
+                targetCtx.fillStyle = gradient;
+                targetCtx.fillRect(0, 0, w, h);
+            } else if (state.bgType === 'blur' && (mainImage || collageImages.length > 0)) {
+                const imgToBlur = mainImage || collageImages[0];
+                targetCtx.fillStyle = state.color1;
+                targetCtx.fillRect(0, 0, w, h);
+                targetCtx.save();
+                targetCtx.filter = 'blur(30px) brightness(0.8)';
+                const imgRatio = imgToBlur.width / imgToBlur.height;
+                const canvasRatio = w / h;
+                let finalW = w, finalH = h;
+                if(imgRatio > canvasRatio) { finalH = w / imgRatio; } else { finalW = h * imgRatio; }
+                const x = (w - finalW) / 2; const y = (h - finalH) / 2;
+                targetCtx.drawImage(imgToBlur, x, y, finalW, finalH);
+                targetCtx.restore();
+            } else {
+                targetCtx.fillStyle = '#cccccc';
+                targetCtx.fillRect(0, 0, w, h);
+            }
+            targetCtx.restore();
+        }
+
+        function drawMainContent(targetCtx, w, h, scale = 1) {
+            targetCtx.save();
+            const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
+            const drawableW = w - p.left - p.right;
+            const drawableH = h - p.top - p.bottom;
+            if (drawableW <= 0 || drawableH <= 0) { targetCtx.restore(); return; }
+
+            if (state.mode === 'single' && mainImage) {
+                if (state.fit === 'contain') {
+                    const containerRatio = drawableW / drawableH;
+                    const imgRatio = mainImage.width / mainImage.height;
+                    let finalW, finalH;
+                    if (imgRatio > containerRatio) { finalW = drawableW; finalH = finalW / imgRatio; } 
+                    else { finalH = drawableH; finalW = finalH * imgRatio; }
+                    const x = p.left + (drawableW - finalW) / 2;
+                    const y = p.top + (drawableH - finalH) / 2;
+                    drawRoundedImage(targetCtx, mainImage, x, y, finalW, finalH, 0, 'contain');
+                } else { // 'cover'
+                    // DÜZELTME: Ofset, kaynak görüntü piksellerinde olduğundan çıktı ölçeğiyle çarpılmamalıdır.
+                    const offset = state.imageOffset || { x: 0, y: 0 };
+                    drawRoundedImage(targetCtx, mainImage, p.left, p.top, drawableW, drawableH, 0, 'cover', offset);
+                }
+            } else if (state.mode === 'collage' && collageImages.length > 0) {
+                drawCollageLayout(targetCtx, w, h, scale);
+            }
+            targetCtx.restore();
+        }
+
+        function drawCollageLayout(targetCtx, w, h, scale) {
+            const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
+            const gap = state.collage.gap * scale;
+            const cornerRadius = state.collage.cornerRadius * scale;
+            const area = { x: p.left, y: p.top, w: w - p.left - p.right, h: h - p.top - p.bottom };
+            const layout = getCollageLayout(state.collage.layout, collageImages.length, area, gap);
+            
+            collageImages.slice(0, layout.length).forEach((img, i) => {
+                const rect = layout[i];
+                if (rect && rect.w > 0 && rect.h > 0) {
+                    // DÜZELTME: Ofset, kaynak görüntü piksellerinde olduğundan çıktı ölçeğiyle çarpılmamalıdır.
+                    const offset = state.collage.imageOffsets[i] || { x: 0, y: 0 };
+                    drawRoundedImage(targetCtx, img, rect.x, rect.y, rect.w, rect.h, cornerRadius, 'cover', offset);
+                }
+            });
+        }
+        
+        function getCollageLayout(type, numImages, area, gap) {
+            const rects = [];
+            if (numImages === 0) return rects;
+            const addRect = (x, y, w, h) => rects.push({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
+
+            if (type === 'auto') {
+                if (numImages === 1) type = 'columns';
+                else if (numImages === 2) type = 'columns';
+                else if (numImages === 3) type = 'hero';
+                else if (numImages === 4) type = 'grid';
+                else if (numImages === 5) type = 'center-focus';
+                else if (numImages === 6) type = 'pano';
+                else type = 'grid';
+            }
+
+            switch (type) {
+                case 'columns':
+                    const colW = (area.w - (numImages - 1) * gap) / numImages;
+                    for (let i=0; i<numImages; i++) { addRect(area.x + i * (colW + gap), area.y, colW, area.h); }
+                    break;
+                case 'rows':
+                    const rowH = (area.h - (numImages - 1) * gap) / numImages;
+                    for (let i=0; i<numImages; i++) { addRect(area.x, area.y + i * (rowH + gap), area.w, rowH); }
+                    break;
+                case 'grid':
+                    const cols = numImages === 3 ? 3 : Math.ceil(Math.sqrt(numImages * (area.w / area.h)));
+                    const rows = numImages === 3 ? 1 : Math.ceil(numImages / cols);
+                    const cellW = (area.w - (cols - 1) * gap) / cols;
+                    const cellH = (area.h - (rows - 1) * gap) / rows;
+                    for (let i = 0; i < numImages; i++) {
+                        const c = i % cols; const r = Math.floor(i / cols);
+                        addRect(area.x + c * (cellW + gap), area.y + r * (cellH + gap), cellW, cellH);
+                    }
+                    break;
+                 case 'hero':
+                    if (numImages > 1) {
+                        const heroW = area.w * 0.66 - gap / 2;
+                        addRect(area.x, area.y, heroW, area.h);
+                        const sideCount = numImages - 1;
+                        const thumbW = area.w - heroW - gap;
+                        const thumbH = (area.h - (sideCount - 1) * gap) / sideCount;
+                        for (let i = 0; i < sideCount; i++) {
+                            addRect(area.x + heroW + gap, area.y + i * (thumbH + gap), thumbW, thumbH);
+                        }
+                    } else { addRect(area.x, area.y, area.w, area.h); }
+                    break;
+                case 'center-focus':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); }
+                    else if (numImages === 2) { const h = (area.h - gap)/2; addRect(area.x, area.y, area.w, h); addRect(area.x, area.y+h+gap, area.w, h); }
+                    else {
+                        const centerW = area.w * 0.5; const centerH = area.h * 0.5;
+                        addRect(area.x + area.w * 0.25, area.y + area.h * 0.25, centerW, centerH);
+                        const others = numImages - 1;
+                        if (others > 0) {
+                            const sideW = area.w * 0.25 - gap / 2;
+                            const sideH = (area.h - (Math.ceil(others/2)-1) * gap) / Math.ceil(others/2);
+                            for (let i=0; i < others; i++) {
+                                if(i < Math.ceil(others/2)) addRect(area.x, area.y + i*(sideH+gap), sideW, sideH);
+                                else addRect(area.x + area.w - sideW, area.y + (i-Math.ceil(others/2))*(sideH+gap), sideW, sideH);
+                            }
+                        }
+                    }
+                    break;
+                case 'overlap':
+                    for (let i = 0; i < numImages; i++) {
+                        const overlapX = (i * 50); const overlapY = (i * 30);
+                        const w = area.w - (numImages-1)*50; const h = area.h - (numImages-1)*30;
+                        addRect(area.x + overlapX, area.y + overlapY, w, h);
+                    }
+                    break;
+                case 'diagonal':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); break; }
+                    let x = area.x, y = area.y;
+                    const w = (area.w - (numImages-1) * gap) / numImages;
+                    const h = (area.h - (numImages-1) * gap) / numImages;
+                    for (let i = 0; i < numImages; i++) {
+                        addRect(x, y, w, h);
+                        x += w + gap; y += h + gap;
+                    }
+                    break;
+                case 'three-stack':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); }
+                    else if (numImages === 2) { const h = (area.h-gap)/2; addRect(area.x, area.y, area.w, h); addRect(area.x, area.y+h+gap, area.w, h); }
+                    else { const h1 = area.h/2 - gap/2; const h2 = area.h/2 - gap/2; const w = (area.w - gap)/2; addRect(area.x, area.y, area.w, h1); addRect(area.x, area.y+h1+gap, w, h2); addRect(area.x+w+gap, area.y+h1+gap, w, h2); }
+                    break;
+                case 'pano':
+                    if (numImages > 1) {
+                        const panoH = area.h * 0.6 - gap / 2;
+                        addRect(area.x, area.y, area.w, panoH);
+                        const sideCount = numImages - 1;
+                        const thumbH = area.h - panoH - gap;
+                        const thumbW = (area.w - (sideCount - 1) * gap) / sideCount;
+                        for (let i = 0; i < sideCount; i++) {
+                            addRect(area.x + i * (thumbW + gap), area.y + panoH + gap, thumbW, thumbH);
+                        }
+                    } else { addRect(area.x, area.y, area.w, area.h); }
+                    break;
+                case 'mosaic':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); }
+                    else if (numImages === 2) { if(area.w > area.h) { const w = (area.w-gap)/2; addRect(area.x, area.y, w, area.h); addRect(area.x + w + gap, area.y, w, area.h); } else { const h = (area.h-gap)/2; addRect(area.x, area.y, area.w, h); addRect(area.x, area.y + h + gap, area.w, h); } } 
+                    else if (numImages === 3) { if(area.w > area.h) { const w1=area.w*0.66-gap/2; const w2=area.w*0.33-gap/2; addRect(area.x, area.y, w1, area.h); addRect(area.x+w1+gap, area.y, w2, area.h/2-gap/2); addRect(area.x+w1+gap, area.y+area.h/2+gap/2, w2, area.h/2-gap/2); } else { const h1=area.h*0.66-gap/2; const h2=area.h*0.33-gap/2; addRect(area.x, area.y, area.w, h1); addRect(area.x, area.y+h1+gap, area.w/2-gap/2, h2); addRect(area.x+w2+gap/2, area.y+h1+gap, area.w/2-gap/2, h2); } }
+                    else { const cols = Math.ceil(Math.sqrt(numImages)); const rows = Math.ceil(numImages / cols); const cellW = (area.w - (cols-1)*gap)/cols; const cellH = (area.h - (rows-1)*gap)/rows; for (let i = 0; i < numImages; i++) { const c=i%cols; const r=Math.floor(i/cols); addRect(area.x+c*(cellW+gap), area.y+r*(cellH+gap), cellW, cellH); } }
+                    break;
+                default:
+                    const def_cols = numImages > 4 ? Math.ceil(Math.sqrt(numImages)) : (numImages > 1 ? 2 : 1);
+                    const def_rows = Math.ceil(numImages / def_cols);
+                    const cellW_def = (area.w - (def_cols - 1) * gap) / def_cols;
+                    const cellH_def = (area.h - (def_rows - 1) * gap) / def_rows;
+                    for (let i = 0; i < numImages; i++) { const c = i % def_cols; const r = Math.floor(i / def_cols); addRect(area.x + c * (cellW_def + gap), area.y + r * (cellH_def + gap), cellW_def, cellH_def); }
+                    break;
+            }
+            return rects;
+        }
+        
+        function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }) {
+            ctx.save();
+            if (r > 0) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+                ctx.clip();
+            }
+            
+            let sX = 0, sY = 0, sW = img.width, sH = img.height;
+            if (fit === 'cover') {
+                const imgRatio = img.width / img.height;
+                const areaRatio = w / h;
+                if (imgRatio > areaRatio) {
+                    sH = img.height;
+                    sW = sH * areaRatio;
+                } else {
+                    sW = img.width;
+                    sH = sW / areaRatio;
+                }
+                sX = (img.width - sW) / 2 + (offset.x || 0);
+                sY = (img.height - sH) / 2 + (offset.y || 0);
+            }
+            
+            ctx.drawImage(img, sX, sY, sW, sH, x, y, w, h);
+            ctx.restore();
+        }
+
+        function drawTextAndWatermark(targetCtx, w, h, scale = 1) {
+            targetCtx.save();
+            const margin = 20 * scale;
+            if (state.text.content) {
+                targetCtx.fillStyle = state.text.color;
+                targetCtx.font = `bold ${state.text.size * scale}px ${state.text.font}`;
+                targetCtx.textAlign = 'center';
+                let x = w / 2, y;
+                if (state.text.position.includes('top')) y = margin;
+                else if (state.text.position.includes('bottom')) y = h - margin;
+                else y = h / 2;
+                if (state.text.position.includes('left')) { targetCtx.textAlign = 'left'; x = margin; }
+                else if (state.text.position.includes('right')) { targetCtx.textAlign = 'right'; x = w - margin; }
+                if (state.text.position.includes('top')) targetCtx.textBaseline = 'top';
+                else if (state.text.position.includes('bottom')) targetCtx.textBaseline = 'bottom';
+                else targetCtx.textBaseline = 'middle';
+                targetCtx.shadowColor = 'rgba(0,0,0,0.5)'; targetCtx.shadowBlur = 5; targetCtx.shadowOffsetX = 2; targetCtx.shadowOffsetY = 2;
+                targetCtx.fillText(state.text.content, x, y);
+            }
+            if (watermarkImage) {
+                targetCtx.globalAlpha = state.watermark.opacity / 100;
+                const wmRatio = watermarkImage.width / watermarkImage.height;
+                const wmSize = (w * (state.watermark.size / 100));
+                const wmWidth = wmSize; const wmHeight = wmWidth / wmRatio;
+                let x, y;
+                if (state.watermark.position.includes('left')) x = margin;
+                else if (state.watermark.position.includes('right')) x = w - wmWidth - margin;
+                else x = (w - wmWidth) / 2;
+                if (state.watermark.position.includes('top')) y = margin;
+                else if (state.watermark.position.includes('bottom')) y = h - wmHeight - margin;
+                else y = (h - wmHeight) / 2;
+                targetCtx.drawImage(watermarkImage, x, y, wmWidth, wmHeight);
+            }
+            targetCtx.restore();
+        }
+
+        function downloadImage() {
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Oluşturuluyor...';
+            setTimeout(() => {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                const qualityMultiplier = state.sizePreset === 'original' ? 1 : 2.5;
+                const preset = presets[state.sizePreset];
+                if (state.sizePreset === 'original' && mainImage) {
+                    tempCanvas.width = mainImage.width + state.padding.left + state.padding.right;
+                    tempCanvas.height = mainImage.height + state.padding.top + state.padding.bottom;
+                } else if(preset) {
+                    tempCanvas.width = preset.width * qualityMultiplier;
+                    tempCanvas.height = preset.height * qualityMultiplier;
+                } else {
+                     downloadBtn.disabled = false;
+                     downloadBtn.textContent = 'İndir';
+                     return;
+                }
+                drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
+                drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                const link = document.createElement('a');
+                link.href = tempCanvas.toDataURL('image/png', 1.0);
+                link.download = `${originalFileName}-duzenlenmis.png`;
+                link.click();
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'İndir';
+            }, 50);
+        }
+        
+        function initDB() {
+            const request = indexedDB.open('PhotoEditorDB', 1);
+            request.onerror = (e) => console.error("Veritabanı hatası:", e.target.errorCode);
+            request.onsuccess = (e) => { db = e.target.result; };
+            request.onupgradeneeded = (e) => {
+                const store = e.target.result.createObjectStore('projects', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('name', 'name', { unique: false });
+            };
+        }
+
+        async function saveProject() {
+            if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
+            const projectName = prompt("Projenize bir isim verin:", "Yeni Projem " + new Date().toLocaleDateString());
+            if (!projectName) return;
+            const imageToBlob = async (img) => {
+                if (!img || !img.src) return null;
+                 if (img.src.startsWith('blob:')) return fetch(img.src).then(r => r.blob());
+                return await fetch(img.src).then(r => r.blob());
+            };
+            syncStateWithUI();
+            const projectData = {
+                name: projectName,
+                state: state,
+                mainImage: await imageToBlob(mainImage),
+                collageImages: await Promise.all(collageImages.map(img => imageToBlob(img))),
+                watermarkImage: await imageToBlob(watermarkImage),
+                savedAt: new Date()
+            };
+            const transaction = db.transaction(['projects'], 'readwrite');
+            transaction.oncomplete = () => showToast(`'${projectName}' projesi kaydedildi!`);
+            transaction.onerror = (e) => { console.error("Kaydetme hatası:", e.target.error); showToast("Proje kaydedilemedi.", "error"); };
+            transaction.objectStore('projects').add(projectData);
+        }
+
+        async function showProjectsModal() {
+            if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
+            projectsModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            projectsModal.querySelector('.modal-content').classList.remove('scale-95');
+            const store = db.transaction(['projects'], 'readonly').objectStore('projects');
+            const request = store.getAll();
+            request.onerror = (e) => console.error("Projeler yüklenemedi:", e.target.error);
+            request.onsuccess = () => {
+                const projects = request.result.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+                projectListContainer.innerHTML = projects.length === 0 ? `<p class="text-center text-gray-400">Kaydedilmiş proje bulunamadı.</p>` : '';
+                projects.forEach(p => {
+                    let previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=O%CC%88nizleme';
+                    if (p.mainImage) previewUrl = URL.createObjectURL(p.mainImage);
+                    else if (p.collageImages && p.collageImages.length > 0) previewUrl = URL.createObjectURL(p.collageImages[0]);
+                    const projectEl = document.createElement('div');
+                    projectEl.className = 'glass-card flex items-center p-4 rounded-lg mb-4 hover:bg-white/10 transition-colors duration-200';
+                    projectEl.innerHTML = `
+                        <img src="${previewUrl}" class="w-24 h-24 object-cover rounded-md mr-4 bg-gray-700" onload="URL.revokeObjectURL(this.src)">
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-lg text-white">${p.name}</h3>
+                            <p class="text-sm text-gray-300">${new Date(p.savedAt).toLocaleString('tr-TR')}</p>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button data-id="${p.id}" class="load-btn bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700">Yükle</button>
+                            <button data-id="${p.id}" class="delete-btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">Sil</button>
+                        </div>
+                    `;
+                    projectListContainer.appendChild(projectEl);
+                });
+            };
+        }
+        
+        projectListContainer.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            if (!id) return;
+            if (e.target.classList.contains('load-btn')) { loadProjectById(parseInt(id)); } 
+            else if (e.target.classList.contains('delete-btn')) {
+                 if (window.confirm("Bu projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+                     deleteProjectById(parseInt(id));
+                 }
+            }
+        });
+
+        function hideProjectsModal() {
+            projectsModal.querySelector('.modal-content').classList.add('scale-95');
+            projectsModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        async function loadProjectById(id) {
+            const request = db.transaction(['projects'], 'readonly').objectStore('projects').get(id);
+            request.onerror = (e) => console.error("Proje yüklenemedi:", e.target.error);
+            request.onsuccess = () => {
+                const pData = request.result;
+                if (!pData) return;
+                state = { ...getDefaultState(), ...pData.state };
+                history = []; historyIndex = -1;
+                saveStateToHistory();
+
+                const blobToImage = (blob) => !blob ? Promise.resolve(null) : new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => resolve(null);
+                    img.src = URL.createObjectURL(blob);
+                });
+                
+                Promise.all([
+                    blobToImage(pData.mainImage),
+                    Promise.all((pData.collageImages || []).map(b => blobToImage(b))),
+                    blobToImage(pData.watermarkImage)
+                ]).then(([loadedMain, loadedCollage, loadedWatermark]) => {
+                    mainImage = loadedMain;
+                    collageImages = loadedCollage;
+                    watermarkImage = loadedWatermark;
+                    
+                    if (state.mode === 'collage' && (!state.collage.imageOffsets || state.collage.imageOffsets.length !== collageImages.length)) {
+                        state.collage.imageOffsets = collageImages.map(() => ({ x: 0, y: 0 }));
+                    }
+
+                    updateUIFromState(state);
+                    const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+                    if(hasImage) {
+                        previewPlaceholder.classList.add('hidden');
+                        canvasWrapper.style.display = 'flex';
+                        canvasWrapper.classList.remove('hidden');
+                        if (state.mode === 'collage') displayCollageThumbnails();
+                    }
+                    if(watermarkImage) {
+                         document.getElementById('watermarkControls').classList.remove('hidden');
+                    } else {
+                         document.getElementById('watermarkControls').classList.add('hidden');
+                         document.getElementById('watermarkLoader').value = '';
+                    }
+                    
+                    updateAndDraw();
+                    hideProjectsModal();
+                    showToast(`'${pData.name}' projesi yüklendi.`);
+                });
+            };
+        }
+
+        function deleteProjectById(id) {
+            const request = db.transaction(['projects'], 'readwrite').objectStore('projects').delete(id);
+            request.onsuccess = () => {
+                showToast("Proje silindi.", "info");
+                showProjectsModal();
+            };
+            request.onerror = (e) => {
+                console.error("Silme hatası:", e.target.error);
+                showToast("Proje silinemedi.", "error");
+            };
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            toast.className = 'px-6 py-3 text-white font-semibold rounded-lg shadow-lg z-50';
+            if(type === 'success') toast.classList.add('bg-emerald-500');
+            else if (type === 'error') toast.classList.add('bg-red-500');
+            else if (type === 'info') toast.classList.add('bg-sky-500');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+        
+        function init() {
+            initDB();
+            state = getDefaultState();
+            updateUIFromState(state);
+            updateAndDraw();
+            saveStateToHistory();
+            setupEventListeners();
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
