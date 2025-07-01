@@ -74,8 +74,11 @@
         .delete-thumb-btn { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; line-height: 1; cursor: pointer; opacity: 0; transform: scale(0.8); transition: opacity 0.2s, transform 0.2s; z-index: 10; }
         .thumbnail-item:hover .delete-thumb-btn { opacity: 1; transform: scale(1); }
         
-        /* EXIF Stilleri */
-        #exifData { background-color: rgba(0,0,0,0.2); color: #e2e8f0; font-family: 'Roboto Mono', monospace; font-size: 12px; padding: 1rem; border-radius: 0.5rem; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        /* EXIF & Şablon Özet Stilleri */
+        #exifData, #templateSettingsSummary { background-color: rgba(0,0,0,0.2); color: #e2e8f0; font-family: 'Roboto Mono', monospace; font-size: 13px; padding: 1rem; border-radius: 0.5rem; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        #templateSettingsSummary ul { list-style: none; padding: 0; }
+        #templateSettingsSummary li { margin-bottom: 0.5rem; }
+        #templateSettingsSummary strong { color: #a78bfa; font-weight: 600; }
     </style>
 </head>
 <body class="p-4 lg:p-8">
@@ -312,13 +315,29 @@
     </div>
     
     
+<div id="saveTemplateModal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content glass-card w-full max-w-lg rounded-2xl shadow-2xl p-6 md:p-8 transform scale-95">
+            <h2 class="text-2xl font-bold text-white mb-4">Şablonu Gözden Geçir ve Kaydet</h2>
+            <p class="text-gray-300 mb-6">Aşağıdaki ayarlar şablon olarak kaydedilecek. Bu şablonu daha sonra tek tıkla uygulayabilirsiniz.</p>
+            
+            <div id="templateSettingsSummary" class="mb-6"></div>
+
+            <input type="text" id="templateNameInput" placeholder="Şablon adı girin..." class="w-full p-3 rounded-lg mb-4 focus-ring">
+            
+            <div class="flex justify-end gap-4">
+                <button id="cancelSaveTemplateBtn" class="bg-black/20 text-white font-bold py-2 px-6 rounded-lg hover:bg-black/30">İptal</button>
+                <button id="confirmSaveTemplateBtn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
 <div id="toast" class="px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg shadow-lg">
         <p id="toastMessage"></p>
     </div>
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ ÖZELLİKLER: İndirme formatı (JPG/WEBP), EXIF veri görüntüleme ve Proje Şablonları eklendi. ---
+        // --- YENİ: Şablon kaydederken ayarları gösteren onay penceresi eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -346,6 +365,11 @@
         const hideExifBtn = document.getElementById('hideExifBtn');
         const exifContainer = document.getElementById('exifContainer');
         const exifDataEl = document.getElementById('exifData');
+        const saveTemplateModal = document.getElementById('saveTemplateModal');
+        const cancelSaveTemplateBtn = document.getElementById('cancelSaveTemplateBtn');
+        const confirmSaveTemplateBtn = document.getElementById('confirmSaveTemplateBtn');
+        const templateNameInput = document.getElementById('templateNameInput');
+        const templateSettingsSummary = document.getElementById('templateSettingsSummary');
         
         let db;
         let state = {};
@@ -525,7 +549,6 @@
         }
         
         function setupEventListeners() {
-            // ... (Mevcut event listener'lar korunuyor)
             document.getElementById('singleModeBtn').addEventListener('click', () => { if (state.mode === 'collage') switchMode('single'); });
             document.getElementById('collageModeBtn').addEventListener('click', () => { if (state.mode === 'single') switchMode('collage'); });
             document.getElementById('fitContainBtn').addEventListener('click', () => { setFitMode('contain'); });
@@ -553,7 +576,6 @@
             document.querySelector('#singleUploader').addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over'); handleImageUpload(e.dataTransfer.files[0]); });
             downloadBtn.addEventListener('click', downloadImage);
             saveProjectBtn.addEventListener('click', saveProject);
-            saveTemplateBtn.addEventListener('click', saveTemplate);
             loadProjectBtn.addEventListener('click', showProjectsModal);
             closeModalBtn.addEventListener('click', hideProjectsModal);
             projectsModal.addEventListener('click', (e) => { if(e.target === projectsModal) hideProjectsModal(); });
@@ -574,25 +596,30 @@
             showExifBtn.addEventListener('click', () => exifContainer.classList.remove('hidden'));
             hideExifBtn.addEventListener('click', () => exifContainer.classList.add('hidden'));
             document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.addEventListener('click', switchModalTab));
+            
+            // Şablon Kaydetme Modal Listener'ları
+            saveTemplateBtn.addEventListener('click', showSaveTemplateModal);
+            cancelSaveTemplateBtn.addEventListener('click', hideSaveTemplateModal);
+            confirmSaveTemplateBtn.addEventListener('click', () => {
+                const templateName = templateNameInput.value.trim();
+                if (templateName) {
+                    saveTemplate(templateName);
+                    hideSaveTemplateModal();
+                } else {
+                    showToast("Lütfen bir şablon adı girin.", "error");
+                }
+            });
+            saveTemplateModal.addEventListener('click', (e) => { if(e.target === saveTemplateModal) hideSaveTemplateModal(); });
         }
         
         function switchMode(mode) {
-            mainImage = null;
-            collageImages = [];
-            exifData = null;
-            showExifBtn.classList.add('hidden');
-            exifContainer.classList.add('hidden');
-            state.imageOffset = { x: 0, y: 0 };
-            state.collage.imageOffsets = [];
-            imageLoader.value = null; 
-            collageImageLoader.value = null;
-            collageThumbnailsContainer.innerHTML = '';
-            collageThumbnailsWrapper.classList.add('hidden');
-            
-            previewPlaceholder.classList.remove('hidden');
-            canvasWrapper.classList.add('hidden');
+            mainImage = null; collageImages = []; exifData = null;
+            showExifBtn.classList.add('hidden'); exifContainer.classList.add('hidden');
+            state.imageOffset = { x: 0, y: 0 }; state.collage.imageOffsets = [];
+            imageLoader.value = null; collageImageLoader.value = null;
+            collageThumbnailsContainer.innerHTML = ''; collageThumbnailsWrapper.classList.add('hidden');
+            previewPlaceholder.classList.remove('hidden'); canvasWrapper.classList.add('hidden');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             state.mode = mode;
             updateUIFromState(state);
             updateAndDraw(); 
@@ -608,20 +635,14 @@
         function updateCursor() {
             const canPanSingle = state.mode === 'single' && mainImage && state.fit === 'cover';
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
-            if (isPanning) {
-                 canvasWrapper.style.cursor = 'grabbing';
-            } else if (isModifierDown && (canPanSingle || canPanCollage)) {
-                canvasWrapper.style.cursor = 'grab';
-            } else {
-                canvasWrapper.style.cursor = 'default';
-            }
+            if (isPanning) { canvasWrapper.style.cursor = 'grabbing'; } 
+            else if (isModifierDown && (canPanSingle || canPanCollage)) { canvasWrapper.style.cursor = 'grab'; } 
+            else { canvasWrapper.style.cursor = 'default'; }
         }
 
         function handlePaddingSlider(e) {
             const value = e.target.value;
-            if (document.getElementById('syncPadding').checked) {
-                document.querySelectorAll('.padding-slider').forEach(s => s.value = value);
-            }
+            if (document.getElementById('syncPadding').checked) { document.querySelectorAll('.padding-slider').forEach(s => s.value = value); }
             updateAndDraw(false); 
         }
         document.querySelectorAll('.padding-slider').forEach(s => s.addEventListener('change', () => updateAndDraw(true)));
@@ -630,27 +651,17 @@
         function handleImageUpload(file) {
             if (!file) return;
             originalFileName = file.name.split('.').slice(0, -1).join('.') || 'fotoğraf';
-            
-            // EXIF Verisi Oku
-            exifData = null;
-            exifContainer.classList.add('hidden');
+            exifData = null; exifContainer.classList.add('hidden');
             EXIF.getData(file, function() {
                 exifData = EXIF.getAllTags(this);
-                if (Object.keys(exifData).length > 0) {
-                    displayExifData();
-                    showExifBtn.classList.remove('hidden');
-                } else {
-                    showExifBtn.classList.add('hidden');
-                }
+                if (Object.keys(exifData).length > 0) { displayExifData(); showExifBtn.classList.remove('hidden'); } 
+                else { showExifBtn.classList.add('hidden'); }
             });
-
             const reader = new FileReader();
             reader.onload = e => {
                 mainImage = new Image();
                 mainImage.onload = () => {
-                    previewPlaceholder.classList.add('hidden');
-                    canvasWrapper.style.display = 'flex';
-                    canvasWrapper.classList.remove('hidden');
+                    previewPlaceholder.classList.add('hidden'); canvasWrapper.style.display = 'flex'; canvasWrapper.classList.remove('hidden');
                     state.imageOffset = { x: 0, y: 0 };
                     updateAndDraw();
                 };
@@ -660,38 +671,21 @@
         }
 
         function displayExifData() {
-            if (!exifData) {
-                exifDataEl.textContent = 'EXIF verisi bulunamadı.';
-                return;
-            }
-            const relevantTags = {
-                'Make': 'Marka', 'Model': 'Model', 'DateTimeOriginal': 'Çekim Tarihi',
-                'FNumber': 'Diyafram', 'ExposureTime': 'Pozlama Süresi', 'ISOSpeedRatings': 'ISO',
-                'FocalLength': 'Odak Uzaklığı', 'Flash': 'Flaş', 'PixelXDimension': 'Genişlik', 'PixelYDimension': 'Yükseklik'
-            };
+            if (!exifData) { exifDataEl.textContent = 'EXIF verisi bulunamadı.'; return; }
+            const relevantTags = { 'Make': 'Marka', 'Model': 'Model', 'DateTimeOriginal': 'Çekim Tarihi', 'FNumber': 'Diyafram', 'ExposureTime': 'Pozlama Süresi', 'ISOSpeedRatings': 'ISO', 'FocalLength': 'Odak Uzaklığı', 'Flash': 'Flaş', 'PixelXDimension': 'Genişlik', 'PixelYDimension': 'Yükseklik' };
             let output = '';
-            for (const tag in relevantTags) {
-                if (exifData[tag]) {
-                    output += `${relevantTags[tag]}: ${exifData[tag]}\n`;
-                }
-            }
+            for (const tag in relevantTags) { if (exifData[tag]) { output += `${relevantTags[tag]}: ${exifData[tag]}\n`; } }
             exifDataEl.textContent = output || 'Temel EXIF bilgisi bulunamadı.';
         }
         
         function handleCollageUpload(files) {
             if (!files || files.length === 0) return;
             originalFileName = 'kolaj';
-            showExifBtn.classList.add('hidden'); // Kolajda EXIF gösterilmez
-            exifContainer.classList.add('hidden');
-
+            showExifBtn.classList.add('hidden'); exifContainer.classList.add('hidden');
             const readers = Array.from(files).map(file => {
                 return new Promise(resolve => {
                     const reader = new FileReader();
-                    reader.onload = e => {
-                        const img = new Image();
-                        img.onload = () => resolve(img);
-                        img.src = e.target.result;
-                    };
+                    reader.onload = e => { const img = new Image(); img.onload = () => resolve(img); img.src = e.target.result; };
                     reader.readAsDataURL(file);
                 });
             });
@@ -699,11 +693,8 @@
                 collageImages = collageImages.concat(images);
                 const newOffsets = images.map(() => ({ x: 0, y: 0 }));
                 state.collage.imageOffsets = state.collage.imageOffsets.concat(newOffsets);
-
                 if (collageImages.length > 0) {
-                    previewPlaceholder.classList.add('hidden');
-                    canvasWrapper.style.display = 'flex';
-                    canvasWrapper.classList.remove('hidden');
+                    previewPlaceholder.classList.add('hidden'); canvasWrapper.style.display = 'flex'; canvasWrapper.classList.remove('hidden');
                     displayCollageThumbnails();
                     updateAndDraw();
                 }
@@ -712,12 +703,9 @@
         
         function deleteCollageImage(index) {
             if (index > -1 && index < collageImages.length) {
-                collageImages.splice(index, 1);
-                state.collage.imageOffsets.splice(index, 1);
+                collageImages.splice(index, 1); state.collage.imageOffsets.splice(index, 1);
                 if (collageImages.length === 0) { previewPlaceholder.classList.remove('hidden'); canvasWrapper.classList.add('hidden'); }
-                displayCollageThumbnails();
-                updateAndDraw();
-                saveStateToHistory();
+                displayCollageThumbnails(); updateAndDraw(); saveStateToHistory();
             }
         }
 
@@ -726,9 +714,7 @@
             collageThumbnailsContainer.innerHTML = '';
             collageImages.forEach((img, index) => {
                 const thumbItem = document.createElement('div');
-                thumbItem.className = 'thumbnail-item';
-                thumbItem.dataset.index = index;
-                thumbItem.draggable = true;
+                thumbItem.className = 'thumbnail-item'; thumbItem.dataset.index = index; thumbItem.draggable = true;
                 thumbItem.innerHTML = `<img src="${img.src}" alt="Kolaj resmi ${index + 1}"><button class="delete-thumb-btn" data-index="${index}" title="Resmi Sil">&times;</button>`;
                 collageThumbnailsContainer.appendChild(thumbItem);
             });
@@ -738,10 +724,8 @@
         function addDragDropListenersToThumbnails() {
             const thumbnails = document.querySelectorAll('.thumbnail-item');
             thumbnails.forEach(thumb => {
-                thumb.addEventListener('dragstart', handleDragStart);
-                thumb.addEventListener('dragend', handleDragEnd);
-                thumb.addEventListener('dragover', handleDragOver);
-                thumb.addEventListener('dragleave', handleDragLeave);
+                thumb.addEventListener('dragstart', handleDragStart); thumb.addEventListener('dragend', handleDragEnd);
+                thumb.addEventListener('dragover', handleDragOver); thumb.addEventListener('dragleave', handleDragLeave);
                 thumb.addEventListener('drop', handleDrop);
             });
         }
@@ -752,8 +736,7 @@
         function handleDragLeave(e) { const targetItem = e.target.closest('.thumbnail-item'); if (targetItem) targetItem.classList.remove('drag-over-thumb'); }
         function handleDrop(e) {
             e.preventDefault();
-            const targetItem = e.target.closest('.thumbnail-item');
-            if (!targetItem) return;
+            const targetItem = e.target.closest('.thumbnail-item'); if (!targetItem) return;
             targetItem.classList.remove('drag-over-thumb');
             const droppedOnIndex = parseInt(targetItem.dataset.index);
             if (draggedThumbnailIndex === droppedOnIndex) return;
@@ -761,8 +744,7 @@
             const draggedOffset = state.collage.imageOffsets.splice(draggedThumbnailIndex, 1)[0];
             collageImages.splice(droppedOnIndex, 0, draggedImage);
             state.collage.imageOffsets.splice(droppedOnIndex, 0, draggedOffset);
-            displayCollageThumbnails();
-            updateAndDraw();
+            displayCollageThumbnails(); updateAndDraw();
         }
 
         function handleWatermarkUpload(e) {
@@ -781,13 +763,9 @@
             const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
             if (!hasImage) { previewPlaceholder.classList.remove('hidden'); canvasWrapper.classList.add('hidden'); return; };
             const preset = presets[state.sizePreset];
-            if (state.sizePreset === 'original' && mainImage) {
-                canvas.width = mainImage.width + state.padding.left + state.padding.right;
-                canvas.height = mainImage.height + state.padding.top + state.padding.bottom;
-            } else if (preset) {
-                canvas.width = preset.width;
-                canvas.height = preset.height;
-            } else { return; }
+            if (state.sizePreset === 'original' && mainImage) { canvas.width = mainImage.width + state.padding.left + state.padding.right; canvas.height = mainImage.height + state.padding.top + state.padding.bottom; } 
+            else if (preset) { canvas.width = preset.width; canvas.height = preset.height; } 
+            else { return; }
             drawBackground(ctx, canvas.width, canvas.height);
             drawMainContent(ctx, canvas.width, canvas.height);
             drawTextAndWatermark(ctx, canvas.width, canvas.height);
@@ -800,10 +778,8 @@
             else if (state.bgType === 'blur' && (mainImage || collageImages.length > 0)) {
                 const imgToBlur = mainImage || collageImages[0];
                 targetCtx.fillStyle = state.color1; targetCtx.fillRect(0, 0, w, h);
-                targetCtx.save();
-                targetCtx.filter = 'blur(30px) brightness(0.8)';
-                const imgRatio = imgToBlur.width / imgToBlur.height;
-                const canvasRatio = w / h;
+                targetCtx.save(); targetCtx.filter = 'blur(30px) brightness(0.8)';
+                const imgRatio = imgToBlur.width / imgToBlur.height; const canvasRatio = w / h;
                 let finalW = w, finalH = h;
                 if(imgRatio > canvasRatio) { finalH = w / imgRatio; } else { finalW = h * imgRatio; }
                 const x = (w - finalW) / 2; const y = (h - finalH) / 2;
@@ -816,18 +792,15 @@
         function drawMainContent(targetCtx, w, h, scale = 1) {
             targetCtx.save();
             const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
-            const drawableW = w - p.left - p.right;
-            const drawableH = h - p.top - p.bottom;
+            const drawableW = w - p.left - p.right; const drawableH = h - p.top - p.bottom;
             if (drawableW <= 0 || drawableH <= 0) { targetCtx.restore(); return; }
             if (state.mode === 'single' && mainImage) {
                 if (state.fit === 'contain') {
-                    const containerRatio = drawableW / drawableH;
-                    const imgRatio = mainImage.width / mainImage.height;
+                    const containerRatio = drawableW / drawableH; const imgRatio = mainImage.width / mainImage.height;
                     let finalW, finalH;
                     if (imgRatio > containerRatio) { finalW = drawableW; finalH = finalW / imgRatio; } 
                     else { finalH = drawableH; finalW = finalH * imgRatio; }
-                    const x = p.left + (drawableW - finalW) / 2;
-                    const y = p.top + (drawableH - finalH) / 2;
+                    const x = p.left + (drawableW - finalW) / 2; const y = p.top + (drawableH - finalH) / 2;
                     drawRoundedImage(targetCtx, mainImage, x, y, finalW, finalH, 0, 'contain');
                 } else { const offset = state.imageOffset || { x: 0, y: 0 }; drawRoundedImage(targetCtx, mainImage, p.left, p.top, drawableW, drawableH, 0, 'cover', offset); }
             } else if (state.mode === 'collage' && collageImages.length > 0) { drawCollageLayout(targetCtx, w, h, scale); }
@@ -836,8 +809,7 @@
 
         function drawCollageLayout(targetCtx, w, h, scale) {
             const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
-            const gap = state.collage.gap * scale;
-            const cornerRadius = state.collage.cornerRadius * scale;
+            const gap = state.collage.gap * scale; const cornerRadius = state.collage.cornerRadius * scale;
             const area = { x: p.left, y: p.top, w: w - p.left - p.right, h: h - p.top - p.bottom };
             const layout = getCollageLayout(state.collage.layout, collageImages.length, area, gap);
             collageImages.slice(0, layout.length).forEach((img, i) => {
@@ -914,11 +886,9 @@
                 drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
                 drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                 drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                
                 const format = downloadFormatSelect.value;
                 const quality = parseInt(downloadQualitySlider.value, 10) / 100;
                 const extension = format.split('/')[1];
-                
                 const link = document.createElement('a');
                 link.href = tempCanvas.toDataURL(format, quality);
                 link.download = `${originalFileName}-duzenlenmis.${extension}`;
@@ -928,7 +898,7 @@
         }
         
         function initDB() {
-            const request = indexedDB.open('PhotoEditorDB_v2', 1); // Versiyon artırıldı
+            const request = indexedDB.open('PhotoEditorDB_v2', 1);
             request.onerror = (e) => console.error("Veritabanı hatası:", e.target.errorCode);
             request.onsuccess = (e) => { db = e.target.result; };
             request.onupgradeneeded = (e) => {
@@ -957,10 +927,8 @@
             transaction.objectStore('projects').add(projectData);
         }
         
-        async function saveTemplate() {
+        async function saveTemplate(templateName) {
             if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
-            const templateName = prompt("Şablonunuza bir isim verin:", "Yeni Şablonum");
-            if (!templateName) return;
             syncStateWithUI();
             const templateData = { name: templateName, state: state, savedAt: new Date() };
             const transaction = db.transaction(['templates'], 'readwrite');
@@ -969,12 +937,61 @@
             transaction.objectStore('templates').add(templateData);
         }
 
+        function showSaveTemplateModal() {
+            syncStateWithUI();
+            templateSettingsSummary.innerHTML = generateTemplateSummaryHTML();
+            templateNameInput.value = '';
+            saveTemplateModal.classList.remove('hidden');
+            saveTemplateModal.querySelector('.modal-content').classList.remove('scale-95');
+            templateNameInput.focus();
+        }
+
+        function hideSaveTemplateModal() {
+            saveTemplateModal.querySelector('.modal-content').classList.add('scale-95');
+            saveTemplateModal.classList.add('hidden');
+        }
+
+        function generateTemplateSummaryHTML() {
+            let html = '<ul>';
+            const presetText = document.querySelector(`#sizePreset option[value="${state.sizePreset}"]`).textContent;
+            html += `<li><strong>Kanvas Boyutu:</strong> ${presetText}</li>`;
+
+            if(state.mode === 'single') {
+                html += `<li><strong>Fotoğraf Yerleşimi:</strong> ${state.fit === 'contain' ? 'Sığdır' : 'Doldur'}</li>`;
+            }
+
+            const bgTypeText = document.querySelector(`label[for="bg${state.bgType.charAt(0).toUpperCase() + state.bgType.slice(1)}"]`).textContent;
+            html += `<li><strong>Arkaplan:</strong> ${bgTypeText} (${state.color1}${state.bgType === 'gradient' ? ', ' + state.color2 : ''})</li>`;
+
+            const paddingValues = `${state.padding.top}px, ${state.padding.right}px, ${state.padding.bottom}px, ${state.padding.left}px`;
+            html += `<li><strong>Kenar Boşlukları:</strong> ${paddingValues}</li>`;
+
+            if(state.mode === 'collage'){
+                const layoutText = document.querySelector(`#collageLayoutContainer .active`).textContent;
+                html += `<li><strong>Kolaj Yerleşimi:</strong> ${layoutText}</li>`;
+                html += `<li><strong>Kolaj Boşluğu:</strong> ${state.collage.gap}px</li>`;
+                html += `<li><strong>Kolaj Köşe Yumuşatma:</strong> ${state.collage.cornerRadius}%</li>`;
+            }
+
+            if(state.text.content) {
+                html += `<li><strong>Metin:</strong> "${state.text.content}" (${state.text.size}px, ${state.text.font})</li>`;
+            }
+
+            if(watermarkImage) {
+                html += `<li><strong>Filigran Ayarları:</strong> Evet (Opaklık: ${state.watermark.opacity}%, Boyut: ${state.watermark.size}%)</li>`;
+            } else {
+                 html += `<li><strong>Filigran Ayarları:</strong> Yok</li>`;
+            }
+
+            html += '</ul>';
+            return html;
+        }
+
         async function showProjectsModal() {
             if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
             projectsModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
             projectsModal.querySelector('.modal-content').classList.remove('scale-95');
             
-            // Projeleri Yükle
             const projectStore = db.transaction(['projects'], 'readonly').objectStore('projects');
             projectStore.getAll().onsuccess = (e) => {
                 const projects = e.target.result.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
@@ -986,7 +1003,6 @@
                 });
             };
 
-            // Şablonları Yükle
             const templateStore = db.transaction(['templates'], 'readonly').objectStore('templates');
             templateStore.getAll().onsuccess = (e) => {
                 const templates = e.target.result.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
@@ -1017,10 +1033,8 @@
         document.getElementById('templateListContainer').addEventListener('click', handleModalListClick);
 
         function handleModalListClick(e) {
-            const id = e.target.dataset.id;
-            const type = e.target.dataset.type;
+            const id = e.target.dataset.id; const type = e.target.dataset.type;
             if (!id || !type) return;
-
             if (e.target.classList.contains('load-btn')) {
                 if (type === 'project') loadProjectById(parseInt(id));
                 else if (type === 'template') loadTemplateById(parseInt(id));
@@ -1065,10 +1079,8 @@
             request.onerror = (e) => console.error("Şablon yüklenemedi:", e.target.error);
             request.onsuccess = () => {
                 const tData = request.result; if (!tData) return;
-                // Sadece state'i yükle, resimleri koru
-                const currentState = JSON.parse(JSON.stringify(state)); // Mevcut state'in derin bir kopyasını al
-                state = { ...currentState, ...tData.state }; // Şablon state'ini mevcut state üzerine yaz
-                
+                const currentState = JSON.parse(JSON.stringify(state));
+                state = { ...currentState, ...tData.state };
                 updateUIFromState(state);
                 updateAndDraw();
                 hideProjectsModal();
@@ -1107,7 +1119,6 @@
             document.getElementById(`${targetTab}ListContainer`).classList.add('active');
         }
 
-        // Pan/Zoom fonksiyonları (değişiklik yok)
         function handleCanvasMouseDown(e) { if (!isModifierDown) return; const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0); if (!hasImage) return; panStart = { x: e.clientX, y: e.clientY }; const canvasRect = canvas.getBoundingClientRect(); const mouse = { x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width), y: (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height) }; if (state.mode === 'single') { isPanning = true; activePanTarget = { type: 'single', index: -1 }; initialImageOffset = { ...state.imageOffset }; } else { const p = state.padding; const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom }; const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap); const clickedIndex = layout.findIndex(rect => mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h); if (clickedIndex > -1) { isPanning = true; activePanTarget = { type: 'collage', index: clickedIndex }; initialImageOffset = { ...state.collage.imageOffsets[clickedIndex] }; } } if(isPanning) canvasWrapper.style.cursor = 'grabbing'; }
         function handleWindowMouseMove(e) { if (!isPanning) return; e.preventDefault(); const previewRect = canvas.getBoundingClientRect(); if (previewRect.width === 0) return; const previewScale = canvas.width / previewRect.width; const dx_canvas = (e.clientX - panStart.x) * previewScale; const dy_canvas = (e.clientY - panStart.y) * previewScale; let targetImage, container; if (activePanTarget.type === 'single') { targetImage = mainImage; const p = state.padding; container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom }; } else if (activePanTarget.type === 'collage') { const p = state.padding; const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom }; const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap); container = layout[activePanTarget.index]; targetImage = collageImages[activePanTarget.index]; } else { return; } if (!targetImage || !container || container.w <= 0) return; const imgRatio = targetImage.width / targetImage.height; const areaRatio = container.w / container.h; let renderScale; if (imgRatio > areaRatio) { renderScale = container.h / targetImage.height; } else { renderScale = container.w / targetImage.width; } const dx_source = dx_canvas / renderScale; const dy_source = dy_canvas / renderScale; let newOffset = { x: initialImageOffset.x - dx_source, y: initialImageOffset.y - dy_source, }; let sW, sH; if(imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; } else { sW = targetImage.width; sH = sW / areaRatio; } const maxOffsetX = Math.max(0, (targetImage.width - sW) / 2); const maxOffsetY = Math.max(0, (targetImage.height - sH) / 2); newOffset.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffset.x)); newOffset.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffset.y)); if (activePanTarget.type === 'single') { state.imageOffset = newOffset; } else { state.collage.imageOffsets[activePanTarget.index] = newOffset; } drawPreview(); }
         function handleWindowMouseUp() { if (isPanning) { isPanning = false; activePanTarget = { type: null, index: -1 }; updateCursor(); saveStateToHistory(); } }
