@@ -337,7 +337,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- HATA DÜZELTMESİ: Şablon kaydetme ve yükleme mantığı iyileştirildi. ---
+        // --- HATA DÜZELTMESİ: Liste görüntüleme ve şablon yükleme mantığı iyileştirildi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -925,7 +925,6 @@
             transaction.objectStore('projects').add(projectData);
         }
         
-        // YENİ: Şablonlar için temiz bir state nesnesi oluşturan fonksiyon
         function getTemplateState(fullState) {
             return {
                 mode: fullState.mode,
@@ -946,40 +945,16 @@
             };
         }
 
-        // GÜNCELLENDİ: Şablon kaydetme fonksiyonu
         async function saveTemplate(templateName) {
-            if (!db) {
-                showToast("Veritabanı hazır değil.", "error");
-                return;
-            }
+            if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
             syncStateWithUI();
-            
             const templateState = getTemplateState(state);
-
-            const templateData = {
-                name: templateName,
-                state: templateState,
-                savedAt: new Date()
-            };
-
-            console.log("Kaydedilecek Şablon Verisi:", templateData);
-
+            const templateData = { name: templateName, state: templateState, savedAt: new Date() };
             const transaction = db.transaction(['templates'], 'readwrite');
-            
-            transaction.oncomplete = () => {
-                console.log("Şablon başarıyla kaydedildi.");
-                showToast(`'${templateName}' şablonu kaydedildi!`);
-            };
-            
-            transaction.onerror = (e) => {
-                console.error("Şablon kaydetme hatası:", e.target.error);
-                showToast("Şablon kaydedilemedi. Konsolu kontrol edin.", "error");
-            };
-            
+            transaction.oncomplete = () => { showToast(`'${templateName}' şablonu kaydedildi!`); };
+            transaction.onerror = (e) => { console.error("Şablon kaydetme hatası:", e.target.error); showToast("Şablon kaydedilemedi. Konsolu kontrol edin.", "error"); };
             const request = transaction.objectStore('templates').add(templateData);
-            request.onerror = (e) => {
-                console.error("Add isteği hatası:", e.target.error);
-            };
+            request.onerror = (e) => { console.error("Add isteği hatası:", e.target.error); };
         }
 
         function showSaveTemplateModal() {
@@ -1000,34 +975,20 @@
             let html = '<ul>';
             const presetText = document.querySelector(`#sizePreset option[value="${state.sizePreset}"]`).textContent;
             html += `<li><strong>Kanvas Boyutu:</strong> ${presetText}</li>`;
-
-            if(state.mode === 'single') {
-                html += `<li><strong>Fotoğraf Yerleşimi:</strong> ${state.fit === 'contain' ? 'Sığdır' : 'Doldur'}</li>`;
-            }
-
+            if(state.mode === 'single') { html += `<li><strong>Fotoğraf Yerleşimi:</strong> ${state.fit === 'contain' ? 'Sığdır' : 'Doldur'}</li>`; }
             const bgTypeText = document.querySelector(`label[for="bg${state.bgType.charAt(0).toUpperCase() + state.bgType.slice(1)}"]`).textContent;
             html += `<li><strong>Arkaplan:</strong> ${bgTypeText} (${state.color1}${state.bgType === 'gradient' ? ', ' + state.color2 : ''})</li>`;
-
             const paddingValues = `${state.padding.top}px, ${state.padding.right}px, ${state.padding.bottom}px, ${state.padding.left}px`;
             html += `<li><strong>Kenar Boşlukları:</strong> ${paddingValues}</li>`;
-
             if(state.mode === 'collage'){
                 const layoutText = document.querySelector(`#collageLayoutContainer .active`).textContent;
                 html += `<li><strong>Kolaj Yerleşimi:</strong> ${layoutText}</li>`;
                 html += `<li><strong>Kolaj Boşluğu:</strong> ${state.collage.gap}px</li>`;
                 html += `<li><strong>Kolaj Köşe Yumuşatma:</strong> ${state.collage.cornerRadius}%</li>`;
             }
-
-            if(state.text.content) {
-                html += `<li><strong>Metin:</strong> "${state.text.content}" (${state.text.size}px, ${state.text.font})</li>`;
-            }
-
-            if(watermarkImage) {
-                html += `<li><strong>Filigran Ayarları:</strong> Evet (Opaklık: ${state.watermark.opacity}%, Boyut: ${state.watermark.size}%)</li>`;
-            } else {
-                 html += `<li><strong>Filigran Ayarları:</strong> Yok</li>`;
-            }
-
+            if(state.text.content) { html += `<li><strong>Metin:</strong> "${state.text.content}" (${state.text.size}px, ${state.text.font})</li>`; }
+            if(watermarkImage) { html += `<li><strong>Filigran Ayarları:</strong> Evet (Opaklık: ${state.watermark.opacity}%, Boyut: ${state.watermark.size}%)</li>`; } 
+            else { html += `<li><strong>Filigran Ayarları:</strong> Yok</li>`; }
             html += '</ul>';
             return html;
         }
@@ -1063,21 +1024,24 @@
             try {
                 const [projects, templates] = await Promise.all([ getFromDB('projects'), getFromDB('templates') ]);
 
+                // DÜZELTME: Listeleri oluşturmak için HTML string'i kullan
                 projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-                projectList.innerHTML = projects.length === 0 ? `<p class="text-center text-gray-400">Kaydedilmiş proje bulunamadı.</p>` : '';
+                let projectsHTML = '';
                 projects.forEach(p => {
                     let previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=O%CC%88nizleme';
                     if (p.mainImage) { previewUrl = URL.createObjectURL(p.mainImage); } 
                     else if (p.collageImages && p.collageImages.length > 0) { previewUrl = URL.createObjectURL(p.collageImages[0]); }
-                    projectList.innerHTML += createListItemHTML(p.id, p.name, new Date(p.savedAt), previewUrl, 'project');
+                    projectsHTML += createListItemHTML(p.id, p.name, new Date(p.savedAt), previewUrl, 'project');
                 });
+                projectList.innerHTML = projectsHTML || `<p class="text-center text-gray-400">Kaydedilmiş proje bulunamadı.</p>`;
 
                 templates.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-                templateList.innerHTML = templates.length === 0 ? `<p class="text-center text-gray-400">Kaydedilmiş şablon bulunamadı.</p>` : '';
+                let templatesHTML = '';
                 templates.forEach(t => {
                     const previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=S%CC%A7ablon';
-                    templateList.innerHTML += createListItemHTML(t.id, t.name, new Date(t.savedAt), previewUrl, 'template');
+                    templatesHTML += createListItemHTML(t.id, t.name, new Date(t.savedAt), previewUrl, 'template');
                 });
+                templateList.innerHTML = templatesHTML || `<p class="text-center text-gray-400">Kaydedilmiş şablon bulunamadı.</p>`;
 
             } catch (error) {
                 console.error("Projeler/Şablonlar yüklenirken hata:", error);
@@ -1088,9 +1052,10 @@
         }
         
         function createListItemHTML(id, name, date, previewUrl, type) {
+             // DÜZELTME: Blob URL'sini iptal eden 'onload' etkinliği kaldırıldı.
              return `
                 <div class="glass-card flex items-center p-4 rounded-lg mb-4 hover:bg-white/10 transition-colors duration-200">
-                    <img src="${previewUrl}" class="w-24 h-24 object-cover rounded-md mr-4 bg-gray-700" ${previewUrl.startsWith('blob:') ? `onload="URL.revokeObjectURL(this.src)"` : ''}>
+                    <img src="${previewUrl}" class="w-24 h-24 object-cover rounded-md mr-4 bg-gray-700">
                     <div class="flex-grow">
                         <h3 class="font-bold text-lg text-white">${name}</h3>
                         <p class="text-sm text-gray-300">${date.toLocaleString('tr-TR')}</p>
@@ -1147,30 +1112,30 @@
             };
         }
         
-        // GÜNCELLENDİ: Şablon yükleme fonksiyonu
         async function loadTemplateById(id) {
             const request = db.transaction(['templates'], 'readonly').objectStore('templates').get(id);
             request.onerror = (e) => console.error("Şablon yüklenemedi:", e.target.error);
             request.onsuccess = () => {
                 const tData = request.result; if (!tData) return;
                 
-                const defaultState = getDefaultState();
                 const templateState = tData.state;
-
-                // Şablonu varsayılan durumun üzerine uygula
+                // Şablonu mevcut duruma uygula, ancak resimlerle ilgili olmayan ayarları koru
+                const currentState = { ...state };
+                
                 state = {
-                    ...defaultState,
-                    ...templateState,
-                    padding: { ...defaultState.padding, ...templateState.padding },
-                    collage: { ...defaultState.collage, ...templateState.collage },
-                    text: { ...defaultState.text, ...templateState.text },
-                    watermark: { ...defaultState.watermark, ...templateState.watermark },
+                    ...currentState, // Mevcut modu, resimleri vb. koru
+                    ...templateState, // Şablon ayarlarını üzerine yaz
+                    padding: { ...currentState.padding, ...templateState.padding },
+                    collage: { ...currentState.collage, ...templateState.collage },
+                    text: { ...currentState.text, ...templateState.text },
+                    watermark: { ...currentState.watermark, ...templateState.watermark },
                 };
                 
-                // Şablon uygulandığında resim konumlarını sıfırla
+                // Resim konumlarını sıfırla
                 state.imageOffset = { x: 0, y: 0 };
+                // DÜZELTME: Mevcut kolaj resimlerinin sayısına göre ofsetleri sıfırla
                 if (state.collage.imageOffsets) {
-                    state.collage.imageOffsets = state.collage.imageOffsets.map(() => ({ x: 0, y: 0 }));
+                    state.collage.imageOffsets = collageImages.map(() => ({ x: 0, y: 0 }));
                 }
 
                 updateUIFromState(state);
