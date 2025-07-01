@@ -6,7 +6,6 @@
     <title>Profesyonel Fotoğraf Editörü ve Kolaj</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,9 +27,9 @@
 
         .control-section { padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.2); }
         .focus-ring:focus { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.5); outline: none; }
-        .mode-btn, .fit-btn, .layout-btn, .modal-tab-btn { background-color: rgba(0, 0, 0, 0.1); color: #e2e8f0; transition: all 0.2s ease-in-out; }
-        .mode-btn:hover, .fit-btn:hover, .layout-btn:hover, .modal-tab-btn:hover { background-color: rgba(0, 0, 0, 0.2); }
-        .mode-btn.active, .fit-btn.active, .layout-btn.active, .modal-tab-btn.active { background-color: rgba(20, 10, 50, 0.6); color: white; box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.2); }
+        .mode-btn, .fit-btn, .layout-btn { background-color: rgba(0, 0, 0, 0.1); color: #e2e8f0; transition: all 0.2s ease-in-out; }
+        .mode-btn:hover, .fit-btn:hover, .layout-btn:hover { background-color: rgba(0, 0, 0, 0.2); }
+        .mode-btn.active, .fit-btn.active, .layout-btn.active { background-color: rgba(20, 10, 50, 0.6); color: white; box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.2); }
         .upload-area { transition: all 0.2s ease-in-out; border-color: rgba(255, 255, 255, 0.3);}
         .upload-area.drag-over { border-color: #a78bfa; background-color: rgba(167, 139, 250, 0.2); }
 
@@ -55,8 +54,6 @@
         /* Modal Stilleri */
         .modal-overlay { transition: opacity 0.3s ease; }
         .modal-content { transition: transform 0.3s ease; }
-        .modal-list-container { display: none; }
-        .modal-list-container.active { display: block; }
         
         /* Toast Bildirim Stilleri */
         #toast {
@@ -66,19 +63,62 @@
         #toast.show { bottom: 30px; }
 
         /* Kolaj Sıralama ve Silme Stilleri */
-        #collageThumbnailsContainer { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; border-radius: 0.5rem; background-color: rgba(0,0,0,0.1); }
-        .thumbnail-item { position: relative; cursor: grab; border: 2px solid transparent; border-radius: 0.375rem; transition: transform 0.2s, border-color 0.2s; }
-        .thumbnail-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 0.25rem; display: block; }
-        .thumbnail-item.dragging { opacity: 0.5; transform: scale(1.1); border-color: #a78bfa; }
-        .thumbnail-item.drag-over-thumb { border-color: #c4b5fd; }
-        .delete-thumb-btn { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background-color: rgba(239, 68, 68, 0.9); color: white; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; line-height: 1; cursor: pointer; opacity: 0; transform: scale(0.8); transition: opacity 0.2s, transform 0.2s; z-index: 10; }
-        .thumbnail-item:hover .delete-thumb-btn { opacity: 1; transform: scale(1); }
-        
-        /* EXIF & Şablon Özet Stilleri */
-        #exifData, #templateSettingsSummary { background-color: rgba(0,0,0,0.2); color: #e2e8f0; font-family: 'Roboto Mono', monospace; font-size: 13px; padding: 1rem; border-radius: 0.5rem; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
-        #templateSettingsSummary ul { list-style: none; padding: 0; }
-        #templateSettingsSummary li { margin-bottom: 0.5rem; }
-        #templateSettingsSummary strong { color: #a78bfa; font-weight: 600; }
+        #collageThumbnailsContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 0.5rem;
+            background-color: rgba(0,0,0,0.1);
+        }
+        .thumbnail-item {
+            position: relative;
+            cursor: grab;
+            border: 2px solid transparent;
+            border-radius: 0.375rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .thumbnail-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 0.25rem;
+            display: block;
+        }
+        .thumbnail-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.1);
+            border-color: #a78bfa;
+        }
+        .thumbnail-item.drag-over-thumb {
+            border-color: #c4b5fd;
+        }
+        .delete-thumb-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 10;
+        }
+        .thumbnail-item:hover .delete-thumb-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
     </style>
 </head>
 <body class="p-4 lg:p-8">
@@ -111,18 +151,6 @@
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Resimleri Sırala (Sürükle) veya Sil (X)</label>
                                 <div id="collageThumbnailsContainer"></div>
                             </div>
-                        </div>
-                        <button id="showExifBtn" class="hidden mt-2 w-full text-sm bg-black/20 text-white font-semibold py-2 px-4 rounded-lg hover:bg-black/30">EXIF Verisini Göster</button>
-                    </div>
-
-                    <div id="exifContainer" class="hidden control-section">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-lg font-semibold text-gray-100">EXIF Meta Verileri</h3>
-                            <button id="hideExifBtn" class="text-gray-300 hover:text-white text-2xl font-bold">&times;</button>
-                        </div>
-                        <pre id="exifData"></pre>
-                        <div class="mt-2 text-xs text-gray-400">
-                            <p>ℹ️ Gizliliğiniz için, indirilen görüntüler bu EXIF verilerini içermez.</p>
                         </div>
                     </div>
 
@@ -249,29 +277,13 @@
                         <button id="undoBtn" disabled title="Geri Al" class="bg-black/20 text-white font-bold p-3 rounded-lg hover:bg-black/30 disabled:opacity-50 disabled:cursor-not-allowed"><i class="gg-undo"></i></button>
                         <button id="redoBtn" disabled title="İleri Al" class="bg-black/20 text-white font-bold p-3 rounded-lg hover:bg-black/30 disabled:opacity-50 disabled:cursor-not-allowed"><i class="gg-redo"></i></button>
                     </div>
-                    <div class="flex-grow flex flex-col gap-2 w-full sm:w-auto">
-                         <div class="flex gap-2">
-                            <button id="saveProjectBtn" class="flex-1 bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-700 disabled:bg-gray-500 disabled:cursor-not-allowed">Projeyi Kaydet</button>
-                            <button id="saveTemplateBtn" class="flex-1 bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-600">Şablon Yap</button>
-                         </div>
-                         <button id="loadProjectBtn" class="w-full bg-sky-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-700">Projeler & Şablonlar</button>
+                    <div class="flex-grow flex gap-2 w-full sm:w-auto">
+                        <button id="saveProjectBtn" class="w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-700 disabled:bg-gray-500 disabled:cursor-not-allowed">Projeyi Kaydet</button>
+                        <button id="loadProjectBtn" class="w-full bg-sky-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-700">Projelerim</button>
                     </div>
-                    <div class="flex flex-col gap-2 w-full sm:w-auto">
-                        <div class="grid grid-cols-2 gap-2">
-                             <select id="downloadFormat" class="h-full w-full p-2 rounded-lg text-sm">
-                                <option value="image/png">PNG</option>
-                                <option value="image/jpeg">JPG</option>
-                                <option value="image/webp">WEBP</option>
-                            </select>
-                            <div id="qualityWrapper" class="hidden items-center bg-black/10 rounded-lg px-2">
-                                <input type="range" id="downloadQuality" min="10" max="100" value="92" class="w-full">
-                                <span id="qualityValue" class="text-xs text-white ml-2">92</span>
-                            </div>
-                        </div>
-                        <button id="downloadBtn" disabled class="w-full bg-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-400 transition-all duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed shadow-lg shadow-violet-500/50">
-                            İndir
-                        </button>
-                    </div>
+                    <button id="downloadBtn" disabled class="w-full sm:w-auto bg-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-violet-700 focus:outline-none focus:ring-4 focus:ring-violet-400 transition-all duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed shadow-lg shadow-violet-500/50">
+                        İndir
+                    </button>
                 </div>
             </div>
         </div>
@@ -293,57 +305,30 @@
     
 <div id="projectsModal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
         <div class="modal-content glass-card w-full max-w-4xl rounded-2xl shadow-2xl p-6 md:p-8 transform scale-95">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-white">Kaydedilenler</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Projelerim</h2>
                 <button id="closeModalBtn" class="text-gray-300 hover:text-white text-3xl font-bold">&times;</button>
             </div>
-            <div class="border-b border-white/20 mb-4">
-                <nav class="flex gap-4 -mb-px">
-                    <button data-tab="projects" class="modal-tab-btn active py-3 px-4 font-semibold border-b-2 border-transparent">Projelerim</button>
-                    <button data-tab="templates" class="modal-tab-btn py-3 px-4 font-semibold border-b-2 border-transparent">Şablonlarım</button>
-                </nav>
-            </div>
-            <div class="max-h-[60vh] overflow-y-auto pr-2">
-                <div id="projectListContainer" class="modal-list-container active">
-                    <div id="projectList"></div>
-                </div>
-                <div id="templateListContainer" class="modal-list-container">
-                    <div id="templateList"></div>
-                </div>
-            </div>
+            <div id="projectList" class="max-h-[60vh] overflow-y-auto pr-2">
+                
+
+</div>
         </div>
     </div>
     
     
-<div id="saveTemplateModal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
-        <div class="modal-content glass-card w-full max-w-lg rounded-2xl shadow-2xl p-6 md:p-8 transform scale-95">
-            <h2 class="text-2xl font-bold text-white mb-4">Şablonu Gözden Geçir ve Kaydet</h2>
-            <p class="text-gray-300 mb-6">Aşağıdaki ayarlar şablon olarak kaydedilecek. Bu şablonu daha sonra tek tıkla uygulayabilirsiniz.</p>
-            
-            <div id="templateSettingsSummary" class="mb-6"></div>
-
-            <input type="text" id="templateNameInput" placeholder="Şablon adı girin..." class="w-full p-3 rounded-lg mb-4 focus-ring">
-            
-            <div class="flex justify-end gap-4">
-                <button id="cancelSaveTemplateBtn" class="bg-black/20 text-white font-bold py-2 px-6 rounded-lg hover:bg-black/30">İptal</button>
-                <button id="confirmSaveTemplateBtn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">Kaydet</button>
-            </div>
-        </div>
-    </div>
-
 <div id="toast" class="px-6 py-3 bg-emerald-500 text-white font-semibold rounded-lg shadow-lg">
         <p id="toastMessage"></p>
     </div>
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- HATA DÜZELTMESİ: Liste görüntüleme ve veri yönetimi mantığı tamamen yeniden yazıldı. ---
+        // --- YENİ: İndirme sırasında kaydırılmış görüntülerin yanlış pozisyonda olma hatası düzeltildi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
         const downloadBtn = document.getElementById('downloadBtn');
         const saveProjectBtn = document.getElementById('saveProjectBtn');
-        const saveTemplateBtn = document.getElementById('saveTemplateBtn');
         const loadProjectBtn = document.getElementById('loadProjectBtn');
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
@@ -354,29 +339,16 @@
         const canvasWrapper = document.getElementById('canvasWrapper');
         const projectsModal = document.getElementById('projectsModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
+        const projectListContainer = document.getElementById('projectList');
         const collageUploaderDiv = document.getElementById('collageUploader');
         const collageThumbnailsWrapper = document.getElementById('collageThumbnailsWrapper');
         const collageThumbnailsContainer = document.getElementById('collageThumbnailsContainer');
-        const downloadFormatSelect = document.getElementById('downloadFormat');
-        const qualityWrapper = document.getElementById('qualityWrapper');
-        const downloadQualitySlider = document.getElementById('downloadQuality');
-        const qualityValueSpan = document.getElementById('qualityValue');
-        const showExifBtn = document.getElementById('showExifBtn');
-        const hideExifBtn = document.getElementById('hideExifBtn');
-        const exifContainer = document.getElementById('exifContainer');
-        const exifDataEl = document.getElementById('exifData');
-        const saveTemplateModal = document.getElementById('saveTemplateModal');
-        const cancelSaveTemplateBtn = document.getElementById('cancelSaveTemplateBtn');
-        const confirmSaveTemplateBtn = document.getElementById('confirmSaveTemplateBtn');
-        const templateNameInput = document.getElementById('templateNameInput');
-        const templateSettingsSummary = document.getElementById('templateSettingsSummary');
         
         let db;
         let state = {};
         let history = [];
         let historyIndex = -1;
         let mainImage = null;
-        let exifData = null;
         let collageImages = [];
         let watermarkImage = null;
         let originalFileName = 'fotoğraf';
@@ -551,11 +523,15 @@
         function setupEventListeners() {
             document.getElementById('singleModeBtn').addEventListener('click', () => { if (state.mode === 'collage') switchMode('single'); });
             document.getElementById('collageModeBtn').addEventListener('click', () => { if (state.mode === 'single') switchMode('collage'); });
+            
             document.getElementById('fitContainBtn').addEventListener('click', () => { setFitMode('contain'); });
             document.getElementById('fitCoverBtn').addEventListener('click', () => { setFitMode('cover'); });
+            
             document.querySelectorAll('.padding-slider').forEach(s => s.addEventListener('input', handlePaddingSlider));
             document.getElementById('syncPadding').addEventListener('change', () => updateAndDraw());
+
             document.querySelectorAll('input[name="bgType"]').forEach(radio => radio.addEventListener('change', () => updateAndDraw()));
+
             document.querySelectorAll('#collageLayoutContainer button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelector('#collageLayoutContainer .active').classList.remove('active');
@@ -563,17 +539,27 @@
                     updateAndDraw();
                 });
             });
+
             allUIInputs.forEach(el => {
                 const eventType = (el.type === 'range' || el.type === 'color') ? 'input' : 'change';
-                 if (!el.classList.contains('padding-slider') && el.id !== 'downloadQuality') {
+                 if (!el.classList.contains('padding-slider')) {
                     el.addEventListener(eventType, () => updateAndDraw(el.type !== 'range'));
                 }
             });
+            
             imageLoader.addEventListener('change', (e) => handleImageUpload(e.target.files[0]));
             collageImageLoader.addEventListener('change', (e) => handleCollageUpload(e.target.files));
             document.getElementById('watermarkLoader').addEventListener('change', handleWatermarkUpload);
-            document.querySelector('#collageUploader .upload-area').addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over'); handleCollageUpload(e.dataTransfer.files); });
-            document.querySelector('#singleUploader').addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over'); handleImageUpload(e.dataTransfer.files[0]); });
+
+            document.querySelector('#collageUploader .upload-area').addEventListener('drop', e => {
+                e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over');
+                handleCollageUpload(e.dataTransfer.files);
+            });
+            document.querySelector('#singleUploader').addEventListener('drop', e => {
+                 e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over');
+                handleImageUpload(e.dataTransfer.files[0]);
+            });
+            
             downloadBtn.addEventListener('click', downloadImage);
             saveProjectBtn.addEventListener('click', saveProject);
             loadProjectBtn.addEventListener('click', showProjectsModal);
@@ -581,43 +567,138 @@
             projectsModal.addEventListener('click', (e) => { if(e.target === projectsModal) hideProjectsModal(); });
             undoBtn.addEventListener('click', undo);
             redoBtn.addEventListener('click', redo);
+            
             window.addEventListener('keydown', e => { if (e.key === 'Meta' || e.key === 'Control') { isModifierDown = true; updateCursor(); } });
             window.addEventListener('keyup', e => { if (e.key === 'Meta' || e.key === 'Control') { isModifierDown = false; updateCursor(); } });
-            canvasWrapper.addEventListener('mousedown', handleCanvasMouseDown);
-            window.addEventListener('mousemove', handleWindowMouseMove);
-            window.addEventListener('mouseup', handleWindowMouseUp);
-            canvasWrapper.addEventListener('mouseenter', updateCursor);
-            canvasWrapper.addEventListener('mouseleave', () => { canvasWrapper.style.cursor = 'default'; });
-            collageThumbnailsContainer.addEventListener('click', (e) => { if(e.target.classList.contains('delete-thumb-btn')) { const indexToDelete = parseInt(e.target.dataset.index, 10); deleteCollageImage(indexToDelete); } });
-
-            downloadFormatSelect.addEventListener('change', handleFormatChange);
-            downloadQualitySlider.addEventListener('input', () => { qualityValueSpan.textContent = downloadQualitySlider.value; });
-            showExifBtn.addEventListener('click', () => exifContainer.classList.remove('hidden'));
-            hideExifBtn.addEventListener('click', () => exifContainer.classList.add('hidden'));
-            document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.addEventListener('click', switchModalTab));
             
-            saveTemplateBtn.addEventListener('click', showSaveTemplateModal);
-            cancelSaveTemplateBtn.addEventListener('click', hideSaveTemplateModal);
-            confirmSaveTemplateBtn.addEventListener('click', () => {
-                const templateName = templateNameInput.value.trim();
-                if (templateName) {
-                    saveTemplate(templateName);
-                    hideSaveTemplateModal();
+            canvasWrapper.addEventListener('mousedown', e => {
+                if (!isModifierDown) return;
+                const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+                if (!hasImage) return;
+
+                panStart = { x: e.clientX, y: e.clientY };
+                const canvasRect = canvas.getBoundingClientRect();
+                const mouse = {
+                    x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width),
+                    y: (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height)
+                };
+
+                if (state.mode === 'single') {
+                    isPanning = true;
+                    activePanTarget = { type: 'single', index: -1 };
+                    initialImageOffset = { ...state.imageOffset };
+                } else { 
+                    const p = state.padding;
+                    const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
+                    const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
+                    const clickedIndex = layout.findIndex(rect => mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h);
+                    if (clickedIndex > -1) {
+                        isPanning = true;
+                        activePanTarget = { type: 'collage', index: clickedIndex };
+                        initialImageOffset = { ...state.collage.imageOffsets[clickedIndex] };
+                    }
+                }
+                 if(isPanning) canvasWrapper.style.cursor = 'grabbing';
+            });
+            
+            window.addEventListener('mousemove', e => {
+                if (!isPanning) return;
+                e.preventDefault();
+
+                const previewRect = canvas.getBoundingClientRect();
+                if (previewRect.width === 0) return;
+
+                const previewScale = canvas.width / previewRect.width;
+                const dx_canvas = (e.clientX - panStart.x) * previewScale;
+                const dy_canvas = (e.clientY - panStart.y) * previewScale;
+                
+                let targetImage, container;
+
+                if (activePanTarget.type === 'single') {
+                    targetImage = mainImage;
+                    const p = state.padding;
+                    container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
+                } else if (activePanTarget.type === 'collage') {
+                    const p = state.padding;
+                    const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
+                    const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
+                    container = layout[activePanTarget.index];
+                    targetImage = collageImages[activePanTarget.index];
                 } else {
-                    showToast("Lütfen bir şablon adı girin.", "error");
+                    return;
+                }
+
+                if (!targetImage || !container || container.w <= 0) return;
+
+                const imgRatio = targetImage.width / targetImage.height;
+                const areaRatio = container.w / container.h;
+                
+                let renderScale;
+                if (imgRatio > areaRatio) { 
+                    renderScale = container.h / targetImage.height;
+                } else { 
+                    renderScale = container.w / targetImage.width;
+                }
+
+                const dx_source = dx_canvas / renderScale;
+                const dy_source = dy_canvas / renderScale;
+                
+                let newOffset = {
+                    x: initialImageOffset.x - dx_source,
+                    y: initialImageOffset.y - dy_source,
+                };
+                
+                let sW, sH;
+                if(imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; }
+                else { sW = targetImage.width; sH = sW / areaRatio; }
+                const maxOffsetX = Math.max(0, (targetImage.width - sW) / 2);
+                const maxOffsetY = Math.max(0, (targetImage.height - sH) / 2);
+
+                newOffset.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffset.x));
+                newOffset.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffset.y));
+
+                if (activePanTarget.type === 'single') {
+                    state.imageOffset = newOffset;
+                } else {
+                    state.collage.imageOffsets[activePanTarget.index] = newOffset;
+                }
+
+                drawPreview();
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isPanning) {
+                    isPanning = false;
+                    activePanTarget = { type: null, index: -1 };
+                    updateCursor();
+                    saveStateToHistory();
                 }
             });
-            saveTemplateModal.addEventListener('click', (e) => { if(e.target === saveTemplateModal) hideSaveTemplateModal(); });
+            canvasWrapper.addEventListener('mouseenter', updateCursor);
+            canvasWrapper.addEventListener('mouseleave', () => { canvasWrapper.style.cursor = 'default'; });
+            
+            collageThumbnailsContainer.addEventListener('click', (e) => {
+                if(e.target.classList.contains('delete-thumb-btn')) {
+                    const indexToDelete = parseInt(e.target.dataset.index, 10);
+                    deleteCollageImage(indexToDelete);
+                }
+            });
         }
         
         function switchMode(mode) {
-            mainImage = null; collageImages = []; exifData = null;
-            showExifBtn.classList.add('hidden'); exifContainer.classList.add('hidden');
-            state.imageOffset = { x: 0, y: 0 }; state.collage.imageOffsets = [];
-            imageLoader.value = null; collageImageLoader.value = null;
-            collageThumbnailsContainer.innerHTML = ''; collageThumbnailsWrapper.classList.add('hidden');
-            previewPlaceholder.classList.remove('hidden'); canvasWrapper.classList.add('hidden');
+            mainImage = null;
+            collageImages = [];
+            state.imageOffset = { x: 0, y: 0 };
+            state.collage.imageOffsets = [];
+            imageLoader.value = null; 
+            collageImageLoader.value = null;
+            collageThumbnailsContainer.innerHTML = '';
+            collageThumbnailsWrapper.classList.add('hidden');
+            
+            previewPlaceholder.classList.remove('hidden');
+            canvasWrapper.classList.add('hidden');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
             state.mode = mode;
             updateUIFromState(state);
             updateAndDraw(); 
@@ -633,14 +714,20 @@
         function updateCursor() {
             const canPanSingle = state.mode === 'single' && mainImage && state.fit === 'cover';
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
-            if (isPanning) { canvasWrapper.style.cursor = 'grabbing'; } 
-            else if (isModifierDown && (canPanSingle || canPanCollage)) { canvasWrapper.style.cursor = 'grab'; } 
-            else { canvasWrapper.style.cursor = 'default'; }
+            if (isPanning) {
+                 canvasWrapper.style.cursor = 'grabbing';
+            } else if (isModifierDown && (canPanSingle || canPanCollage)) {
+                canvasWrapper.style.cursor = 'grab';
+            } else {
+                canvasWrapper.style.cursor = 'default';
+            }
         }
 
         function handlePaddingSlider(e) {
             const value = e.target.value;
-            if (document.getElementById('syncPadding').checked) { document.querySelectorAll('.padding-slider').forEach(s => s.value = value); }
+            if (document.getElementById('syncPadding').checked) {
+                document.querySelectorAll('.padding-slider').forEach(s => s.value = value);
+            }
             updateAndDraw(false); 
         }
         document.querySelectorAll('.padding-slider').forEach(s => s.addEventListener('change', () => updateAndDraw(true)));
@@ -649,17 +736,13 @@
         function handleImageUpload(file) {
             if (!file) return;
             originalFileName = file.name.split('.').slice(0, -1).join('.') || 'fotoğraf';
-            exifData = null; exifContainer.classList.add('hidden');
-            EXIF.getData(file, function() {
-                exifData = EXIF.getAllTags(this);
-                if (Object.keys(exifData).length > 0) { displayExifData(); showExifBtn.classList.remove('hidden'); } 
-                else { showExifBtn.classList.add('hidden'); }
-            });
             const reader = new FileReader();
             reader.onload = e => {
                 mainImage = new Image();
                 mainImage.onload = () => {
-                    previewPlaceholder.classList.add('hidden'); canvasWrapper.style.display = 'flex'; canvasWrapper.classList.remove('hidden');
+                    previewPlaceholder.classList.add('hidden');
+                    canvasWrapper.style.display = 'flex';
+                    canvasWrapper.classList.remove('hidden');
                     state.imageOffset = { x: 0, y: 0 };
                     updateAndDraw();
                 };
@@ -667,23 +750,18 @@
             };
             reader.readAsDataURL(file);
         }
-
-        function displayExifData() {
-            if (!exifData) { exifDataEl.textContent = 'EXIF verisi bulunamadı.'; return; }
-            const relevantTags = { 'Make': 'Marka', 'Model': 'Model', 'DateTimeOriginal': 'Çekim Tarihi', 'FNumber': 'Diyafram', 'ExposureTime': 'Pozlama Süresi', 'ISOSpeedRatings': 'ISO', 'FocalLength': 'Odak Uzaklığı', 'Flash': 'Flaş', 'PixelXDimension': 'Genişlik', 'PixelYDimension': 'Yükseklik' };
-            let output = '';
-            for (const tag in relevantTags) { if (exifData[tag]) { output += `${relevantTags[tag]}: ${exifData[tag]}\n`; } }
-            exifDataEl.textContent = output || 'Temel EXIF bilgisi bulunamadı.';
-        }
         
         function handleCollageUpload(files) {
             if (!files || files.length === 0) return;
             originalFileName = 'kolaj';
-            showExifBtn.classList.add('hidden'); exifContainer.classList.add('hidden');
             const readers = Array.from(files).map(file => {
                 return new Promise(resolve => {
                     const reader = new FileReader();
-                    reader.onload = e => { const img = new Image(); img.onload = () => resolve(img); img.src = e.target.result; };
+                    reader.onload = e => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.src = e.target.result;
+                    };
                     reader.readAsDataURL(file);
                 });
             });
@@ -691,8 +769,11 @@
                 collageImages = collageImages.concat(images);
                 const newOffsets = images.map(() => ({ x: 0, y: 0 }));
                 state.collage.imageOffsets = state.collage.imageOffsets.concat(newOffsets);
+
                 if (collageImages.length > 0) {
-                    previewPlaceholder.classList.add('hidden'); canvasWrapper.style.display = 'flex'; canvasWrapper.classList.remove('hidden');
+                    previewPlaceholder.classList.add('hidden');
+                    canvasWrapper.style.display = 'flex';
+                    canvasWrapper.classList.remove('hidden');
                     displayCollageThumbnails();
                     updateAndDraw();
                 }
@@ -701,9 +782,17 @@
         
         function deleteCollageImage(index) {
             if (index > -1 && index < collageImages.length) {
-                collageImages.splice(index, 1); state.collage.imageOffsets.splice(index, 1);
-                if (collageImages.length === 0) { previewPlaceholder.classList.remove('hidden'); canvasWrapper.classList.add('hidden'); }
-                displayCollageThumbnails(); updateAndDraw(); saveStateToHistory();
+                collageImages.splice(index, 1);
+                state.collage.imageOffsets.splice(index, 1);
+                
+                if (collageImages.length === 0) {
+                    previewPlaceholder.classList.remove('hidden');
+                    canvasWrapper.classList.add('hidden');
+                }
+                
+                displayCollageThumbnails();
+                updateAndDraw();
+                saveStateToHistory();
             }
         }
 
@@ -712,8 +801,13 @@
             collageThumbnailsContainer.innerHTML = '';
             collageImages.forEach((img, index) => {
                 const thumbItem = document.createElement('div');
-                thumbItem.className = 'thumbnail-item'; thumbItem.dataset.index = index; thumbItem.draggable = true;
-                thumbItem.innerHTML = `<img src="${img.src}" alt="Kolaj resmi ${index + 1}"><button class="delete-thumb-btn" data-index="${index}" title="Resmi Sil">&times;</button>`;
+                thumbItem.className = 'thumbnail-item';
+                thumbItem.dataset.index = index;
+                thumbItem.draggable = true;
+                thumbItem.innerHTML = `
+                    <img src="${img.src}" alt="Kolaj resmi ${index + 1}">
+                    <button class="delete-thumb-btn" data-index="${index}" title="Resmi Sil">&times;</button>
+                `;
                 collageThumbnailsContainer.appendChild(thumbItem);
             });
             addDragDropListenersToThumbnails();
@@ -722,36 +816,67 @@
         function addDragDropListenersToThumbnails() {
             const thumbnails = document.querySelectorAll('.thumbnail-item');
             thumbnails.forEach(thumb => {
-                thumb.addEventListener('dragstart', handleDragStart); thumb.addEventListener('dragend', handleDragEnd);
-                thumb.addEventListener('dragover', handleDragOver); thumb.addEventListener('dragleave', handleDragLeave);
+                thumb.addEventListener('dragstart', handleDragStart);
+                thumb.addEventListener('dragend', handleDragEnd);
+                thumb.addEventListener('dragover', handleDragOver);
+                thumb.addEventListener('dragleave', handleDragLeave);
                 thumb.addEventListener('drop', handleDrop);
             });
         }
 
-        function handleDragStart(e) { draggedThumbnailIndex = parseInt(e.target.closest('.thumbnail-item').dataset.index); e.target.closest('.thumbnail-item').classList.add('dragging'); }
-        function handleDragEnd(e) { e.target.closest('.thumbnail-item').classList.remove('dragging'); }
-        function handleDragOver(e) { e.preventDefault(); const targetItem = e.target.closest('.thumbnail-item'); if (targetItem) targetItem.classList.add('drag-over-thumb'); }
-        function handleDragLeave(e) { const targetItem = e.target.closest('.thumbnail-item'); if (targetItem) targetItem.classList.remove('drag-over-thumb'); }
+        function handleDragStart(e) {
+            draggedThumbnailIndex = parseInt(e.target.closest('.thumbnail-item').dataset.index);
+            e.target.closest('.thumbnail-item').classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.closest('.thumbnail-item').classList.remove('dragging');
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            const targetItem = e.target.closest('.thumbnail-item');
+            if (targetItem) targetItem.classList.add('drag-over-thumb');
+        }
+
+        function handleDragLeave(e) {
+             const targetItem = e.target.closest('.thumbnail-item');
+            if (targetItem) targetItem.classList.remove('drag-over-thumb');
+        }
+
         function handleDrop(e) {
             e.preventDefault();
-            const targetItem = e.target.closest('.thumbnail-item'); if (!targetItem) return;
+            const targetItem = e.target.closest('.thumbnail-item');
+            if (!targetItem) return;
             targetItem.classList.remove('drag-over-thumb');
             const droppedOnIndex = parseInt(targetItem.dataset.index);
+
             if (draggedThumbnailIndex === droppedOnIndex) return;
+
             const draggedImage = collageImages.splice(draggedThumbnailIndex, 1)[0];
             const draggedOffset = state.collage.imageOffsets.splice(draggedThumbnailIndex, 1)[0];
+            
             collageImages.splice(droppedOnIndex, 0, draggedImage);
             state.collage.imageOffsets.splice(droppedOnIndex, 0, draggedOffset);
-            displayCollageThumbnails(); updateAndDraw();
+            
+            displayCollageThumbnails();
+            updateAndDraw();
         }
 
         function handleWatermarkUpload(e) {
             const file = e.target.files[0];
-            if (!file) { watermarkImage = null; document.getElementById('watermarkControls').classList.add('hidden'); updateAndDraw(); return; }
+            if (!file) {
+                watermarkImage = null;
+                document.getElementById('watermarkControls').classList.add('hidden');
+                updateAndDraw(); return;
+            }
             const reader = new FileReader();
             reader.onload = res => {
                 watermarkImage = new Image();
-                watermarkImage.onload = () => { document.getElementById('watermarkControls').classList.remove('hidden'); updateAndDraw(); }
+                watermarkImage.onload = () => {
+                    document.getElementById('watermarkControls').classList.remove('hidden');
+                    updateAndDraw();
+                }
                 watermarkImage.src = res.target.result;
             }
             reader.readAsDataURL(file);
@@ -759,11 +884,19 @@
 
         function drawPreview() {
             const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
-            if (!hasImage) { previewPlaceholder.classList.remove('hidden'); canvasWrapper.classList.add('hidden'); return; };
+            if (!hasImage) {
+                previewPlaceholder.classList.remove('hidden');
+                canvasWrapper.classList.add('hidden');
+                return;
+            };
             const preset = presets[state.sizePreset];
-            if (state.sizePreset === 'original' && mainImage) { canvas.width = mainImage.width + state.padding.left + state.padding.right; canvas.height = mainImage.height + state.padding.top + state.padding.bottom; } 
-            else if (preset) { canvas.width = preset.width; canvas.height = preset.height; } 
-            else { return; }
+            if (state.sizePreset === 'original' && mainImage) {
+                canvas.width = mainImage.width + state.padding.left + state.padding.right;
+                canvas.height = mainImage.height + state.padding.top + state.padding.bottom;
+            } else if (preset) {
+                canvas.width = preset.width;
+                canvas.height = preset.height;
+            } else { return; }
             drawBackground(ctx, canvas.width, canvas.height);
             drawMainContent(ctx, canvas.width, canvas.height);
             drawTextAndWatermark(ctx, canvas.width, canvas.height);
@@ -771,74 +904,218 @@
 
         function drawBackground(targetCtx, w, h) {
             targetCtx.save();
-            if (state.bgType === 'solid') { targetCtx.fillStyle = state.color1; targetCtx.fillRect(0, 0, w, h); } 
-            else if (state.bgType === 'gradient') { const gradient = targetCtx.createLinearGradient(0, 0, w, h); gradient.addColorStop(0, state.color1); gradient.addColorStop(1, state.color2); targetCtx.fillStyle = gradient; targetCtx.fillRect(0, 0, w, h); } 
-            else if (state.bgType === 'blur' && (mainImage || collageImages.length > 0)) {
+            if (state.bgType === 'solid') {
+                targetCtx.fillStyle = state.color1;
+                targetCtx.fillRect(0, 0, w, h);
+            } else if (state.bgType === 'gradient') {
+                const gradient = targetCtx.createLinearGradient(0, 0, w, h);
+                gradient.addColorStop(0, state.color1);
+                gradient.addColorStop(1, state.color2);
+                targetCtx.fillStyle = gradient;
+                targetCtx.fillRect(0, 0, w, h);
+            } else if (state.bgType === 'blur' && (mainImage || collageImages.length > 0)) {
                 const imgToBlur = mainImage || collageImages[0];
-                targetCtx.fillStyle = state.color1; targetCtx.fillRect(0, 0, w, h);
-                targetCtx.save(); targetCtx.filter = 'blur(30px) brightness(0.8)';
-                const imgRatio = imgToBlur.width / imgToBlur.height; const canvasRatio = w / h;
+                targetCtx.fillStyle = state.color1;
+                targetCtx.fillRect(0, 0, w, h);
+                targetCtx.save();
+                targetCtx.filter = 'blur(30px) brightness(0.8)';
+                const imgRatio = imgToBlur.width / imgToBlur.height;
+                const canvasRatio = w / h;
                 let finalW = w, finalH = h;
                 if(imgRatio > canvasRatio) { finalH = w / imgRatio; } else { finalW = h * imgRatio; }
                 const x = (w - finalW) / 2; const y = (h - finalH) / 2;
                 targetCtx.drawImage(imgToBlur, x, y, finalW, finalH);
                 targetCtx.restore();
-            } else { targetCtx.fillStyle = '#cccccc'; targetCtx.fillRect(0, 0, w, h); }
+            } else {
+                targetCtx.fillStyle = '#cccccc';
+                targetCtx.fillRect(0, 0, w, h);
+            }
             targetCtx.restore();
         }
 
         function drawMainContent(targetCtx, w, h, scale = 1) {
             targetCtx.save();
             const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
-            const drawableW = w - p.left - p.right; const drawableH = h - p.top - p.bottom;
+            const drawableW = w - p.left - p.right;
+            const drawableH = h - p.top - p.bottom;
             if (drawableW <= 0 || drawableH <= 0) { targetCtx.restore(); return; }
+
             if (state.mode === 'single' && mainImage) {
                 if (state.fit === 'contain') {
-                    const containerRatio = drawableW / drawableH; const imgRatio = mainImage.width / mainImage.height;
+                    const containerRatio = drawableW / drawableH;
+                    const imgRatio = mainImage.width / mainImage.height;
                     let finalW, finalH;
                     if (imgRatio > containerRatio) { finalW = drawableW; finalH = finalW / imgRatio; } 
                     else { finalH = drawableH; finalW = finalH * imgRatio; }
-                    const x = p.left + (drawableW - finalW) / 2; const y = p.top + (drawableH - finalH) / 2;
+                    const x = p.left + (drawableW - finalW) / 2;
+                    const y = p.top + (drawableH - finalH) / 2;
                     drawRoundedImage(targetCtx, mainImage, x, y, finalW, finalH, 0, 'contain');
-                } else { const offset = state.imageOffset || { x: 0, y: 0 }; drawRoundedImage(targetCtx, mainImage, p.left, p.top, drawableW, drawableH, 0, 'cover', offset); }
-            } else if (state.mode === 'collage' && collageImages.length > 0) { drawCollageLayout(targetCtx, w, h, scale); }
+                } else { // 'cover'
+                    // DÜZELTME: Ofset, kaynak görüntü piksellerinde olduğundan çıktı ölçeğiyle çarpılmamalıdır.
+                    const offset = state.imageOffset || { x: 0, y: 0 };
+                    drawRoundedImage(targetCtx, mainImage, p.left, p.top, drawableW, drawableH, 0, 'cover', offset);
+                }
+            } else if (state.mode === 'collage' && collageImages.length > 0) {
+                drawCollageLayout(targetCtx, w, h, scale);
+            }
             targetCtx.restore();
         }
 
         function drawCollageLayout(targetCtx, w, h, scale) {
             const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
-            const gap = state.collage.gap * scale; const cornerRadius = state.collage.cornerRadius * scale;
+            const gap = state.collage.gap * scale;
+            const cornerRadius = state.collage.cornerRadius * scale;
             const area = { x: p.left, y: p.top, w: w - p.left - p.right, h: h - p.top - p.bottom };
             const layout = getCollageLayout(state.collage.layout, collageImages.length, area, gap);
+            
             collageImages.slice(0, layout.length).forEach((img, i) => {
                 const rect = layout[i];
-                if (rect && rect.w > 0 && rect.h > 0) { const offset = state.collage.imageOffsets[i] || { x: 0, y: 0 }; drawRoundedImage(targetCtx, img, rect.x, rect.y, rect.w, rect.h, cornerRadius, 'cover', offset); }
+                if (rect && rect.w > 0 && rect.h > 0) {
+                    // DÜZELTME: Ofset, kaynak görüntü piksellerinde olduğundan çıktı ölçeğiyle çarpılmamalıdır.
+                    const offset = state.collage.imageOffsets[i] || { x: 0, y: 0 };
+                    drawRoundedImage(targetCtx, img, rect.x, rect.y, rect.w, rect.h, cornerRadius, 'cover', offset);
+                }
             });
         }
         
         function getCollageLayout(type, numImages, area, gap) {
-            const rects = []; if (numImages === 0) return rects; const addRect = (x, y, w, h) => rects.push({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
-            if (type === 'auto') { if (numImages <= 2) type = 'columns'; else if (numImages === 3) type = 'hero'; else if (numImages === 4) type = 'grid'; else if (numImages === 5) type = 'center-focus'; else if (numImages === 6) type = 'pano'; else type = 'grid'; }
+            const rects = [];
+            if (numImages === 0) return rects;
+            const addRect = (x, y, w, h) => rects.push({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
+
+            if (type === 'auto') {
+                if (numImages === 1) type = 'columns';
+                else if (numImages === 2) type = 'columns';
+                else if (numImages === 3) type = 'hero';
+                else if (numImages === 4) type = 'grid';
+                else if (numImages === 5) type = 'center-focus';
+                else if (numImages === 6) type = 'pano';
+                else type = 'grid';
+            }
+
             switch (type) {
-                case 'columns': const colW = (area.w - (numImages - 1) * gap) / numImages; for (let i=0; i<numImages; i++) { addRect(area.x + i * (colW + gap), area.y, colW, area.h); } break;
-                case 'rows': const rowH = (area.h - (numImages - 1) * gap) / numImages; for (let i=0; i<numImages; i++) { addRect(area.x, area.y + i * (rowH + gap), area.w, rowH); } break;
-                case 'grid': const cols = numImages === 3 ? 3 : Math.ceil(Math.sqrt(numImages * (area.w / area.h))); const rows = numImages === 3 ? 1 : Math.ceil(numImages / cols); const cellW = (area.w - (cols - 1) * gap) / cols; const cellH = (area.h - (rows - 1) * gap) / rows; for (let i = 0; i < numImages; i++) { const c = i % cols; const r = Math.floor(i / cols); addRect(area.x + c * (cellW + gap), area.y + r * (cellH + gap), cellW, cellH); } break;
-                case 'hero': if (numImages > 1) { const heroW = area.w * 0.66 - gap / 2; addRect(area.x, area.y, heroW, area.h); const sideCount = numImages - 1; const thumbW = area.w - heroW - gap; const thumbH = (area.h - (sideCount - 1) * gap) / sideCount; for (let i = 0; i < sideCount; i++) { addRect(area.x + heroW + gap, area.y + i * (thumbH + gap), thumbW, thumbH); } } else { addRect(area.x, area.y, area.w, area.h); } break;
-                case 'center-focus': if (numImages <= 2) { getCollageLayout('columns', numImages, area, gap).forEach(r => rects.push(r)); } else { const centerW = area.w * 0.5; const centerH = area.h * 0.5; addRect(area.x + area.w * 0.25, area.y + area.h * 0.25, centerW, centerH); const others = numImages - 1; if (others > 0) { const sideW = area.w * 0.25 - gap / 2; const sideH = (area.h - (Math.ceil(others/2)-1) * gap) / Math.ceil(others/2); for (let i=0; i < others; i++) { if(i < Math.ceil(others/2)) addRect(area.x, area.y + i*(sideH+gap), sideW, sideH); else addRect(area.x + area.w - sideW, area.y + (i-Math.ceil(others/2))*(sideH+gap), sideW, sideH); } } } break;
-                default: getCollageLayout('grid', numImages, area, gap).forEach(r => rects.push(r)); break;
+                case 'columns':
+                    const colW = (area.w - (numImages - 1) * gap) / numImages;
+                    for (let i=0; i<numImages; i++) { addRect(area.x + i * (colW + gap), area.y, colW, area.h); }
+                    break;
+                case 'rows':
+                    const rowH = (area.h - (numImages - 1) * gap) / numImages;
+                    for (let i=0; i<numImages; i++) { addRect(area.x, area.y + i * (rowH + gap), area.w, rowH); }
+                    break;
+                case 'grid':
+                    const cols = numImages === 3 ? 3 : Math.ceil(Math.sqrt(numImages * (area.w / area.h)));
+                    const rows = numImages === 3 ? 1 : Math.ceil(numImages / cols);
+                    const cellW = (area.w - (cols - 1) * gap) / cols;
+                    const cellH = (area.h - (rows - 1) * gap) / rows;
+                    for (let i = 0; i < numImages; i++) {
+                        const c = i % cols; const r = Math.floor(i / cols);
+                        addRect(area.x + c * (cellW + gap), area.y + r * (cellH + gap), cellW, cellH);
+                    }
+                    break;
+                 case 'hero':
+                    if (numImages > 1) {
+                        const heroW = area.w * 0.66 - gap / 2;
+                        addRect(area.x, area.y, heroW, area.h);
+                        const sideCount = numImages - 1;
+                        const thumbW = area.w - heroW - gap;
+                        const thumbH = (area.h - (sideCount - 1) * gap) / sideCount;
+                        for (let i = 0; i < sideCount; i++) {
+                            addRect(area.x + heroW + gap, area.y + i * (thumbH + gap), thumbW, thumbH);
+                        }
+                    } else { addRect(area.x, area.y, area.w, area.h); }
+                    break;
+                case 'center-focus':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); }
+                    else if (numImages === 2) { const h = (area.h - gap)/2; addRect(area.x, area.y, area.w, h); addRect(area.x, area.y+h+gap, area.w, h); }
+                    else {
+                        const centerW = area.w * 0.5; const centerH = area.h * 0.5;
+                        addRect(area.x + area.w * 0.25, area.y + area.h * 0.25, centerW, centerH);
+                        const others = numImages - 1;
+                        if (others > 0) {
+                            const sideW = area.w * 0.25 - gap / 2;
+                            const sideH = (area.h - (Math.ceil(others/2)-1) * gap) / Math.ceil(others/2);
+                            for (let i=0; i < others; i++) {
+                                if(i < Math.ceil(others/2)) addRect(area.x, area.y + i*(sideH+gap), sideW, sideH);
+                                else addRect(area.x + area.w - sideW, area.y + (i-Math.ceil(others/2))*(sideH+gap), sideW, sideH);
+                            }
+                        }
+                    }
+                    break;
+                case 'overlap':
+                    for (let i = 0; i < numImages; i++) {
+                        const overlapX = (i * 50); const overlapY = (i * 30);
+                        const w = area.w - (numImages-1)*50; const h = area.h - (numImages-1)*30;
+                        addRect(area.x + overlapX, area.y + overlapY, w, h);
+                    }
+                    break;
+                case 'diagonal':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); break; }
+                    let x = area.x, y = area.y;
+                    const w = (area.w - (numImages-1) * gap) / numImages;
+                    const h = (area.h - (numImages-1) * gap) / numImages;
+                    for (let i = 0; i < numImages; i++) {
+                        addRect(x, y, w, h);
+                        x += w + gap; y += h + gap;
+                    }
+                    break;
+                case 'three-stack':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); }
+                    else if (numImages === 2) { const h = (area.h-gap)/2; addRect(area.x, area.y, area.w, h); addRect(area.x, area.y+h+gap, area.w, h); }
+                    else { const h1 = area.h/2 - gap/2; const h2 = area.h/2 - gap/2; const w = (area.w - gap)/2; addRect(area.x, area.y, area.w, h1); addRect(area.x, area.y+h1+gap, w, h2); addRect(area.x+w+gap, area.y+h1+gap, w, h2); }
+                    break;
+                case 'pano':
+                    if (numImages > 1) {
+                        const panoH = area.h * 0.6 - gap / 2;
+                        addRect(area.x, area.y, area.w, panoH);
+                        const sideCount = numImages - 1;
+                        const thumbH = area.h - panoH - gap;
+                        const thumbW = (area.w - (sideCount - 1) * gap) / sideCount;
+                        for (let i = 0; i < sideCount; i++) {
+                            addRect(area.x + i * (thumbW + gap), area.y + panoH + gap, thumbW, thumbH);
+                        }
+                    } else { addRect(area.x, area.y, area.w, area.h); }
+                    break;
+                case 'mosaic':
+                    if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); }
+                    else if (numImages === 2) { if(area.w > area.h) { const w = (area.w-gap)/2; addRect(area.x, area.y, w, area.h); addRect(area.x + w + gap, area.y, w, area.h); } else { const h = (area.h-gap)/2; addRect(area.x, area.y, area.w, h); addRect(area.x, area.y + h + gap, area.w, h); } } 
+                    else if (numImages === 3) { if(area.w > area.h) { const w1=area.w*0.66-gap/2; const w2=area.w*0.33-gap/2; addRect(area.x, area.y, w1, area.h); addRect(area.x+w1+gap, area.y, w2, area.h/2-gap/2); addRect(area.x+w1+gap, area.y+area.h/2+gap/2, w2, area.h/2-gap/2); } else { const h1=area.h*0.66-gap/2; const h2=area.h*0.33-gap/2; addRect(area.x, area.y, area.w, h1); addRect(area.x, area.y+h1+gap, area.w/2-gap/2, h2); addRect(area.x+w2+gap/2, area.y+h1+gap, area.w/2-gap/2, h2); } }
+                    else { const cols = Math.ceil(Math.sqrt(numImages)); const rows = Math.ceil(numImages / cols); const cellW = (area.w - (cols-1)*gap)/cols; const cellH = (area.h - (rows-1)*gap)/rows; for (let i = 0; i < numImages; i++) { const c=i%cols; const r=Math.floor(i/cols); addRect(area.x+c*(cellW+gap), area.y+r*(cellH+gap), cellW, cellH); } }
+                    break;
+                default:
+                    const def_cols = numImages > 4 ? Math.ceil(Math.sqrt(numImages)) : (numImages > 1 ? 2 : 1);
+                    const def_rows = Math.ceil(numImages / def_cols);
+                    const cellW_def = (area.w - (def_cols - 1) * gap) / def_cols;
+                    const cellH_def = (area.h - (def_rows - 1) * gap) / def_rows;
+                    for (let i = 0; i < numImages; i++) { const c = i % def_cols; const r = Math.floor(i / def_cols); addRect(area.x + c * (cellW_def + gap), area.y + r * (cellH_def + gap), cellW_def, cellH_def); }
+                    break;
             }
             return rects;
         }
         
         function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }) {
             ctx.save();
-            if (r > 0) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); ctx.clip(); }
+            if (r > 0) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+                ctx.clip();
+            }
+            
             let sX = 0, sY = 0, sW = img.width, sH = img.height;
             if (fit === 'cover') {
-                const imgRatio = img.width / img.height; const areaRatio = w / h;
-                if (imgRatio > areaRatio) { sH = img.height; sW = sH * areaRatio; } else { sW = img.width; sH = sW / areaRatio; }
-                sX = (img.width - sW) / 2 + (offset.x || 0); sY = (img.height - sH) / 2 + (offset.y || 0);
+                const imgRatio = img.width / img.height;
+                const areaRatio = w / h;
+                if (imgRatio > areaRatio) {
+                    sH = img.height;
+                    sW = sH * areaRatio;
+                } else {
+                    sW = img.width;
+                    sH = sW / areaRatio;
+                }
+                sX = (img.width - sW) / 2 + (offset.x || 0);
+                sY = (img.height - sH) / 2 + (offset.y || 0);
             }
+            
             ctx.drawImage(img, sX, sY, sW, sH, x, y, w, h);
             ctx.restore();
         }
@@ -847,68 +1124,76 @@
             targetCtx.save();
             const margin = 20 * scale;
             if (state.text.content) {
-                targetCtx.fillStyle = state.text.color; targetCtx.font = `bold ${state.text.size * scale}px ${state.text.font}`; targetCtx.textAlign = 'center';
+                targetCtx.fillStyle = state.text.color;
+                targetCtx.font = `bold ${state.text.size * scale}px ${state.text.font}`;
+                targetCtx.textAlign = 'center';
                 let x = w / 2, y;
-                if (state.text.position.includes('top')) y = margin; else if (state.text.position.includes('bottom')) y = h - margin; else y = h / 2;
-                if (state.text.position.includes('left')) { targetCtx.textAlign = 'left'; x = margin; } else if (state.text.position.includes('right')) { targetCtx.textAlign = 'right'; x = w - margin; }
-                if (state.text.position.includes('top')) targetCtx.textBaseline = 'top'; else if (state.text.position.includes('bottom')) targetCtx.textBaseline = 'bottom'; else targetCtx.textBaseline = 'middle';
+                if (state.text.position.includes('top')) y = margin;
+                else if (state.text.position.includes('bottom')) y = h - margin;
+                else y = h / 2;
+                if (state.text.position.includes('left')) { targetCtx.textAlign = 'left'; x = margin; }
+                else if (state.text.position.includes('right')) { targetCtx.textAlign = 'right'; x = w - margin; }
+                if (state.text.position.includes('top')) targetCtx.textBaseline = 'top';
+                else if (state.text.position.includes('bottom')) targetCtx.textBaseline = 'bottom';
+                else targetCtx.textBaseline = 'middle';
                 targetCtx.shadowColor = 'rgba(0,0,0,0.5)'; targetCtx.shadowBlur = 5; targetCtx.shadowOffsetX = 2; targetCtx.shadowOffsetY = 2;
                 targetCtx.fillText(state.text.content, x, y);
             }
             if (watermarkImage) {
                 targetCtx.globalAlpha = state.watermark.opacity / 100;
-                const wmRatio = watermarkImage.width / watermarkImage.height; const wmSize = (w * (state.watermark.size / 100));
+                const wmRatio = watermarkImage.width / watermarkImage.height;
+                const wmSize = (w * (state.watermark.size / 100));
                 const wmWidth = wmSize; const wmHeight = wmWidth / wmRatio;
                 let x, y;
-                if (state.watermark.position.includes('left')) x = margin; else if (state.watermark.position.includes('right')) x = w - wmWidth - margin; else x = (w - wmWidth) / 2;
-                if (state.watermark.position.includes('top')) y = margin; else if (state.watermark.position.includes('bottom')) y = h - wmHeight - margin; else y = (h - wmHeight) / 2;
+                if (state.watermark.position.includes('left')) x = margin;
+                else if (state.watermark.position.includes('right')) x = w - wmWidth - margin;
+                else x = (w - wmWidth) / 2;
+                if (state.watermark.position.includes('top')) y = margin;
+                else if (state.watermark.position.includes('bottom')) y = h - wmHeight - margin;
+                else y = (h - wmHeight) / 2;
                 targetCtx.drawImage(watermarkImage, x, y, wmWidth, wmHeight);
             }
             targetCtx.restore();
         }
-        
-        function handleFormatChange() {
-            const format = downloadFormatSelect.value;
-            qualityWrapper.classList.toggle('hidden', format === 'image/png');
-        }
 
         function downloadImage() {
-            downloadBtn.disabled = true; downloadBtn.textContent = 'Oluşturuluyor...';
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Oluşturuluyor...';
             setTimeout(() => {
-                const tempCanvas = document.createElement('canvas'); const tempCtx = tempCanvas.getContext('2d');
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
                 const qualityMultiplier = state.sizePreset === 'original' ? 1 : 2.5;
                 const preset = presets[state.sizePreset];
-                if (state.sizePreset === 'original' && mainImage) { tempCanvas.width = mainImage.width + state.padding.left + state.padding.right; tempCanvas.height = mainImage.height + state.padding.top + state.padding.bottom; } 
-                else if(preset) { tempCanvas.width = preset.width * qualityMultiplier; tempCanvas.height = preset.height * qualityMultiplier; } 
-                else { downloadBtn.disabled = false; downloadBtn.textContent = 'İndir'; return; }
+                if (state.sizePreset === 'original' && mainImage) {
+                    tempCanvas.width = mainImage.width + state.padding.left + state.padding.right;
+                    tempCanvas.height = mainImage.height + state.padding.top + state.padding.bottom;
+                } else if(preset) {
+                    tempCanvas.width = preset.width * qualityMultiplier;
+                    tempCanvas.height = preset.height * qualityMultiplier;
+                } else {
+                     downloadBtn.disabled = false;
+                     downloadBtn.textContent = 'İndir';
+                     return;
+                }
                 drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
                 drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                 drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                const format = downloadFormatSelect.value;
-                const quality = parseInt(downloadQualitySlider.value, 10) / 100;
-                const extension = format.split('/')[1];
                 const link = document.createElement('a');
-                link.href = tempCanvas.toDataURL(format, quality);
-                link.download = `${originalFileName}-duzenlenmis.${extension}`;
+                link.href = tempCanvas.toDataURL('image/png', 1.0);
+                link.download = `${originalFileName}-duzenlenmis.png`;
                 link.click();
-                downloadBtn.disabled = false; downloadBtn.textContent = 'İndir';
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'İndir';
             }, 50);
         }
         
         function initDB() {
-            const request = indexedDB.open('PhotoEditorDB_v2', 1);
+            const request = indexedDB.open('PhotoEditorDB', 1);
             request.onerror = (e) => console.error("Veritabanı hatası:", e.target.errorCode);
             request.onsuccess = (e) => { db = e.target.result; };
             request.onupgradeneeded = (e) => {
-                const dbInstance = e.target.result;
-                if (!dbInstance.objectStoreNames.contains('projects')) {
-                    const projectStore = dbInstance.createObjectStore('projects', { keyPath: 'id', autoIncrement: true });
-                    projectStore.createIndex('name', 'name', { unique: false });
-                }
-                if (!dbInstance.objectStoreNames.contains('templates')) {
-                     const templateStore = dbInstance.createObjectStore('templates', { keyPath: 'id', autoIncrement: true });
-                     templateStore.createIndex('name', 'name', { unique: false });
-                }
+                const store = e.target.result.createObjectStore('projects', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('name', 'name', { unique: false });
             };
         }
 
@@ -916,189 +1201,69 @@
             if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
             const projectName = prompt("Projenize bir isim verin:", "Yeni Projem " + new Date().toLocaleDateString());
             if (!projectName) return;
-            const imageToBlob = async (img) => { if (!img || !img.src) return null; return await fetch(img.src).then(r => r.blob()); };
+            const imageToBlob = async (img) => {
+                if (!img || !img.src) return null;
+                 if (img.src.startsWith('blob:')) return fetch(img.src).then(r => r.blob());
+                return await fetch(img.src).then(r => r.blob());
+            };
             syncStateWithUI();
-            const projectData = { name: projectName, state: state, mainImage: await imageToBlob(mainImage), collageImages: await Promise.all(collageImages.map(img => imageToBlob(img))), watermarkImage: await imageToBlob(watermarkImage), savedAt: new Date() };
+            const projectData = {
+                name: projectName,
+                state: state,
+                mainImage: await imageToBlob(mainImage),
+                collageImages: await Promise.all(collageImages.map(img => imageToBlob(img))),
+                watermarkImage: await imageToBlob(watermarkImage),
+                savedAt: new Date()
+            };
             const transaction = db.transaction(['projects'], 'readwrite');
             transaction.oncomplete = () => showToast(`'${projectName}' projesi kaydedildi!`);
             transaction.onerror = (e) => { console.error("Kaydetme hatası:", e.target.error); showToast("Proje kaydedilemedi.", "error"); };
             transaction.objectStore('projects').add(projectData);
         }
-        
-        function getTemplateState(fullState) {
-            return {
-                mode: fullState.mode,
-                fit: fullState.fit,
-                sizePreset: fullState.sizePreset,
-                padding: { ...fullState.padding },
-                syncPadding: fullState.syncPadding,
-                bgType: fullState.bgType,
-                color1: fullState.color1,
-                color2: fullState.color2,
-                collage: {
-                    gap: fullState.collage.gap,
-                    layout: fullState.collage.layout,
-                    cornerRadius: fullState.collage.cornerRadius,
-                },
-                text: { ...fullState.text },
-                watermark: { ...fullState.watermark }
-            };
-        }
 
-        async function saveTemplate(templateName) {
-            if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
-            syncStateWithUI();
-            const templateState = getTemplateState(state);
-            const templateData = { name: templateName, state: templateState, savedAt: new Date() };
-            const transaction = db.transaction(['templates'], 'readwrite');
-            transaction.oncomplete = () => { showToast(`'${templateName}' şablonu kaydedildi!`); };
-            transaction.onerror = (e) => { console.error("Şablon kaydetme hatası:", e.target.error); showToast("Şablon kaydedilemedi. Konsolu kontrol edin.", "error"); };
-            const request = transaction.objectStore('templates').add(templateData);
-            request.onerror = (e) => { console.error("Add isteği hatası:", e.target.error); };
-        }
-
-        function showSaveTemplateModal() {
-            syncStateWithUI();
-            templateSettingsSummary.innerHTML = generateTemplateSummaryHTML();
-            templateNameInput.value = '';
-            saveTemplateModal.classList.remove('hidden');
-            saveTemplateModal.querySelector('.modal-content').classList.remove('scale-95');
-            templateNameInput.focus();
-        }
-
-        function hideSaveTemplateModal() {
-            saveTemplateModal.querySelector('.modal-content').classList.add('scale-95');
-            saveTemplateModal.classList.add('hidden');
-        }
-
-        function generateTemplateSummaryHTML() {
-            let html = '<ul>';
-            const presetText = document.querySelector(`#sizePreset option[value="${state.sizePreset}"]`).textContent;
-            html += `<li><strong>Kanvas Boyutu:</strong> ${presetText}</li>`;
-            if(state.mode === 'single') { html += `<li><strong>Fotoğraf Yerleşimi:</strong> ${state.fit === 'contain' ? 'Sığdır' : 'Doldur'}</li>`; }
-            const bgTypeText = document.querySelector(`label[for="bg${state.bgType.charAt(0).toUpperCase() + state.bgType.slice(1)}"]`).textContent;
-            html += `<li><strong>Arkaplan:</strong> ${bgTypeText} (${state.color1}${state.bgType === 'gradient' ? ', ' + state.color2 : ''})</li>`;
-            const paddingValues = `${state.padding.top}px, ${state.padding.right}px, ${state.padding.bottom}px, ${state.padding.left}px`;
-            html += `<li><strong>Kenar Boşlukları:</strong> ${paddingValues}</li>`;
-            if(state.mode === 'collage'){
-                const layoutText = document.querySelector(`#collageLayoutContainer .active`).textContent;
-                html += `<li><strong>Kolaj Yerleşimi:</strong> ${layoutText}</li>`;
-                html += `<li><strong>Kolaj Boşluğu:</strong> ${state.collage.gap}px</li>`;
-                html += `<li><strong>Kolaj Köşe Yumuşatma:</strong> ${state.collage.cornerRadius}%</li>`;
-            }
-            if(state.text.content) { html += `<li><strong>Metin:</strong> "${state.text.content}" (${state.text.size}px, ${state.text.font})</li>`; }
-            if(watermarkImage) { html += `<li><strong>Filigran Ayarları:</strong> Evet (Opaklık: ${state.watermark.opacity}%, Boyut: ${state.watermark.size}%)</li>`; } 
-            else { html += `<li><strong>Filigran Ayarları:</strong> Yok</li>`; }
-            html += '</ul>';
-            return html;
-        }
-        
-        function getFromDB(storeName) {
-            return new Promise((resolve, reject) => {
-                if (!db) return reject("Veritabanı bağlantısı henüz hazır değil.");
-                const transaction = db.transaction([storeName], 'readonly');
-                const store = transaction.objectStore(storeName);
-                const request = store.getAll();
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = (event) => reject(`Veri alınamadı: ${event.target.error}`);
-            });
-        }
-        
-        // YENİ: Listeleri DOM elemanları olarak oluşturan fonksiyon
-        function renderList(container, items, type) {
-            container.innerHTML = ''; // Önceki elemanları temizle
-
-            if (items.length === 0) {
-                const message = type === 'project' ? 'Kaydedilmiş proje bulunamadı.' : 'Kaydedilmiş şablon bulunamadı.';
-                container.innerHTML = `<p class="text-center text-gray-400">${message}</p>`;
-                return;
-            }
-
-            items.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-
-            items.forEach(item => {
-                const listItem = document.createElement('div');
-                listItem.className = 'glass-card flex items-center p-4 rounded-lg mb-4 hover:bg-white/10 transition-colors duration-200';
-
-                const img = document.createElement('img');
-                img.className = 'w-24 h-24 object-cover rounded-md mr-4 bg-gray-700';
-                
-                let previewUrl = `https://placehold.co/100x75/4a5568/ffffff?text=${type === 'project' ? 'Proje' : 'Şablon'}`;
-                if (type === 'project') {
-                    if (item.mainImage) { previewUrl = URL.createObjectURL(item.mainImage); } 
-                    else if (item.collageImages && item.collageImages.length > 0) { previewUrl = URL.createObjectURL(item.collageImages[0]); }
-                }
-                img.src = previewUrl;
-
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'flex-grow';
-                
-                const nameH3 = document.createElement('h3');
-                nameH3.className = 'font-bold text-lg text-white';
-                nameH3.textContent = item.name;
-
-                const dateP = document.createElement('p');
-                dateP.className = 'text-sm text-gray-300';
-                dateP.textContent = new Date(item.savedAt).toLocaleString('tr-TR');
-
-                infoDiv.append(nameH3, dateP);
-
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'flex flex-col gap-2';
-
-                const loadBtn = document.createElement('button');
-                loadBtn.className = 'bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700';
-                loadBtn.textContent = 'Yükle';
-                loadBtn.onclick = () => {
-                    if (type === 'project') loadProjectById(item.id);
-                    else loadTemplateById(item.id);
-                };
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700';
-                deleteBtn.textContent = 'Sil';
-                deleteBtn.onclick = () => {
-                    // Not: window.confirm() desteklenmediği için şimdilik doğrudan silme işlemi yapılıyor.
-                    // İdeal bir senaryoda burada özel bir onay penceresi gösterilmelidir.
-                    if (type === 'project') deleteProjectById(item.id);
-                    else deleteTemplateById(item.id);
-                };
-
-                actionsDiv.append(loadBtn, deleteBtn);
-                listItem.append(img, infoDiv, actionsDiv);
-                container.appendChild(listItem);
-            });
-        }
-
-        // GÜNCELLENDİ: Modal pencereyi açan ve listeleri dolduran fonksiyon
         async function showProjectsModal() {
-            if (!db) { showToast("Veritabanı hazır değil, lütfen bir saniye sonra tekrar deneyin.", "error"); return; }
-            
-            projectsModal.classList.remove('hidden'); 
+            if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
+            projectsModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             projectsModal.querySelector('.modal-content').classList.remove('scale-95');
-
-            document.querySelector('.modal-tab-btn.active')?.classList.remove('active');
-            document.querySelector('.modal-list-container.active')?.classList.remove('active');
-            document.querySelector('.modal-tab-btn[data-tab="projects"]').classList.add('active');
-            document.getElementById('projectListContainer').classList.add('active');
-
-            const projectList = document.getElementById('projectList');
-            const templateList = document.getElementById('templateList');
-            projectList.innerHTML = `<p class="text-center text-gray-400">Projeler yükleniyor...</p>`;
-            templateList.innerHTML = `<p class="text-center text-gray-400">Şablonlar yükleniyor...</p>`;
-
-            try {
-                const [projects, templates] = await Promise.all([ getFromDB('projects'), getFromDB('templates') ]);
-                renderList(projectList, projects, 'project');
-                renderList(templateList, templates, 'template');
-            } catch (error) {
-                console.error("Projeler/Şablonlar yüklenirken hata:", error);
-                showToast("Kaydedilenler yüklenemedi.", "error");
-                projectList.innerHTML = `<p class="text-center text-red-400">Projeler yüklenemedi.</p>`;
-                templateList.innerHTML = `<p class="text-center text-red-400">Şablonlar yüklenemedi.</p>`;
-            }
+            const store = db.transaction(['projects'], 'readonly').objectStore('projects');
+            const request = store.getAll();
+            request.onerror = (e) => console.error("Projeler yüklenemedi:", e.target.error);
+            request.onsuccess = () => {
+                const projects = request.result.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+                projectListContainer.innerHTML = projects.length === 0 ? `<p class="text-center text-gray-400">Kaydedilmiş proje bulunamadı.</p>` : '';
+                projects.forEach(p => {
+                    let previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=O%CC%88nizleme';
+                    if (p.mainImage) previewUrl = URL.createObjectURL(p.mainImage);
+                    else if (p.collageImages && p.collageImages.length > 0) previewUrl = URL.createObjectURL(p.collageImages[0]);
+                    const projectEl = document.createElement('div');
+                    projectEl.className = 'glass-card flex items-center p-4 rounded-lg mb-4 hover:bg-white/10 transition-colors duration-200';
+                    projectEl.innerHTML = `
+                        <img src="${previewUrl}" class="w-24 h-24 object-cover rounded-md mr-4 bg-gray-700" onload="URL.revokeObjectURL(this.src)">
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-lg text-white">${p.name}</h3>
+                            <p class="text-sm text-gray-300">${new Date(p.savedAt).toLocaleString('tr-TR')}</p>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button data-id="${p.id}" class="load-btn bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700">Yükle</button>
+                            <button data-id="${p.id}" class="delete-btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">Sil</button>
+                        </div>
+                    `;
+                    projectListContainer.appendChild(projectEl);
+                });
+            };
         }
+        
+        projectListContainer.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            if (!id) return;
+            if (e.target.classList.contains('load-btn')) { loadProjectById(parseInt(id)); } 
+            else if (e.target.classList.contains('delete-btn')) {
+                 if (window.confirm("Bu projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+                     deleteProjectById(parseInt(id));
+                 }
+            }
+        });
 
         function hideProjectsModal() {
             projectsModal.querySelector('.modal-content').classList.add('scale-95');
@@ -1110,64 +1275,69 @@
             const request = db.transaction(['projects'], 'readonly').objectStore('projects').get(id);
             request.onerror = (e) => console.error("Proje yüklenemedi:", e.target.error);
             request.onsuccess = () => {
-                const pData = request.result; if (!pData) return;
+                const pData = request.result;
+                if (!pData) return;
                 state = { ...getDefaultState(), ...pData.state };
-                history = []; historyIndex = -1; saveStateToHistory();
-                const blobToImage = (blob) => !blob ? Promise.resolve(null) : new Promise(resolve => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = URL.createObjectURL(blob); });
-                Promise.all([ blobToImage(pData.mainImage), Promise.all((pData.collageImages || []).map(b => blobToImage(b))), blobToImage(pData.watermarkImage) ])
-                .then(([loadedMain, loadedCollage, loadedWatermark]) => {
-                    mainImage = loadedMain; collageImages = loadedCollage; watermarkImage = loadedWatermark;
-                    if (state.mode === 'collage' && (!state.collage.imageOffsets || state.collage.imageOffsets.length !== collageImages.length)) { state.collage.imageOffsets = collageImages.map(() => ({ x: 0, y: 0 })); }
+                history = []; historyIndex = -1;
+                saveStateToHistory();
+
+                const blobToImage = (blob) => !blob ? Promise.resolve(null) : new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => resolve(null);
+                    img.src = URL.createObjectURL(blob);
+                });
+                
+                Promise.all([
+                    blobToImage(pData.mainImage),
+                    Promise.all((pData.collageImages || []).map(b => blobToImage(b))),
+                    blobToImage(pData.watermarkImage)
+                ]).then(([loadedMain, loadedCollage, loadedWatermark]) => {
+                    mainImage = loadedMain;
+                    collageImages = loadedCollage;
+                    watermarkImage = loadedWatermark;
+                    
+                    if (state.mode === 'collage' && (!state.collage.imageOffsets || state.collage.imageOffsets.length !== collageImages.length)) {
+                        state.collage.imageOffsets = collageImages.map(() => ({ x: 0, y: 0 }));
+                    }
+
                     updateUIFromState(state);
                     const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
-                    if(hasImage) { previewPlaceholder.classList.add('hidden'); canvasWrapper.style.display = 'flex'; canvasWrapper.classList.remove('hidden'); if (state.mode === 'collage') displayCollageThumbnails(); }
-                    document.getElementById('watermarkControls').classList.toggle('hidden', !watermarkImage);
-                    document.getElementById('watermarkLoader').value = '';
-                    updateAndDraw(); hideProjectsModal(); showToast(`'${pData.name}' projesi yüklendi.`);
+                    if(hasImage) {
+                        previewPlaceholder.classList.add('hidden');
+                        canvasWrapper.style.display = 'flex';
+                        canvasWrapper.classList.remove('hidden');
+                        if (state.mode === 'collage') displayCollageThumbnails();
+                    }
+                    if(watermarkImage) {
+                         document.getElementById('watermarkControls').classList.remove('hidden');
+                    } else {
+                         document.getElementById('watermarkControls').classList.add('hidden');
+                         document.getElementById('watermarkLoader').value = '';
+                    }
+                    
+                    updateAndDraw();
+                    hideProjectsModal();
+                    showToast(`'${pData.name}' projesi yüklendi.`);
                 });
-            };
-        }
-        
-        async function loadTemplateById(id) {
-            const request = db.transaction(['templates'], 'readonly').objectStore('templates').get(id);
-            request.onerror = (e) => console.error("Şablon yüklenemedi:", e.target.error);
-            request.onsuccess = () => {
-                const tData = request.result; if (!tData) return;
-                const templateState = tData.state;
-                const currentState = { ...state };
-                state = {
-                    ...currentState,
-                    ...templateState,
-                    padding: { ...currentState.padding, ...templateState.padding },
-                    collage: { ...currentState.collage, ...templateState.collage },
-                    text: { ...currentState.text, ...templateState.text },
-                    watermark: { ...currentState.watermark, ...templateState.watermark },
-                };
-                state.imageOffset = { x: 0, y: 0 };
-                if (state.collage.imageOffsets) {
-                    state.collage.imageOffsets = collageImages.map(() => ({ x: 0, y: 0 }));
-                }
-                updateUIFromState(state);
-                updateAndDraw();
-                hideProjectsModal();
-                showToast(`'${tData.name}' şablonu uygulandı.`);
             };
         }
 
         function deleteProjectById(id) {
             const request = db.transaction(['projects'], 'readwrite').objectStore('projects').delete(id);
-            request.onsuccess = () => { showToast("Proje silindi.", "info"); showProjectsModal(); }; // Listeyi yenilemek için tekrar çağır
-            request.onerror = (e) => { console.error("Silme hatası:", e.target.error); showToast("Proje silinemedi.", "error"); };
-        }
-        
-        function deleteTemplateById(id) {
-            const request = db.transaction(['templates'], 'readwrite').objectStore('templates').delete(id);
-            request.onsuccess = () => { showToast("Şablon silindi.", "info"); showProjectsModal(); }; // Listeyi yenilemek için tekrar çağır
-            request.onerror = (e) => { console.error("Şablon silme hatası:", e.target.error); showToast("Şablon silinemedi.", "error"); };
+            request.onsuccess = () => {
+                showToast("Proje silindi.", "info");
+                showProjectsModal();
+            };
+            request.onerror = (e) => {
+                console.error("Silme hatası:", e.target.error);
+                showToast("Proje silinemedi.", "error");
+            };
         }
         
         function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast'); const toastMessage = document.getElementById('toastMessage');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
             toastMessage.textContent = message;
             toast.className = 'px-6 py-3 text-white font-semibold rounded-lg shadow-lg z-50';
             if(type === 'success') toast.classList.add('bg-emerald-500');
@@ -1176,18 +1346,6 @@
             toast.classList.add('show');
             setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
-
-        function switchModalTab(e) {
-            const targetTab = e.currentTarget.dataset.tab;
-            document.querySelector('.modal-tab-btn.active').classList.remove('active');
-            e.currentTarget.classList.add('active');
-            document.querySelector('.modal-list-container.active').classList.remove('active');
-            document.getElementById(`${targetTab}ListContainer`).classList.add('active');
-        }
-
-        function handleCanvasMouseDown(e) { if (!isModifierDown) return; const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0); if (!hasImage) return; panStart = { x: e.clientX, y: e.clientY }; const canvasRect = canvas.getBoundingClientRect(); const mouse = { x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width), y: (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height) }; if (state.mode === 'single') { isPanning = true; activePanTarget = { type: 'single', index: -1 }; initialImageOffset = { ...state.imageOffset }; } else { const p = state.padding; const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom }; const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap); const clickedIndex = layout.findIndex(rect => mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h); if (clickedIndex > -1) { isPanning = true; activePanTarget = { type: 'collage', index: clickedIndex }; initialImageOffset = { ...state.collage.imageOffsets[clickedIndex] }; } } if(isPanning) canvasWrapper.style.cursor = 'grabbing'; }
-        function handleWindowMouseMove(e) { if (!isPanning) return; e.preventDefault(); const previewRect = canvas.getBoundingClientRect(); if (previewRect.width === 0) return; const previewScale = canvas.width / previewRect.width; const dx_canvas = (e.clientX - panStart.x) * previewScale; const dy_canvas = (e.clientY - panStart.y) * previewScale; let targetImage, container; if (activePanTarget.type === 'single') { targetImage = mainImage; const p = state.padding; container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom }; } else if (activePanTarget.type === 'collage') { const p = state.padding; const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom }; const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap); container = layout[activePanTarget.index]; targetImage = collageImages[activePanTarget.index]; } else { return; } if (!targetImage || !container || container.w <= 0) return; const imgRatio = targetImage.width / targetImage.height; const areaRatio = container.w / container.h; let renderScale; if (imgRatio > areaRatio) { renderScale = container.h / targetImage.height; } else { renderScale = container.w / targetImage.width; } const dx_source = dx_canvas / renderScale; const dy_source = dy_canvas / renderScale; let newOffset = { x: initialImageOffset.x - dx_source, y: initialImageOffset.y - dy_source, }; let sW, sH; if(imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; } else { sW = targetImage.width; sH = sW / areaRatio; } const maxOffsetX = Math.max(0, (targetImage.width - sW) / 2); const maxOffsetY = Math.max(0, (targetImage.height - sH) / 2); newOffset.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffset.x)); newOffset.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffset.y)); if (activePanTarget.type === 'single') { state.imageOffset = newOffset; } else { state.collage.imageOffsets[activePanTarget.index] = newOffset; } drawPreview(); }
-        function handleWindowMouseUp() { if (isPanning) { isPanning = false; activePanTarget = { type: null, index: -1 }; updateCursor(); saveStateToHistory(); } }
         
         function init() {
             initDB();
@@ -1196,7 +1354,6 @@
             updateAndDraw();
             saveStateToHistory();
             setupEventListeners();
-            handleFormatChange();
         }
         
         window.onload = init;
