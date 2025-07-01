@@ -337,7 +337,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- HATA DÜZELTMESİ: Liste görüntüleme ve şablon yükleme mantığı iyileştirildi. ---
+        // --- HATA DÜZELTMESİ: Liste görüntüleme ve veri yönetimi mantığı tamamen yeniden yazıldı. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -1003,7 +1003,74 @@
                 request.onerror = (event) => reject(`Veri alınamadı: ${event.target.error}`);
             });
         }
+        
+        // YENİ: Listeleri DOM elemanları olarak oluşturan fonksiyon
+        function renderList(container, items, type) {
+            container.innerHTML = ''; // Önceki elemanları temizle
 
+            if (items.length === 0) {
+                const message = type === 'project' ? 'Kaydedilmiş proje bulunamadı.' : 'Kaydedilmiş şablon bulunamadı.';
+                container.innerHTML = `<p class="text-center text-gray-400">${message}</p>`;
+                return;
+            }
+
+            items.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+
+            items.forEach(item => {
+                const listItem = document.createElement('div');
+                listItem.className = 'glass-card flex items-center p-4 rounded-lg mb-4 hover:bg-white/10 transition-colors duration-200';
+
+                const img = document.createElement('img');
+                img.className = 'w-24 h-24 object-cover rounded-md mr-4 bg-gray-700';
+                
+                let previewUrl = `https://placehold.co/100x75/4a5568/ffffff?text=${type === 'project' ? 'Proje' : 'Şablon'}`;
+                if (type === 'project') {
+                    if (item.mainImage) { previewUrl = URL.createObjectURL(item.mainImage); } 
+                    else if (item.collageImages && item.collageImages.length > 0) { previewUrl = URL.createObjectURL(item.collageImages[0]); }
+                }
+                img.src = previewUrl;
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'flex-grow';
+                
+                const nameH3 = document.createElement('h3');
+                nameH3.className = 'font-bold text-lg text-white';
+                nameH3.textContent = item.name;
+
+                const dateP = document.createElement('p');
+                dateP.className = 'text-sm text-gray-300';
+                dateP.textContent = new Date(item.savedAt).toLocaleString('tr-TR');
+
+                infoDiv.append(nameH3, dateP);
+
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'flex flex-col gap-2';
+
+                const loadBtn = document.createElement('button');
+                loadBtn.className = 'bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700';
+                loadBtn.textContent = 'Yükle';
+                loadBtn.onclick = () => {
+                    if (type === 'project') loadProjectById(item.id);
+                    else loadTemplateById(item.id);
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700';
+                deleteBtn.textContent = 'Sil';
+                deleteBtn.onclick = () => {
+                    // Not: window.confirm() desteklenmediği için şimdilik doğrudan silme işlemi yapılıyor.
+                    // İdeal bir senaryoda burada özel bir onay penceresi gösterilmelidir.
+                    if (type === 'project') deleteProjectById(item.id);
+                    else deleteTemplateById(item.id);
+                };
+
+                actionsDiv.append(loadBtn, deleteBtn);
+                listItem.append(img, infoDiv, actionsDiv);
+                container.appendChild(listItem);
+            });
+        }
+
+        // GÜNCELLENDİ: Modal pencereyi açan ve listeleri dolduran fonksiyon
         async function showProjectsModal() {
             if (!db) { showToast("Veritabanı hazır değil, lütfen bir saniye sonra tekrar deneyin.", "error"); return; }
             
@@ -1023,64 +1090,13 @@
 
             try {
                 const [projects, templates] = await Promise.all([ getFromDB('projects'), getFromDB('templates') ]);
-
-                // DÜZELTME: Listeleri oluşturmak için HTML string'i kullan
-                projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-                let projectsHTML = '';
-                projects.forEach(p => {
-                    let previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=O%CC%88nizleme';
-                    if (p.mainImage) { previewUrl = URL.createObjectURL(p.mainImage); } 
-                    else if (p.collageImages && p.collageImages.length > 0) { previewUrl = URL.createObjectURL(p.collageImages[0]); }
-                    projectsHTML += createListItemHTML(p.id, p.name, new Date(p.savedAt), previewUrl, 'project');
-                });
-                projectList.innerHTML = projectsHTML || `<p class="text-center text-gray-400">Kaydedilmiş proje bulunamadı.</p>`;
-
-                templates.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-                let templatesHTML = '';
-                templates.forEach(t => {
-                    const previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=S%CC%A7ablon';
-                    templatesHTML += createListItemHTML(t.id, t.name, new Date(t.savedAt), previewUrl, 'template');
-                });
-                templateList.innerHTML = templatesHTML || `<p class="text-center text-gray-400">Kaydedilmiş şablon bulunamadı.</p>`;
-
+                renderList(projectList, projects, 'project');
+                renderList(templateList, templates, 'template');
             } catch (error) {
                 console.error("Projeler/Şablonlar yüklenirken hata:", error);
                 showToast("Kaydedilenler yüklenemedi.", "error");
                 projectList.innerHTML = `<p class="text-center text-red-400">Projeler yüklenemedi.</p>`;
                 templateList.innerHTML = `<p class="text-center text-red-400">Şablonlar yüklenemedi.</p>`;
-            }
-        }
-        
-        function createListItemHTML(id, name, date, previewUrl, type) {
-             // DÜZELTME: Blob URL'sini iptal eden 'onload' etkinliği kaldırıldı.
-             return `
-                <div class="glass-card flex items-center p-4 rounded-lg mb-4 hover:bg-white/10 transition-colors duration-200">
-                    <img src="${previewUrl}" class="w-24 h-24 object-cover rounded-md mr-4 bg-gray-700">
-                    <div class="flex-grow">
-                        <h3 class="font-bold text-lg text-white">${name}</h3>
-                        <p class="text-sm text-gray-300">${date.toLocaleString('tr-TR')}</p>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <button data-id="${id}" data-type="${type}" class="load-btn bg-sky-600 text-white px-4 py-2 rounded-md hover:bg-sky-700">Yükle</button>
-                        <button data-id="${id}" data-type="${type}" class="delete-btn bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">Sil</button>
-                    </div>
-                </div>`;
-        }
-
-        document.getElementById('projectListContainer').addEventListener('click', handleModalListClick);
-        document.getElementById('templateListContainer').addEventListener('click', handleModalListClick);
-
-        function handleModalListClick(e) {
-            const id = e.target.dataset.id; 
-            const type = e.target.dataset.type;
-            if (!id || !type) return;
-
-            if (e.target.classList.contains('load-btn')) {
-                if (type === 'project') loadProjectById(parseInt(id));
-                else if (type === 'template') loadTemplateById(parseInt(id));
-            } else if (e.target.classList.contains('delete-btn')) {
-                if (type === 'project') deleteProjectById(parseInt(id));
-                else if (type === 'template') deleteTemplateById(parseInt(id));
             }
         }
 
@@ -1117,27 +1133,20 @@
             request.onerror = (e) => console.error("Şablon yüklenemedi:", e.target.error);
             request.onsuccess = () => {
                 const tData = request.result; if (!tData) return;
-                
                 const templateState = tData.state;
-                // Şablonu mevcut duruma uygula, ancak resimlerle ilgili olmayan ayarları koru
                 const currentState = { ...state };
-                
                 state = {
-                    ...currentState, // Mevcut modu, resimleri vb. koru
-                    ...templateState, // Şablon ayarlarını üzerine yaz
+                    ...currentState,
+                    ...templateState,
                     padding: { ...currentState.padding, ...templateState.padding },
                     collage: { ...currentState.collage, ...templateState.collage },
                     text: { ...currentState.text, ...templateState.text },
                     watermark: { ...currentState.watermark, ...templateState.watermark },
                 };
-                
-                // Resim konumlarını sıfırla
                 state.imageOffset = { x: 0, y: 0 };
-                // DÜZELTME: Mevcut kolaj resimlerinin sayısına göre ofsetleri sıfırla
                 if (state.collage.imageOffsets) {
                     state.collage.imageOffsets = collageImages.map(() => ({ x: 0, y: 0 }));
                 }
-
                 updateUIFromState(state);
                 updateAndDraw();
                 hideProjectsModal();
@@ -1147,13 +1156,13 @@
 
         function deleteProjectById(id) {
             const request = db.transaction(['projects'], 'readwrite').objectStore('projects').delete(id);
-            request.onsuccess = () => { showToast("Proje silindi.", "info"); showProjectsModal(); };
+            request.onsuccess = () => { showToast("Proje silindi.", "info"); showProjectsModal(); }; // Listeyi yenilemek için tekrar çağır
             request.onerror = (e) => { console.error("Silme hatası:", e.target.error); showToast("Proje silinemedi.", "error"); };
         }
         
         function deleteTemplateById(id) {
             const request = db.transaction(['templates'], 'readwrite').objectStore('templates').delete(id);
-            request.onsuccess = () => { showToast("Şablon silindi.", "info"); showProjectsModal(); };
+            request.onsuccess = () => { showToast("Şablon silindi.", "info"); showProjectsModal(); }; // Listeyi yenilemek için tekrar çağır
             request.onerror = (e) => { console.error("Şablon silme hatası:", e.target.error); showToast("Şablon silinemedi.", "error"); };
         }
         
