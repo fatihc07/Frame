@@ -337,7 +337,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Şablon kaydederken ayarları gösteren onay penceresi eklendi. ---
+        // --- HATA DÜZELTMESİ: Proje/şablon listeleme ve silme işlevleri iyileştirildi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -590,14 +590,12 @@
             canvasWrapper.addEventListener('mouseleave', () => { canvasWrapper.style.cursor = 'default'; });
             collageThumbnailsContainer.addEventListener('click', (e) => { if(e.target.classList.contains('delete-thumb-btn')) { const indexToDelete = parseInt(e.target.dataset.index, 10); deleteCollageImage(indexToDelete); } });
 
-            // YENİ EVENT LISTENER'LAR
             downloadFormatSelect.addEventListener('change', handleFormatChange);
             downloadQualitySlider.addEventListener('input', () => { qualityValueSpan.textContent = downloadQualitySlider.value; });
             showExifBtn.addEventListener('click', () => exifContainer.classList.remove('hidden'));
             hideExifBtn.addEventListener('click', () => exifContainer.classList.add('hidden'));
             document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.addEventListener('click', switchModalTab));
             
-            // Şablon Kaydetme Modal Listener'ları
             saveTemplateBtn.addEventListener('click', showSaveTemplateModal);
             cancelSaveTemplateBtn.addEventListener('click', hideSaveTemplateModal);
             confirmSaveTemplateBtn.addEventListener('click', () => {
@@ -986,32 +984,74 @@
             html += '</ul>';
             return html;
         }
+        
+        // YENİ: Veritabanından veri çekmek için Promise tabanlı yardımcı fonksiyon
+        function getFromDB(storeName) {
+            return new Promise((resolve, reject) => {
+                if (!db) return reject("Veritabanı bağlantısı henüz hazır değil.");
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(`Veri alınamadı: ${event.target.error}`);
+                transaction.onerror = (event) => reject(`Veritabanı işlemi hatası: ${event.target.error}`);
+            });
+        }
 
+        // GÜNCELLENDİ: Projeleri/şablonları listeleyen fonksiyon
         async function showProjectsModal() {
-            if (!db) { showToast("Veritabanı hazır değil.", "error"); return; }
-            projectsModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
-            projectsModal.querySelector('.modal-content').classList.remove('scale-95');
+            if (!db) { showToast("Veritabanı hazır değil, lütfen bir saniye sonra tekrar deneyin.", "error"); return; }
             
-            const projectStore = db.transaction(['projects'], 'readonly').objectStore('projects');
-            projectStore.getAll().onsuccess = (e) => {
-                const projects = e.target.result.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-                const projectList = document.getElementById('projectList');
+            projectsModal.classList.remove('hidden'); 
+            document.body.style.overflow = 'hidden';
+            projectsModal.querySelector('.modal-content').classList.remove('scale-95');
+
+            // 1. Sekmeleri varsayılan duruma sıfırla
+            document.querySelector('.modal-tab-btn.active')?.classList.remove('active');
+            document.querySelector('.modal-list-container.active')?.classList.remove('active');
+            document.querySelector('.modal-tab-btn[data-tab="projects"]').classList.add('active');
+            document.getElementById('projectListContainer').classList.add('active');
+
+            // 2. Yükleniyor durumunu ayarla
+            const projectList = document.getElementById('projectList');
+            const templateList = document.getElementById('templateList');
+            projectList.innerHTML = `<p class="text-center text-gray-400">Projeler yükleniyor...</p>`;
+            templateList.innerHTML = `<p class="text-center text-gray-400">Şablonlar yükleniyor...</p>`;
+
+            try {
+                // 3. Her ikisini de paralel olarak çek
+                const [projects, templates] = await Promise.all([
+                    getFromDB('projects'),
+                    getFromDB('templates')
+                ]);
+
+                // 4. Proje listesini doldur
+                projects.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
                 projectList.innerHTML = projects.length === 0 ? `<p class="text-center text-gray-400">Kaydedilmiş proje bulunamadı.</p>` : '';
                 projects.forEach(p => {
-                    let previewUrl = p.mainImage ? URL.createObjectURL(p.mainImage) : (p.collageImages && p.collageImages.length > 0 ? URL.createObjectURL(p.collageImages[0]) : 'https://placehold.co/100x75/4a5568/ffffff?text=O%CC%88nizleme');
+                    let previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=O%CC%88nizleme';
+                    if (p.mainImage) {
+                        previewUrl = URL.createObjectURL(p.mainImage);
+                    } else if (p.collageImages && p.collageImages.length > 0) {
+                        previewUrl = URL.createObjectURL(p.collageImages[0]);
+                    }
                     projectList.innerHTML += createListItemHTML(p.id, p.name, new Date(p.savedAt), previewUrl, 'project');
                 });
-            };
 
-            const templateStore = db.transaction(['templates'], 'readonly').objectStore('templates');
-            templateStore.getAll().onsuccess = (e) => {
-                const templates = e.target.result.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-                const templateList = document.getElementById('templateList');
+                // 5. Şablon listesini doldur
+                templates.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
                 templateList.innerHTML = templates.length === 0 ? `<p class="text-center text-gray-400">Kaydedilmiş şablon bulunamadı.</p>` : '';
                 templates.forEach(t => {
-                    templateList.innerHTML += createListItemHTML(t.id, t.name, new Date(t.savedAt), 'https://placehold.co/100x75/4a5568/ffffff?text=S%CC%A7ablon', 'template');
+                    const previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=S%CC%A7ablon';
+                    templateList.innerHTML += createListItemHTML(t.id, t.name, new Date(t.savedAt), previewUrl, 'template');
                 });
-            };
+
+            } catch (error) {
+                console.error("Projeler/Şablonlar yüklenirken hata:", error);
+                showToast("Kaydedilenler yüklenemedi.", "error");
+                projectList.innerHTML = `<p class="text-center text-red-400">Projeler yüklenemedi.</p>`;
+                templateList.innerHTML = `<p class="text-center text-red-400">Şablonlar yüklenemedi.</p>`;
+            }
         }
         
         function createListItemHTML(id, name, date, previewUrl, type) {
@@ -1032,17 +1072,19 @@
         document.getElementById('projectListContainer').addEventListener('click', handleModalListClick);
         document.getElementById('templateListContainer').addEventListener('click', handleModalListClick);
 
+        // GÜNCELLENDİ: Silme işlemi için `window.confirm` kaldırıldı.
         function handleModalListClick(e) {
-            const id = e.target.dataset.id; const type = e.target.dataset.type;
+            const id = e.target.dataset.id; 
+            const type = e.target.dataset.type;
             if (!id || !type) return;
+
             if (e.target.classList.contains('load-btn')) {
                 if (type === 'project') loadProjectById(parseInt(id));
                 else if (type === 'template') loadTemplateById(parseInt(id));
             } else if (e.target.classList.contains('delete-btn')) {
-                if (window.confirm("Bu öğeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
-                    if (type === 'project') deleteProjectById(parseInt(id));
-                    else if (type === 'template') deleteTemplateById(parseInt(id));
-                }
+                // Onay penceresi kaldırıldı, silme işlemi artık direkt gerçekleşir.
+                if (type === 'project') deleteProjectById(parseInt(id));
+                else if (type === 'template') deleteTemplateById(parseInt(id));
             }
         }
 
@@ -1090,13 +1132,13 @@
 
         function deleteProjectById(id) {
             const request = db.transaction(['projects'], 'readwrite').objectStore('projects').delete(id);
-            request.onsuccess = () => { showToast("Proje silindi.", "info"); showProjectsModal(); };
+            request.onsuccess = () => { showToast("Proje silindi.", "info"); showProjectsModal(); }; // Listeyi yenilemek için showProjectsModal çağırılıyor
             request.onerror = (e) => { console.error("Silme hatası:", e.target.error); showToast("Proje silinemedi.", "error"); };
         }
         
         function deleteTemplateById(id) {
             const request = db.transaction(['templates'], 'readwrite').objectStore('templates').delete(id);
-            request.onsuccess = () => { showToast("Şablon silindi.", "info"); showProjectsModal(); };
+            request.onsuccess = () => { showToast("Şablon silindi.", "info"); showProjectsModal(); }; // Listeyi yenilemek için showProjectsModal çağırılıyor
             request.onerror = (e) => { console.error("Şablon silme hatası:", e.target.error); showToast("Şablon silinemedi.", "error"); };
         }
         
