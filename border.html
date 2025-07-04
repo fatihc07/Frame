@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://css.gg/css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono&display=swap" rel="stylesheet">
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
@@ -50,6 +50,12 @@
         input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: #f7fafc; cursor: pointer; }
 
         .peer:checked ~ label { background-color: rgba(20, 10, 50, 0.6); color: white; border-color: transparent; }
+
+        /* Polaroid Çerçeve Stilleri */
+        .frame-btn { border: 2px solid transparent; transition: all 0.2s ease-in-out; }
+        .frame-btn.active { border-color: #a78bfa; transform: scale(1.05); box-shadow: 0 0 15px rgba(167, 139, 250, 0.5); }
+        .frame-preview { width: 60px; height: 72px; border: 2px solid #4a5568; }
+        .frame-preview-img { width: 80%; height: 70%; background: #718096; }
 
         /* Modal Stilleri */
         .modal-overlay { transition: opacity 0.3s ease; }
@@ -133,9 +139,9 @@
                 </div>
                 
                 <div class="grid grid-cols-3 gap-2 p-1 bg-black/10 rounded-lg">
-                    <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold">Tek Fotoğraf</button>
-                    <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold">Kolaj</button>
-                    <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold">Polaroid</button>
+                     <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold">Tekli</button>
+                     <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold">Kolaj</button>
+                     <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold">Polaroid</button>
                 </div>
 
                 <div class="space-y-4">
@@ -158,53 +164,88 @@
                     <div id="settingsPanel" class="pt-4">
                         <h2 class="text-lg font-semibold text-gray-100 mb-4 text-center">2. Düzenleme Araçları</h2>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="sizePreset" class="text-xs text-gray-300 mb-2 block">Kanvas Boyutu</label>
-                                <select id="sizePreset" class="w-full h-12 px-3 rounded-lg focus-ring">
-                                    <option value="original">Orijinal Boyut</option>
-                                    <optgroup label="Sosyal Medya">
-                                        <option value="square" selected>Kare Post (1:1 - 1080x1080)</option>
-                                        <option value="portrait45">Dikey Post (4:5 - 1080x1350)</option>
-                                        <option value="story">Hikaye/Reels (9:16 - 1080x1920)</option>
-                                        <option value="horizontal">Yatay Post (1.91:1 - 1080x566)</option>
-                                        <option value="profile">Profil Fotoğrafı (1:1 - 320x320)</option>
-                                    </optgroup>
-                                </select>
+                        <div id="sizeAndBackgroundSettings">
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="sizePreset" class="text-xs text-gray-300 mb-2 block">Kanvas Boyutu</label>
+                                    <select id="sizePreset" class="w-full h-12 px-3 rounded-lg focus-ring">
+                                        <option value="original">Orijinal Boyut</option>
+                                        <optgroup label="Sosyal Medya">
+                                            <option value="square" selected>Kare Post (1:1 - 1080x1080)</option>
+                                            <option value="portrait45">Dikey Post (4:5 - 1080x1350)</option>
+                                            <option value="story">Hikaye/Reels (9:16 - 1080x1920)</option>
+                                            <option value="horizontal">Yatay Post (1.91:1 - 1080x566)</option>
+                                            <option value="profile">Profil Fotoğrafı (1:1 - 320x320)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div id="fitFillContainer">
+                                    <label class="text-xs text-gray-300 mb-2 block">Fotoğraf Yerleşimi</label>
+                                    <div class="grid grid-cols-2 gap-2 p-1 bg-black/10 rounded-lg h-12 items-center">
+                                         <button id="fitContainBtn" class="fit-btn active py-2 rounded-md font-semibold text-sm">Sığdır</button>
+                                         <button id="fitCoverBtn" class="fit-btn py-2 rounded-md font-semibold text-sm">Doldur</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="fitFillContainer">
-                                <label class="text-xs text-gray-300 mb-2 block">Fotoğraf Yerleşimi</label>
-                                <div class="grid grid-cols-2 gap-2 p-1 bg-black/10 rounded-lg h-12 items-center">
-                                     <button id="fitContainBtn" class="fit-btn active py-2 rounded-md font-semibold text-sm">Sığdır</button>
-                                     <button id="fitCoverBtn" class="fit-btn py-2 rounded-md font-semibold text-sm">Doldur</button>
+                            <div class="control-section">
+                                <label class="block text-sm font-medium text-gray-200 mb-2">Arkaplan Stili</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div><input type="radio" name="bgType" id="bgSolid" value="solid" checked class="hidden peer"><label for="bgSolid" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Düz Renk</label></div>
+                                    <div><input type="radio" name="bgType" id="bgGradient" value="gradient" class="hidden peer"><label for="bgGradient" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Gradyan</label></div>
+                                    <div><input type="radio" name="bgType" id="bgBlur" value="blur" class="hidden peer"><label for="bgBlur" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Bulanık</label></div>
+                                </div>
+                                <div class="mt-4 grid grid-cols-2 gap-4">
+                                    <input type="color" id="color1" value="#000000">
+                                    <input type="color" id="color2" value="#4a5568" class="hidden">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="standardSettings">
+                            <div class="control-section">
+                                 <label class="block text-sm font-medium text-gray-200">Dış Kenar Boşlukları (Padding)</label>
+                                 <div class="flex items-center justify-start mt-2 mb-4"><input type="checkbox" id="syncPadding" checked class="h-4 w-4 rounded border-gray-500 text-violet-400 bg-transparent focus:ring-violet-500"><label for="syncPadding" class="ml-2 block text-sm text-gray-200">Tümünü eşitle</label></div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                                    <div><div class="flex justify-between items-center mb-1"><label for="paddingTop" class="text-xs text-gray-300">Üst</label><span id="paddingTopValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingTop" value="0" min="0" max="300" class="padding-slider w-full"></div>
+                                    <div><div class="flex justify-between items-center mb-1"><label for="paddingRight" class="text-xs text-gray-300">Sağ</label><span id="paddingRightValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingRight" value="0" min="0" max="300" class="padding-slider w-full"></div>
+                                    <div><div class="flex justify-between items-center mb-1"><label for="paddingBottom" class="text-xs text-gray-300">Alt</label><span id="paddingBottomValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingBottom" value="0" min="0" max="300" class="padding-slider w-full"></div>
+                                    <div><div class="flex justify-between items-center mb-1"><label for="paddingLeft" class="text-xs text-gray-300">Sol</label><span id="paddingLeftValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingLeft" value="0" min="0" max="300" class="padding-slider w-full"></div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="control-section">
-                            <label class="block text-sm font-medium text-gray-200 mb-2">Arkaplan Stili</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <div><input type="radio" name="bgType" id="bgSolid" value="solid" checked class="hidden peer"><label for="bgSolid" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Düz Renk</label></div>
-                                <div><input type="radio" name="bgType" id="bgGradient" value="gradient" class="hidden peer"><label for="bgGradient" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Gradyan</label></div>
-                                <div><input type="radio" name="bgType" id="bgBlur" value="blur" class="hidden peer"><label for="bgBlur" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Bulanık</label></div>
+                        <div id="polaroidSettings" class="hidden">
+                            <div class="control-section">
+                                <label class="block text-sm font-medium text-gray-200 mb-3">Çerçeve Stili</label>
+                                <div id="polaroidFrameContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                                    <button data-frame="classic" class="frame-btn active rounded-lg p-1">
+                                        <div class="frame-preview bg-white flex items-center justify-center rounded-sm"><div class="frame-preview-img"></div></div>
+                                        <span class="text-xs mt-1 block text-gray-200">Klasik</span>
+                                    </button>
+                                    <button data-frame="dark" class="frame-btn rounded-lg p-1">
+                                        <div class="frame-preview bg-gray-800 flex items-center justify-center rounded-sm"><div class="frame-preview-img"></div></div>
+                                        <span class="text-xs mt-1 block text-gray-200">Siyah</span>
+                                    </button>
+                                    <button data-frame="vintage" class="frame-btn rounded-lg p-1">
+                                        <div class="frame-preview bg-amber-100 flex items-center justify-center rounded-sm"><div class="frame-preview-img"></div></div>
+                                        <span class="text-xs mt-1 block text-gray-200">Vintage</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="mt-4 grid grid-cols-2 gap-4">
-                                <input type="color" id="color1" value="#000000">
-                                <input type="color" id="color2" value="#4a5568" class="hidden">
+                             <div class="control-section">
+                                <label for="polaroidText" class="block text-sm font-medium text-gray-200 mb-2">El Yazısı Not</label>
+                                <input type="text" id="polaroidText" placeholder="Kısa bir not ekle..." class="w-full p-2 rounded-lg" style="font-family: 'Caveat', cursive; font-size: 20px;">
+                            </div>
+                             <div class="control-section">
+                                <label for="polaroidRotation" class="block text-sm font-medium text-gray-200 mb-2">Döndürme Açısı</label>
+                                <input type="range" id="polaroidRotation" min="-15" max="15" value="5" class="w-full">
+                            </div>
+                             <div class="control-section">
+                                <label for="polaroidZoom" class="block text-sm font-medium text-gray-200 mb-2">Yakınlaştırma</label>
+                                <input type="range" id="polaroidZoom" min="100" max="300" value="100" class="w-full">
                             </div>
                         </div>
 
-                        <div class="control-section">
-                             <label class="block text-sm font-medium text-gray-200">Dış Kenar Boşlukları (Padding)</label>
-                             <div class="flex items-center justify-start mt-2 mb-4"><input type="checkbox" id="syncPadding" checked class="h-4 w-4 rounded border-gray-500 text-violet-400 bg-transparent focus:ring-violet-500"><label for="syncPadding" class="ml-2 block text-sm text-gray-200">Tümünü eşitle</label></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
-                                <div><div class="flex justify-between items-center mb-1"><label for="paddingTop" class="text-xs text-gray-300">Üst</label><span id="paddingTopValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingTop" value="0" min="0" max="300" class="padding-slider w-full"></div>
-                                <div><div class="flex justify-between items-center mb-1"><label for="paddingRight" class="text-xs text-gray-300">Sağ</label><span id="paddingRightValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingRight" value="0" min="0" max="300" class="padding-slider w-full"></div>
-                                <div><div class="flex justify-between items-center mb-1"><label for="paddingBottom" class="text-xs text-gray-300">Alt</label><span id="paddingBottomValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingBottom" value="0" min="0" max="300" class="padding-slider w-full"></div>
-                                <div><div class="flex justify-between items-center mb-1"><label for="paddingLeft" class="text-xs text-gray-300">Sol</label><span id="paddingLeftValue" class="text-sm font-semibold text-violet-300">0px</span></div><input type="range" id="paddingLeft" value="0" min="0" max="300" class="padding-slider w-full"></div>
-                            </div>
-                        </div>
-                        
                         <div id="collageSettings" class="hidden control-section">
                              <label class="block text-sm font-medium text-gray-200 mb-4">Kolaj Ayarları</label>
                              <div class="grid grid-cols-1 gap-6 text-gray-300 text-xs">
@@ -235,71 +276,44 @@
                              </div>
                         </div>
 
-                        <div class="control-section">
-                            <label class="block text-sm font-medium text-gray-200 mb-2">Metin Ekle</label>
-                            <input type="text" id="textInput" placeholder="Metninizi buraya yazın..." class="w-full p-2 rounded-lg">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                                <input type="color" id="textColor" value="#FFFFFF" title="Metin Rengi">
-                                <input type="number" id="textSize" value="48" title="Metin Boyutu" class="w-full p-2 rounded-lg">
-                                <select id="textFont" class="w-full p-2 rounded-lg">
-                                    <option value="Inter">Inter</option>
-                                    <option value="Playfair Display">Playfair</option>
-                                    <option value="Roboto Mono">Mono</option>
-                                </select>
-                                <select id="textPosition" class="w-full p-2 rounded-lg">
-                                    <option value="bottom-center">Alt-Orta</option>
-                                    <option value="top-center">Üst-Orta</option>
-                                    <option value="center-center">Orta</option>
-                                </select>
+                        <div id="generalTools">
+                            <div class="control-section">
+                                <label class="block text-sm font-medium text-gray-200 mb-2">Metin Ekle</label>
+                                <input type="text" id="textInput" placeholder="Metninizi buraya yazın..." class="w-full p-2 rounded-lg">
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                    <input type="color" id="textColor" value="#FFFFFF" title="Metin Rengi">
+                                    <input type="number" id="textSize" value="48" title="Metin Boyutu" class="w-full p-2 rounded-lg">
+                                    <select id="textFont" class="w-full p-2 rounded-lg">
+                                        <option value="Inter">Inter</option>
+                                        <option value="Playfair Display">Playfair</option>
+                                        <option value="Roboto Mono">Mono</option>
+                                        <option value="Caveat">Caveat</option>
+                                    </select>
+                                    <select id="textPosition" class="w-full p-2 rounded-lg">
+                                        <option value="bottom-center">Alt-Orta</option>
+                                        <option value="top-center">Üst-Orta</option>
+                                        <option value="center-center">Orta</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="control-section">
+                                <label class="block text-sm font-medium text-gray-200 mb-2">Filigran (Watermark)</label>
+                                <input type="file" id="watermarkLoader" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-500/30 file:text-teal-50 hover:file:bg-teal-500/50 cursor-pointer rounded-lg">
+                                <div id="watermarkControls" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-xs text-gray-300">
+                                     <div><label>Opaklık</label><input type="range" id="watermarkOpacity" min="0" max="100" value="50" class="w-full"></div>
+                                     <div><label>Boyut</label><input type="range" id="watermarkSize" min="5" max="100" value="20" class="w-full"></div>
+                                     <select id="watermarkPosition" class="w-full p-2 rounded-lg col-span-2">
+                                        <option value="bottom-right">Sağ Alt</option>
+                                        <option value="bottom-left">Sol Alt</option>
+                                        <option value="top-right">Sağ Üst</option>
+                                        <option value="top-left">Sol Üst</option>
+                                        <option value="center">Orta</option>
+                                     </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="control-section">
-                            <label class="block text-sm font-medium text-gray-200 mb-2">Filigran (Watermark)</label>
-                            <input type="file" id="watermarkLoader" accept="image/png, image/jpeg" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-500/30 file:text-teal-50 hover:file:bg-teal-500/50 cursor-pointer rounded-lg">
-                            <div id="watermarkControls" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-xs text-gray-300">
-                                 <div><label>Opaklık</label><input type="range" id="watermarkOpacity" min="0" max="100" value="50" class="w-full"></div>
-                                 <div><label>Boyut</label><input type="range" id="watermarkSize" min="5" max="100" value="20" class="w-full"></div>
-                                 <select id="watermarkPosition" class="w-full p-2 rounded-lg col-span-2">
-                                    <option value="bottom-right">Sağ Alt</option>
-                                    <option value="bottom-left">Sol Alt</option>
-                                    <option value="top-right">Sağ Üst</option>
-                                    <option value="top-left">Sol Üst</option>
-                                    <option value="center">Orta</option>
-                                 </select>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div id="polaroidSettings" class="hidden control-section">
-                    <label class="block text-sm font-medium text-gray-200 mb-4">Polaroid Ayarları</label>
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="mb-1 block">Tasarım</label>
-                            <select id="polaroidDesign" class="w-full p-2 rounded-lg">
-                                <option value="classic">Klasik</option>
-                                <option value="modern">Modern</option>
-                                <option value="tilted">Eğik</option>
-                                <option value="bw">Siyah Beyaz</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="mb-1 block">Alt Yazı</label>
-                            <input type="text" id="polaroidCaption" placeholder="Alt yazı..." class="w-full p-2 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="mb-1 block">Tarih</label>
-                            <input type="date" id="polaroidDate" class="w-full p-2 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="mb-1 block">Çıktı Formatı</label>
-                            <select id="polaroidExportFormat" class="w-full p-2 rounded-lg">
-                                <option value="png">PNG</option>
-                                <option value="jpeg">JPEG</option>
-                            </select>
-                        </div>
                     </div>
                 </div>
 
@@ -354,7 +368,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: İndirme sırasında kaydırılmış görüntülerin yanlış pozisyonda olma hatası düzeltildi. ---
+        // --- YENİ: Polaroid moduna Instagram boyutları, yakınlaştırma ve fotoğrafı kaydırma özelliği eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -400,6 +414,12 @@
             'profile': { width: 320, height: 320 }
         };
 
+        const polaroidFrameSpecs = {
+            'classic': { frameColor: '#ffffff', textColor: '#2d3748', aspectRatio: 88 / 107, photoPadding: 0.05 },
+            'dark': { frameColor: '#2d3748', textColor: '#e2e8f0', aspectRatio: 88 / 107, photoPadding: 0.05 },
+            'vintage': { frameColor: '#fffae5', textColor: '#5a4a3a', aspectRatio: 88 / 107, photoPadding: 0.05 },
+        };
+
         function getDefaultState() {
             return {
                 mode: 'single', fit: 'contain', sizePreset: 'square',
@@ -412,15 +432,14 @@
                     cornerRadius: 0,
                     imageOffsets: []
                 },
-                text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
-                watermark: { opacity: 50, size: 20, position: 'bottom-right' },
                 polaroid: {
-                    enabled: false,
-                    design: 'classic',
-                    caption: '',
-                    date: '',
-                    exportFormat: 'png',
+                    frame: 'classic',
+                    text: '',
+                    rotation: 5,
+                    zoom: 100
                 },
+                text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
+                watermark: { opacity: 50, size: 20, position: 'bottom-right' }
             };
         }
         
@@ -438,7 +457,10 @@
             }
             state.sizePreset = newPreset;
 
-            state.mode = document.getElementById('singleModeBtn').classList.contains('active') ? 'single' : 'collage';
+            if (document.getElementById('singleModeBtn').classList.contains('active')) state.mode = 'single';
+            else if (document.getElementById('collageModeBtn').classList.contains('active')) state.mode = 'collage';
+            else if (document.getElementById('polaroidModeBtn').classList.contains('active')) state.mode = 'polaroid';
+            
             state.syncPadding = document.getElementById('syncPadding').checked;
             state.padding = {
                 top: parseInt(document.getElementById('paddingTop').value, 10),
@@ -452,8 +474,13 @@
             
             state.collage.gap = parseInt(document.getElementById('collageGap').value, 10);
             state.collage.cornerRadius = parseInt(document.getElementById('cornerRadius').value, 10);
-            state.collage.layout = document.querySelector('#collageLayoutContainer .active').dataset.layout;
+            state.collage.layout = document.querySelector('#collageLayoutContainer .active')?.dataset.layout;
             
+            state.polaroid.frame = document.querySelector('#polaroidFrameContainer .active')?.dataset.frame;
+            state.polaroid.text = document.getElementById('polaroidText').value;
+            state.polaroid.rotation = parseInt(document.getElementById('polaroidRotation').value, 10);
+            state.polaroid.zoom = parseInt(document.getElementById('polaroidZoom').value, 10);
+
             state.text = {
                 content: document.getElementById('textInput').value,
                 color: document.getElementById('textColor').value,
@@ -466,17 +493,19 @@
                 size: parseInt(document.getElementById('watermarkSize').value, 10),
                 position: document.getElementById('watermarkPosition').value,
             };
-            state.polaroid = {
-                design: document.getElementById('polaroidDesign').value,
-                caption: document.getElementById('polaroidCaption').value,
-                date: document.getElementById('polaroidDate').value,
-                exportFormat: document.getElementById('polaroidExportFormat').value,
-            };
         }
 
         function updateUIFromState(s) {
             document.getElementById('singleModeBtn').classList.toggle('active', s.mode === 'single');
             document.getElementById('collageModeBtn').classList.toggle('active', s.mode === 'collage');
+            document.getElementById('polaroidModeBtn').classList.toggle('active', s.mode === 'polaroid');
+
+            document.getElementById('sizeAndBackgroundSettings').style.display = 'block';
+            document.getElementById('standardSettings').style.display = s.mode === 'single' || s.mode === 'collage' ? 'block' : 'none';
+            document.getElementById('polaroidSettings').style.display = s.mode === 'polaroid' ? 'block' : 'none';
+            document.getElementById('generalTools').style.display = s.mode === 'single' || s.mode === 'collage' ? 'block' : 'none';
+            document.getElementById('fitFillContainer').style.visibility = s.mode === 'single' ? 'visible' : 'hidden';
+
             document.getElementById('fitContainBtn').classList.toggle('active', s.fit === 'contain');
             document.getElementById('fitCoverBtn').classList.toggle('active', s.fit === 'cover');
             document.getElementById('sizePreset').value = s.sizePreset;
@@ -500,6 +529,11 @@
             document.getElementById('cornerRadius').value = s.collage.cornerRadius;
             document.querySelectorAll('#collageLayoutContainer button').forEach(b => b.classList.toggle('active', b.dataset.layout === s.collage.layout));
             
+            document.querySelectorAll('#polaroidFrameContainer button').forEach(b => b.classList.toggle('active', b.dataset.frame === s.polaroid.frame));
+            document.getElementById('polaroidText').value = s.polaroid.text;
+            document.getElementById('polaroidRotation').value = s.polaroid.rotation;
+            document.getElementById('polaroidZoom').value = s.polaroid.zoom;
+
             document.getElementById('textInput').value = s.text.content; 
             document.getElementById('textColor').value = s.text.color; 
             document.getElementById('textSize').value = s.text.size; 
@@ -508,19 +542,17 @@
             document.getElementById('watermarkOpacity').value = s.watermark.opacity; 
             document.getElementById('watermarkSize').value = s.watermark.size; 
             document.getElementById('watermarkPosition').value = s.watermark.position;
-            document.getElementById('polaroidDesign').value = s.polaroid.design;
-            document.getElementById('polaroidCaption').value = s.polaroid.caption;
-            document.getElementById('polaroidDate').value = s.polaroid.date;
-            document.getElementById('polaroidExportFormat').value = s.polaroid.exportFormat;
             
-            document.getElementById('singleUploader').style.display = (s.mode === 'single' || s.mode === 'polaroid') ? 'block' : 'none';
+            document.getElementById('singleUploader').style.display = s.mode === 'single' || s.mode === 'polaroid' ? 'block' : 'none';
             collageUploaderDiv.style.display = s.mode === 'collage' ? 'block' : 'none';
-            document.getElementById('fitFillContainer').style.visibility = s.mode === 'single' ? 'visible' : 'hidden';
             document.getElementById('collageSettings').style.display = s.mode === 'collage' ? 'block' : 'none';
             document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
-            document.getElementById('imageLoaderLabel').textContent = `1. ${s.mode === 'single' ? 'Ana' : 'Kolaj'} Fotoğraf(lar)ı Seçin`;
-            document.querySelector('#sizePreset option[value="original"]').disabled = s.mode === 'collage';
-            document.getElementById('polaroidSettings').style.display = s.mode === 'polaroid' ? 'block' : 'none';
+            document.getElementById('imageLoaderLabel').textContent = `1. ${s.mode === 'collage' ? 'Kolaj Fotoğrafları' : 'Fotoğraf'} Seçin`;
+            document.querySelector('#sizePreset option[value="original"]').disabled = s.mode === 'collage' || s.mode === 'polaroid';
+            if (s.mode === 'polaroid' && s.sizePreset === 'original') {
+                s.sizePreset = 'square';
+                document.getElementById('sizePreset').value = 'square';
+            }
         }
 
         function updateAndDraw(saveToHistory = true) {
@@ -530,7 +562,7 @@
             }
             drawPreview();
 
-            const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+            const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'polaroid' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
             saveProjectBtn.disabled = !hasImage;
             downloadBtn.disabled = !hasImage;
         }
@@ -570,8 +602,9 @@
         }
         
         function setupEventListeners() {
-            document.getElementById('singleModeBtn').addEventListener('click', () => { if (state.mode === 'collage') switchMode('single'); });
-            document.getElementById('collageModeBtn').addEventListener('click', () => { if (state.mode === 'single') switchMode('collage'); });
+            document.getElementById('singleModeBtn').addEventListener('click', () => { if (state.mode !== 'single') switchMode('single'); });
+            document.getElementById('collageModeBtn').addEventListener('click', () => { if (state.mode !== 'collage') switchMode('collage'); });
+            document.getElementById('polaroidModeBtn').addEventListener('click', () => { if (state.mode !== 'polaroid') switchMode('polaroid'); });
             
             document.getElementById('fitContainBtn').addEventListener('click', () => { setFitMode('contain'); });
             document.getElementById('fitCoverBtn').addEventListener('click', () => { setFitMode('cover'); });
@@ -583,7 +616,15 @@
 
             document.querySelectorAll('#collageLayoutContainer button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    document.querySelector('#collageLayoutContainer .active').classList.remove('active');
+                    document.querySelector('#collageLayoutContainer .active')?.classList.remove('active');
+                    e.currentTarget.classList.add('active');
+                    updateAndDraw();
+                });
+            });
+            
+            document.querySelectorAll('#polaroidFrameContainer button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelector('#polaroidFrameContainer .active')?.classList.remove('active');
                     e.currentTarget.classList.add('active');
                     updateAndDraw();
                 });
@@ -622,21 +663,21 @@
             
             canvasWrapper.addEventListener('mousedown', e => {
                 if (!isModifierDown) return;
-                const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+                const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'polaroid' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
                 if (!hasImage) return;
 
                 panStart = { x: e.clientX, y: e.clientY };
-                const canvasRect = canvas.getBoundingClientRect();
-                const mouse = {
-                    x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width),
-                    y: (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height)
-                };
-
-                if (state.mode === 'single') {
+                
+                if (state.mode === 'single' || state.mode === 'polaroid') {
                     isPanning = true;
-                    activePanTarget = { type: 'single', index: -1 };
+                    activePanTarget = { type: state.mode, index: -1 };
                     initialImageOffset = { ...state.imageOffset };
-                } else { 
+                } else if (state.mode === 'collage') { 
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const mouse = {
+                        x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width),
+                        y: (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height)
+                    };
                     const p = state.padding;
                     const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
                     const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
@@ -661,18 +702,26 @@
                 const dx_canvas = (e.clientX - panStart.x) * previewScale;
                 const dy_canvas = (e.clientY - panStart.y) * previewScale;
                 
-                let targetImage, container;
+                let targetImage, container, currentOffset, zoom = 1;
 
                 if (activePanTarget.type === 'single') {
                     targetImage = mainImage;
                     const p = state.padding;
                     container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
+                    currentOffset = state.imageOffset;
+                } else if (activePanTarget.type === 'polaroid') {
+                    targetImage = mainImage;
+                    const frameDetails = getPolaroidFrameDetails(canvas.width, canvas.height);
+                    container = { w: frameDetails.photoW, h: frameDetails.photoH };
+                    currentOffset = state.imageOffset;
+                    zoom = state.polaroid.zoom / 100;
                 } else if (activePanTarget.type === 'collage') {
                     const p = state.padding;
                     const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
                     const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
                     container = layout[activePanTarget.index];
                     targetImage = collageImages[activePanTarget.index];
+                    currentOffset = state.collage.imageOffsets[activePanTarget.index];
                 } else {
                     return;
                 }
@@ -684,9 +733,9 @@
                 
                 let renderScale;
                 if (imgRatio > areaRatio) { 
-                    renderScale = container.h / targetImage.height;
+                    renderScale = container.h / (targetImage.height / zoom);
                 } else { 
-                    renderScale = container.w / targetImage.width;
+                    renderScale = container.w / (targetImage.width / zoom);
                 }
 
                 const dx_source = dx_canvas / renderScale;
@@ -700,13 +749,16 @@
                 let sW, sH;
                 if(imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; }
                 else { sW = targetImage.width; sH = sW / areaRatio; }
+                
+                sW /= zoom; sH /= zoom;
+
                 const maxOffsetX = Math.max(0, (targetImage.width - sW) / 2);
                 const maxOffsetY = Math.max(0, (targetImage.height - sH) / 2);
 
                 newOffset.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffset.x));
                 newOffset.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffset.y));
 
-                if (activePanTarget.type === 'single') {
+                if (activePanTarget.type === 'single' || activePanTarget.type === 'polaroid') {
                     state.imageOffset = newOffset;
                 } else {
                     state.collage.imageOffsets[activePanTarget.index] = newOffset;
@@ -732,23 +784,20 @@
                     deleteCollageImage(indexToDelete);
                 }
             });
-
-            document.getElementById('polaroidModeBtn').addEventListener('click', () => { if (state.mode !== 'polaroid') switchMode('polaroid'); });
-            document.getElementById('polaroidDesign').addEventListener('change', () => { state.polaroid.design = document.getElementById('polaroidDesign').value; updateAndDraw(); });
-            document.getElementById('polaroidCaption').addEventListener('input', () => { state.polaroid.caption = document.getElementById('polaroidCaption').value; updateAndDraw(); });
-            document.getElementById('polaroidDate').addEventListener('input', () => { state.polaroid.date = document.getElementById('polaroidDate').value; updateAndDraw(); });
-            document.getElementById('polaroidExportFormat').addEventListener('change', () => { state.polaroid.exportFormat = document.getElementById('polaroidExportFormat').value; });
         }
         
         function switchMode(mode) {
-            mainImage = null;
-            collageImages = [];
+            if (state.mode === 'collage' || mode === 'collage') {
+                mainImage = null;
+                collageImages = [];
+                imageLoader.value = null; 
+                collageImageLoader.value = null;
+                collageThumbnailsContainer.innerHTML = '';
+                collageThumbnailsWrapper.classList.add('hidden');
+            }
+            
             state.imageOffset = { x: 0, y: 0 };
             state.collage.imageOffsets = [];
-            imageLoader.value = null; 
-            collageImageLoader.value = null;
-            collageThumbnailsContainer.innerHTML = '';
-            collageThumbnailsWrapper.classList.add('hidden');
             
             previewPlaceholder.classList.remove('hidden');
             canvasWrapper.classList.add('hidden');
@@ -769,9 +818,11 @@
         function updateCursor() {
             const canPanSingle = state.mode === 'single' && mainImage && state.fit === 'cover';
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
+            const canPanPolaroid = state.mode === 'polaroid' && mainImage;
+
             if (isPanning) {
                  canvasWrapper.style.cursor = 'grabbing';
-            } else if (isModifierDown && (canPanSingle || canPanCollage)) {
+            } else if (isModifierDown && (canPanSingle || canPanCollage || canPanPolaroid)) {
                 canvasWrapper.style.cursor = 'grab';
             } else {
                 canvasWrapper.style.cursor = 'default';
@@ -938,34 +989,29 @@
         }
 
         function drawPreview() {
-            previewPlaceholder.classList.add('hidden');
-            canvasWrapper.classList.remove('hidden');
-            let w = canvas.width, h = canvas.height;
-            ctx.clearRect(0, 0, w, h);
-            if (state.mode === 'polaroid') {
-                // Tek fotoğraf veya kolajı polaroid çerçeveye oturt
-                let img = null;
-                if (mainImage && state.mode === 'polaroid') img = mainImage;
-                else if (collageImages.length > 0) {
-                    // Kolajı geçici bir canvas'a çiz
-                    let tempCanvas = document.createElement('canvas');
-                    let tempCtx = tempCanvas.getContext('2d');
-                    tempCanvas.width = w;
-                    tempCanvas.height = h;
-                    drawCollageLayout(tempCtx, w, h, 1);
-                    img = new Image();
-                    img.src = tempCanvas.toDataURL();
-                }
-                if (img) {
-                    // Polaroid çerçeve boyutunu belirle
-                    let polaroidW = w * 0.9;
-                    let polaroidH = h * 0.75;
-                    drawPolaroid(ctx, img, (w - polaroidW) / 2, (h - polaroidH) / 2, polaroidW, polaroidH, state.polaroid.design, state.polaroid.caption, state.polaroid.date);
-                }
-            } else {
-                drawBackground(ctx, w, h);
-                drawMainContent(ctx, w, h);
-                drawTextAndWatermark(ctx, w, h);
+            const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'polaroid' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+            if (!hasImage) {
+                previewPlaceholder.classList.remove('hidden');
+                canvasWrapper.classList.add('hidden');
+                return;
+            };
+
+            const preset = presets[state.sizePreset];
+            if (state.sizePreset === 'original' && mainImage && state.mode !== 'polaroid') {
+                canvas.width = mainImage.width + state.padding.left + state.padding.right;
+                canvas.height = mainImage.height + state.padding.top + state.padding.bottom;
+            } else if (preset) {
+                canvas.width = preset.width;
+                canvas.height = preset.height;
+            } else { 
+                canvas.width = 1080;
+                canvas.height = 1080;
+            }
+            
+            drawBackground(ctx, canvas.width, canvas.height);
+            drawMainContent(ctx, canvas.width, canvas.height);
+            if (state.mode !== 'polaroid') {
+                 drawTextAndWatermark(ctx, canvas.width, canvas.height);
             }
         }
 
@@ -1002,29 +1048,115 @@
 
         function drawMainContent(targetCtx, w, h, scale = 1) {
             targetCtx.save();
-            const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
-            const drawableW = w - p.left - p.right;
-            const drawableH = h - p.top - p.bottom;
-            if (drawableW <= 0 || drawableH <= 0) { targetCtx.restore(); return; }
+            
+            if (state.mode === 'polaroid' && mainImage) {
+                drawPolaroidFrame(targetCtx, w, h, scale);
+            } else {
+                const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
+                const drawableW = w - p.left - p.right;
+                const drawableH = h - p.top - p.bottom;
+                if (drawableW <= 0 || drawableH <= 0) { targetCtx.restore(); return; }
 
-            if (state.mode === 'single' && mainImage) {
-                if (state.fit === 'contain') {
-                    const containerRatio = drawableW / drawableH;
-                    const imgRatio = mainImage.width / mainImage.height;
-                    let finalW, finalH;
-                    if (imgRatio > containerRatio) { finalW = drawableW; finalH = finalW / imgRatio; } 
-                    else { finalH = drawableH; finalW = finalH * imgRatio; }
-                    const x = p.left + (drawableW - finalW) / 2;
-                    const y = p.top + (drawableH - finalH) / 2;
-                    drawRoundedImage(targetCtx, mainImage, x, y, finalW, finalH, 0, 'contain');
-                } else { // 'cover'
-                    // DÜZELTME: Ofset, kaynak görüntü piksellerinde olduğundan çıktı ölçeğiyle çarpılmamalıdır.
-                    const offset = state.imageOffset || { x: 0, y: 0 };
-                    drawRoundedImage(targetCtx, mainImage, p.left, p.top, drawableW, drawableH, 0, 'cover', offset);
+                if (state.mode === 'single' && mainImage) {
+                    if (state.fit === 'contain') {
+                        const containerRatio = drawableW / drawableH;
+                        const imgRatio = mainImage.width / mainImage.height;
+                        let finalW, finalH;
+                        if (imgRatio > containerRatio) { finalW = drawableW; finalH = finalW / imgRatio; } 
+                        else { finalH = drawableH; finalW = finalH * imgRatio; }
+                        const x = p.left + (drawableW - finalW) / 2;
+                        const y = p.top + (drawableH - finalH) / 2;
+                        drawRoundedImage(targetCtx, mainImage, x, y, finalW, finalH, 0, 'contain');
+                    } else { // 'cover'
+                        const offset = state.imageOffset || { x: 0, y: 0 };
+                        drawRoundedImage(targetCtx, mainImage, p.left, p.top, drawableW, drawableH, 0, 'cover', offset);
+                    }
+                } else if (state.mode === 'collage' && collageImages.length > 0) {
+                    drawCollageLayout(targetCtx, w, h, scale);
                 }
-            } else if (state.mode === 'collage' && collageImages.length > 0) {
-                drawCollageLayout(targetCtx, w, h, scale);
             }
+            targetCtx.restore();
+        }
+
+        function getPolaroidFrameDetails(canvasW, canvasH) {
+            const frameSpec = polaroidFrameSpecs[state.polaroid.frame];
+            const margin = Math.min(canvasW, canvasH) * 0.1;
+            const availableW = canvasW - 2 * margin;
+            const availableH = canvasH - 2 * margin;
+
+            let frameW, frameH;
+            if (availableW / frameSpec.aspectRatio <= availableH) {
+                frameW = availableW;
+                frameH = frameW / frameSpec.aspectRatio;
+            } else {
+                frameH = availableH;
+                frameW = frameH * frameSpec.aspectRatio;
+            }
+            
+            const p = frameSpec.photoPadding;
+            const photoW = frameW * (1 - 2 * p);
+            const photoH = photoW;
+            const photoX = (canvasW - frameW) / 2 + frameW * p;
+            const photoY = (canvasH - frameH) / 2 + frameW * p;
+
+            return { frameW, frameH, photoX, photoY, photoW, photoH };
+        }
+
+        function drawPolaroidFrame(targetCtx, w, h, scale) {
+            const frameSpec = polaroidFrameSpecs[state.polaroid.frame];
+            if (!frameSpec) return;
+
+            targetCtx.save();
+            
+            const margin = Math.min(w, h) * 0.1;
+            const availableW = w - 2 * margin;
+            const availableH = h - 2 * margin;
+
+            let frameW, frameH;
+            if (availableW / frameSpec.aspectRatio <= availableH) {
+                frameW = availableW;
+                frameH = frameW / frameSpec.aspectRatio;
+            } else {
+                frameH = availableH;
+                frameW = frameH * frameSpec.aspectRatio;
+            }
+
+            const frameX = (w - frameW) / 2;
+            const frameY = (h - frameH) / 2;
+            
+            targetCtx.translate(frameX + frameW / 2, frameY + frameH / 2);
+            targetCtx.rotate(state.polaroid.rotation * Math.PI / 180);
+            targetCtx.translate(-(frameX + frameW / 2), -(frameY + frameH / 2));
+
+            targetCtx.shadowColor = 'rgba(0,0,0,0.4)';
+            targetCtx.shadowBlur = 30 * scale;
+            targetCtx.shadowOffsetX = 5 * scale;
+            targetCtx.shadowOffsetY = 10 * scale;
+
+            targetCtx.fillStyle = frameSpec.frameColor;
+            targetCtx.fillRect(frameX, frameY, frameW, frameH);
+            
+            targetCtx.shadowColor = 'transparent';
+
+            const p = frameSpec.photoPadding;
+            const photoX = frameX + frameW * p;
+            const photoY = frameY + frameW * p;
+            const photoW = frameW * (1 - 2 * p);
+            const photoH = photoW;
+            
+            targetCtx.fillStyle = '#1a202c';
+            targetCtx.fillRect(photoX, photoY, photoW, photoH);
+            drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
+
+            if(state.polaroid.text) {
+                targetCtx.fillStyle = frameSpec.textColor;
+                targetCtx.font = `${frameW * 0.05}px 'Caveat', cursive`;
+                targetCtx.textAlign = 'center';
+                targetCtx.textBaseline = 'middle';
+                const textY = photoY + photoH + (frameH - (frameW*p) - photoH) / 2;
+                targetCtx.fillText(state.polaroid.text, frameX + frameW / 2, textY, frameW * 0.9);
+            }
+
             targetCtx.restore();
         }
 
@@ -1038,7 +1170,6 @@
             collageImages.slice(0, layout.length).forEach((img, i) => {
                 const rect = layout[i];
                 if (rect && rect.w > 0 && rect.h > 0) {
-                    // DÜZELTME: Ofset, kaynak görüntü piksellerinde olduğundan çıktı ölçeğiyle çarpılmamalıdır.
                     const offset = state.collage.imageOffsets[i] || { x: 0, y: 0 };
                     drawRoundedImage(targetCtx, img, rect.x, rect.y, rect.w, rect.h, cornerRadius, 'cover', offset);
                 }
@@ -1159,7 +1290,7 @@
             return rects;
         }
         
-        function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }) {
+        function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }, zoom = 1) {
             ctx.save();
             if (r > 0) {
                 ctx.beginPath();
@@ -1179,6 +1310,10 @@
                     sW = img.width;
                     sH = sW / areaRatio;
                 }
+
+                sW /= zoom;
+                sH /= zoom;
+                
                 sX = (img.width - sW) / 2 + (offset.x || 0);
                 sY = (img.height - sH) / 2 + (offset.y || 0);
             }
@@ -1229,58 +1364,27 @@
             setTimeout(() => {
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
-                const qualityMultiplier = state.sizePreset === 'original' ? 1 : 2.5;
+                const qualityMultiplier = 2.5;
                 const preset = presets[state.sizePreset];
-                let w, h;
-                if (state.mode === 'polaroid') {
-                    w = preset ? preset.width * qualityMultiplier : 1080 * qualityMultiplier;
-                    h = preset ? preset.height * qualityMultiplier : 1350 * qualityMultiplier;
-                    tempCanvas.width = w;
-                    tempCanvas.height = h;
-                    let img = null;
-                    if (mainImage) img = mainImage;
-                    else if (collageImages.length > 0) {
-                        let tempColCanvas = document.createElement('canvas');
-                        let tempColCtx = tempColCanvas.getContext('2d');
-                        tempColCanvas.width = w;
-                        tempColCanvas.height = h * 0.75;
-                        drawCollageLayout(tempColCtx, tempColCanvas.width, tempColCanvas.height, 1);
-                        img = new Image();
-                        img.src = tempColCanvas.toDataURL();
-                    }
-                    if (img) {
-                        let polaroidW = w * 0.95;
-                        let polaroidH = h * 0.8;
-                        drawPolaroid(tempCtx, img, (w - polaroidW) / 2, (h - polaroidH) / 2, polaroidW, polaroidH, state.polaroid.design, state.polaroid.caption, state.polaroid.date);
-                    }
+                
+                if (preset) {
+                    tempCanvas.width = preset.width * qualityMultiplier;
+                    tempCanvas.height = preset.height * qualityMultiplier;
                 } else {
-                    if (state.sizePreset === 'original' && mainImage) {
-                        w = mainImage.width + state.padding.left + state.padding.right;
-                        h = mainImage.height + state.padding.top + state.padding.bottom;
-                    } else if(preset) {
-                        w = preset.width * qualityMultiplier;
-                        h = preset.height * qualityMultiplier;
-                    } else {
-                        downloadBtn.disabled = false;
-                        downloadBtn.textContent = 'İndir';
-                        return;
-                    }
-                    tempCanvas.width = w;
-                    tempCanvas.height = h;
-                    drawBackground(tempCtx, w, h);
-                    drawMainContent(tempCtx, w, h, qualityMultiplier);
-                    drawTextAndWatermark(tempCtx, w, h, qualityMultiplier);
+                     downloadBtn.disabled = false;
+                     downloadBtn.textContent = 'İndir';
+                     return;
                 }
-                const format = state.mode === 'polaroid' ? state.polaroid.exportFormat : 'png';
-                let dataUrl;
-                if (format === 'jpeg') {
-                    dataUrl = tempCanvas.toDataURL('image/jpeg', 0.95);
-                } else {
-                    dataUrl = tempCanvas.toDataURL('image/png', 1.0);
+
+                drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
+                drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                if (state.mode !== 'polaroid') {
+                    drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                 }
+
                 const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = `${originalFileName}-duzenlenmis.${format}`;
+                link.href = tempCanvas.toDataURL('image/png', 1.0);
+                link.download = `${originalFileName}-${state.mode}-duzenlenmis.png`;
                 link.click();
                 downloadBtn.disabled = false;
                 downloadBtn.textContent = 'İndir';
@@ -1402,7 +1506,7 @@
                     }
 
                     updateUIFromState(state);
-                    const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
+                    const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'polaroid' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
                     if(hasImage) {
                         previewPlaceholder.classList.add('hidden');
                         canvasWrapper.style.display = 'flex';
@@ -1457,81 +1561,6 @@
         }
         
         window.onload = init;
-
-        // POLAROID ÇİZİM FONKSİYONLARI
-        function drawPolaroidClassic(ctx, img, x, y, w, h, caption = '', date = '') {
-            const border = w * 0.05;
-            const bottomBorder = border * 3;
-            ctx.save();
-            ctx.fillStyle = '#f8f8f8';
-            ctx.fillRect(x, y, w, h + bottomBorder);
-            ctx.drawImage(img, x + border, y + border, w - 2 * border, h - 2 * border);
-            ctx.font = `${border * 1.2}px 'Playfair Display', cursive`;
-            ctx.fillStyle = '#444';
-            ctx.textAlign = 'center';
-            if (caption) ctx.fillText(caption, x + w / 2, y + h + bottomBorder * 0.55);
-            if (date) ctx.fillText(date, x + w / 2, y + h + bottomBorder * 0.85);
-            ctx.restore();
-        }
-        function drawPolaroidModern(ctx, img, x, y, w, h, caption = '', date = '') {
-            const border = w * 0.04;
-            const bottomBorder = border * 4;
-            ctx.save();
-            ctx.fillStyle = '#fff';
-            ctx.shadowColor = '#bbb';
-            ctx.shadowBlur = border;
-            ctx.fillRect(x, y, w, h + bottomBorder);
-            ctx.shadowBlur = 0;
-            ctx.drawImage(img, x + border, y + border, w - 2 * border, h - 2 * border);
-            ctx.font = `${border * 1.3}px 'Pacifico', cursive`;
-            ctx.fillStyle = '#222';
-            ctx.textAlign = 'center';
-            if (caption) ctx.fillText(caption, x + w / 2, y + h + bottomBorder * 0.5);
-            if (date) ctx.fillText(date, x + w / 2, y + h + bottomBorder * 0.8);
-            ctx.restore();
-        }
-        function drawPolaroidTilted(ctx, img, x, y, w, h, caption = '', date = '') {
-            const border = w * 0.05;
-            const bottomBorder = border * 3;
-            ctx.save();
-            ctx.translate(x + w / 2, y + (h + bottomBorder) / 2);
-            ctx.rotate(-0.07);
-            ctx.translate(-w / 2, -(h + bottomBorder) / 2);
-            ctx.fillStyle = '#f4f4f4';
-            ctx.shadowColor = '#888';
-            ctx.shadowBlur = border * 1.5;
-            ctx.fillRect(0, 0, w, h + bottomBorder);
-            ctx.shadowBlur = 0;
-            ctx.drawImage(img, border, border, w - 2 * border, h - 2 * border);
-            ctx.font = `${border * 1.1}px 'Indie Flower', cursive`;
-            ctx.fillStyle = '#333';
-            ctx.textAlign = 'center';
-            if (caption) ctx.fillText(caption, w / 2, h + bottomBorder * 0.55);
-            if (date) ctx.fillText(date, w / 2, h + bottomBorder * 0.85);
-            ctx.restore();
-        }
-        function drawPolaroidBW(ctx, img, x, y, w, h, caption = '', date = '') {
-            const border = w * 0.05;
-            const bottomBorder = border * 3;
-            ctx.save();
-            ctx.fillStyle = '#ededed';
-            ctx.fillRect(x, y, w, h + bottomBorder);
-            ctx.filter = 'grayscale(1)';
-            ctx.drawImage(img, x + border, y + border, w - 2 * border, h - 2 * border);
-            ctx.filter = 'none';
-            ctx.font = `${border * 1.1}px 'Roboto Mono', monospace`;
-            ctx.fillStyle = '#222';
-            ctx.textAlign = 'center';
-            if (caption) ctx.fillText(caption, x + w / 2, y + h + bottomBorder * 0.55);
-            if (date) ctx.fillText(date, x + w / 2, y + h + bottomBorder * 0.85);
-            ctx.restore();
-        }
-        function drawPolaroid(ctx, img, x, y, w, h, design, caption, date) {
-            if (design === 'classic') drawPolaroidClassic(ctx, img, x, y, w, h, caption, date);
-            else if (design === 'modern') drawPolaroidModern(ctx, img, x, y, w, h, caption, date);
-            else if (design === 'tilted') drawPolaroidTilted(ctx, img, x, y, w, h, caption, date);
-            else if (design === 'bw') drawPolaroidBW(ctx, img, x, y, w, h, caption, date);
-        }
     </script>
 </body>
 </html>
