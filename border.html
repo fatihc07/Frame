@@ -358,7 +358,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Transparan arkaplan seçeneği ve yeni Polaroid çerçeveleri (Film, Suluboya, Çiçekli, Galaksi, Altın, Eskitme) eklendi. ---
+        // --- YENİ: İsteğiniz üzerine "Eşit Kenar" ve "Ters Polaroid" gibi yeni çerçeve stilleri eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -407,20 +407,24 @@
         };
         
         const polaroidFrameSpecs = {
-            'classic': { name: 'Klasik', type: 'color', value: '#ffffff', textColor: '#2d3748' },
-            'dark': { name: 'Siyah', type: 'color', value: '#2d3748', textColor: '#e2e8f0' },
-            'vintage': { name: 'Vintage', type: 'color', value: '#fffae5', textColor: '#5a4a3a' },
-            'film': { name: 'Film', type: 'film', value: '#f0f0f0', textColor: '#1a202c' },
-            'gold': { name: 'Altın', type: 'color', value: '#d4af37', textColor: '#3a2e0a' },
-            'watercolor': { name: 'Suluboya', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/watercolor.png', textColor: '#3a5a78' },
-            'floral': { name: 'Çiçekli', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/flowers.png', textColor: '#2a4b2a' },
-            'galaxy': { name: 'Galaksi', type: 'pattern', value: 'https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', textColor: '#e0e0ff' },
-            'grunge': { name: 'Eskitme', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/paper-fibers.png', textColor: '#4a4a4a' },
+            'classic': { name: 'Klasik', type: 'color', value: '#ffffff', textColor: '#2d3748', layout: 'classic' },
+            'equal': { name: 'Eşit Kenar', type: 'color', value: '#ffffff', textColor: '#2d3748', layout: 'equal' },
+            'top-heavy': { name: 'Ters Polaroid', type: 'color', value: '#ffffff', textColor: '#2d3748', layout: 'top-heavy' },
+            'dark': { name: 'Siyah', type: 'color', value: '#2d3748', textColor: '#e2e8f0', layout: 'classic' },
+            'vintage': { name: 'Vintage', type: 'color', value: '#fffae5', textColor: '#5a4a3a', layout: 'classic' },
+            'film': { name: 'Film', type: 'film', value: '#f0f0f0', textColor: '#1a202c', layout: 'classic' },
+            'gold': { name: 'Altın', type: 'color', value: '#d4af37', textColor: '#3a2e0a', layout: 'classic' },
+            'watercolor': { name: 'Suluboya', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/watercolor.png', textColor: '#3a5a78', layout: 'classic' },
+            'floral': { name: 'Çiçekli', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/flowers.png', textColor: '#2a4b2a', layout: 'classic' },
+            'galaxy': { name: 'Galaksi', type: 'pattern', value: 'https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', textColor: '#e0e0ff', layout: 'classic' },
+            'grunge': { name: 'Eskitme', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/paper-fibers.png', textColor: '#4a4a4a', layout: 'classic' },
         };
         
         Object.keys(polaroidFrameSpecs).forEach(key => {
             polaroidFrameSpecs[key].aspectRatio = 88 / 107;
-            polaroidFrameSpecs[key].photoPadding = 0.05;
+            if (polaroidFrameSpecs[key].layout === 'classic') {
+                 polaroidFrameSpecs[key].photoPadding = 0.05;
+            }
         });
         polaroidFrameSpecs['film'].photoPadding = 0.08;
 
@@ -1015,7 +1019,6 @@
                 canvas.height = 1080;
             }
             
-            // Clear canvas for all modes, especially important for transparency
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             drawBackground(ctx, canvas.width, canvas.height);
@@ -1145,7 +1148,6 @@
             targetCtx.shadowOffsetX = 5 * scale;
             targetCtx.shadowOffsetY = 10 * scale;
 
-            // Draw frame background
             if (frameSpec.type === 'pattern' && frameImageAssets[frameSpec.value] && frameImageAssets[frameSpec.value].complete) {
                 targetCtx.fillStyle = targetCtx.createPattern(frameImageAssets[frameSpec.value], 'repeat');
             } else {
@@ -1155,18 +1157,37 @@
             
             targetCtx.shadowColor = 'transparent';
 
-            // Draw photo area
-            const p = frameSpec.photoPadding;
-            const photoX = frameX + frameW * p;
-            const photoY = frameY + frameW * p;
-            const photoW = frameW * (1 - 2 * p);
-            const photoH = photoW;
+            // --- DEĞİŞİKLİK BAŞLANGICI ---
+            // Fotoğraf alanını yerleşime göre çiz
+            let photoX, photoY, photoW, photoH;
+            const layout = frameSpec.layout || 'classic'; // Varsayılan: klasik yerleşim
+
+            if (layout === 'equal') {
+                const p = 0.05; // Her taraftan %5 boşluk
+                photoX = frameX + frameW * p;
+                photoY = frameY + frameH * p;
+                photoW = frameW * (1 - 2 * p);
+                photoH = frameH * (1 - 2 * p);
+            } else if (layout === 'top-heavy') {
+                const pX = 0.05; // %5 yatay boşluk
+                const pTop = 0.25; // %25 üst boşluk (geniş)
+                const pBottom = 0.05; // %5 alt boşluk (dar)
+                photoX = frameX + frameW * pX;
+                photoY = frameY + frameH * pTop;
+                photoW = frameW * (1 - 2 * pX);
+                photoH = frameH - (frameH * pTop) - (frameH * pBottom);
+            } else { // 'classic' yerleşim
+                const p = frameSpec.photoPadding; // Mevcut boşluk tanımını kullan
+                photoX = frameX + frameW * p;
+                photoY = frameY + frameW * p; // Üst boşluk yan boşlukla aynı
+                photoW = frameW * (1 - 2 * p);
+                photoH = photoW; // Klasik kare fotoğraf
+            }
             
-            targetCtx.fillStyle = '#1a202c';
+            targetCtx.fillStyle = '#1a202c'; // Fotoğraf alanı yer tutucu rengi
             targetCtx.fillRect(photoX, photoY, photoW, photoH);
             drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
 
-            // Draw special frame effects
             if (frameSpec.type === 'film') {
                 targetCtx.fillStyle = 'rgba(60, 60, 60, 0.8)';
                 const markSize = frameW * 0.02;
@@ -1176,15 +1197,25 @@
                 }
             }
 
-            // Draw text
+            // Metni çiz
             if(state.polaroid.text) {
                 targetCtx.fillStyle = frameSpec.textColor;
                 targetCtx.font = `${frameW * 0.05}px 'Caveat', cursive`;
                 targetCtx.textAlign = 'center';
                 targetCtx.textBaseline = 'middle';
-                const textY = photoY + photoH + (frameH - (frameW*p) - photoH) / 2;
-                targetCtx.fillText(state.polaroid.text, frameX + frameW / 2, textY, frameW * 0.9);
+
+                // Metin Y pozisyonunu fotoğrafın altındaki boşluğa göre dinamik olarak hesapla
+                const bottomEdgeOfPhoto = photoY + photoH;
+                const bottomEdgeOfFrame = frameY + frameH;
+                const spaceBelowPhoto = bottomEdgeOfFrame - bottomEdgeOfPhoto;
+                
+                // Sadece yeterli alan varsa metni çiz
+                if (spaceBelowPhoto > (frameW * 0.06)) { // Alanın yazı tipi boyutundan biraz büyük olup olmadığını kontrol et
+                    const textY = bottomEdgeOfPhoto + spaceBelowPhoto / 2;
+                    targetCtx.fillText(state.polaroid.text, frameX + frameW / 2, textY, frameW * 0.9);
+                }
             }
+            // --- DEĞİŞİKLİK SONU ---
 
             targetCtx.restore();
         }
@@ -1591,7 +1622,7 @@
                     const img = new Image();
                     img.crossOrigin = "Anonymous";
                     img.src = spec.value;
-                    img.onload = () => updateAndDraw(); // Redraw when image loads
+                    img.onload = () => updateAndDraw();
                     frameImageAssets[spec.value] = img;
                 }
             }
