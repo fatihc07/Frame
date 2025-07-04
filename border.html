@@ -222,6 +222,10 @@
                                     <!-- Çerçeveler JS ile eklenecek -->
                                 </div>
                             </div>
+                            <div class="control-section" id="polaroidColorSection">
+                                <label for="polaroidFrameColor" class="block text-sm font-medium text-gray-200 mb-2">Çerçeve Rengi</label>
+                                <input type="color" id="polaroidFrameColor" value="#ffffff">
+                            </div>
                              <div class="control-section">
                                 <label for="polaroidText" class="block text-sm font-medium text-gray-200 mb-2">El Yazısı Not</label>
                                 <input type="text" id="polaroidText" placeholder="Kısa bir not ekle..." class="w-full p-2 rounded-lg" style="font-family: 'Caveat', cursive; font-size: 20px;">
@@ -358,7 +362,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: İsteğiniz üzerine "Eşit Kenar" ve "Ters Polaroid" gibi yeni çerçeve stilleri eklendi. ---
+        // --- YENİ: Polaroid çerçeve rengi artık değiştirilebilir. Gönderdiğiniz görsellere göre yeni çerçeve stilleri eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -379,6 +383,7 @@
         const collageThumbnailsWrapper = document.getElementById('collageThumbnailsWrapper');
         const collageThumbnailsContainer = document.getElementById('collageThumbnailsContainer');
         const polaroidFrameContainer = document.getElementById('polaroidFrameContainer');
+        const polaroidColorSection = document.getElementById('polaroidColorSection');
 
         let db;
         let state = {};
@@ -407,13 +412,14 @@
         };
         
         const polaroidFrameSpecs = {
-            'classic': { name: 'Klasik', type: 'color', value: '#ffffff', textColor: '#2d3748', layout: 'classic' },
-            'equal': { name: 'Eşit Kenar', type: 'color', value: '#ffffff', textColor: '#2d3748', layout: 'equal' },
-            'top-heavy': { name: 'Ters Polaroid', type: 'color', value: '#ffffff', textColor: '#2d3748', layout: 'top-heavy' },
-            'dark': { name: 'Siyah', type: 'color', value: '#2d3748', textColor: '#e2e8f0', layout: 'classic' },
-            'vintage': { name: 'Vintage', type: 'color', value: '#fffae5', textColor: '#5a4a3a', layout: 'classic' },
-            'film': { name: 'Film', type: 'film', value: '#f0f0f0', textColor: '#1a202c', layout: 'classic' },
-            'gold': { name: 'Altın', type: 'color', value: '#d4af37', textColor: '#3a2e0a', layout: 'classic' },
+            'classic': { name: 'Klasik', type: 'color', defaultColor: '#ffffff', textColor: '#2d3748', layout: 'classic' },
+            'equal': { name: 'Eşit Kenar', type: 'color', defaultColor: '#ffffff', textColor: '#2d3748', layout: 'equal' },
+            'top-heavy': { name: 'Ters Polaroid', type: 'color', defaultColor: '#ffffff', textColor: '#2d3748', layout: 'top-heavy' },
+            'dark': { name: 'Siyah', type: 'color', defaultColor: '#2d3748', textColor: '#e2e8f0', layout: 'classic' },
+            'vintage': { name: 'Vintage', type: 'color', defaultColor: '#fffae5', textColor: '#5a4a3a', layout: 'classic' },
+            'film-kare': { name: 'Film Karesi', type: 'special', value: '#000000', textColor: '#e0e0e0', layout: 'equal' },
+            'sprocket-light': { name: 'Film Şeridi (Açık)', type: 'effect', effectColor: 'rgba(255,255,255,0.8)', layout: 'equal' },
+            'sprocket-dark': { name: 'Film Şeridi (Koyu)', type: 'effect', effectColor: 'rgba(0,0,0,0.7)', layout: 'equal' },
             'watercolor': { name: 'Suluboya', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/watercolor.png', textColor: '#3a5a78', layout: 'classic' },
             'floral': { name: 'Çiçekli', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/flowers.png', textColor: '#2a4b2a', layout: 'classic' },
             'galaxy': { name: 'Galaksi', type: 'pattern', value: 'https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', textColor: '#e0e0ff', layout: 'classic' },
@@ -426,7 +432,6 @@
                  polaroidFrameSpecs[key].photoPadding = 0.05;
             }
         });
-        polaroidFrameSpecs['film'].photoPadding = 0.08;
 
         function getDefaultState() {
             return {
@@ -442,6 +447,7 @@
                 },
                 polaroid: {
                     frame: 'classic',
+                    frameColor: '#ffffff',
                     text: '',
                     rotation: 5,
                     zoom: 100
@@ -485,6 +491,7 @@
             state.collage.layout = document.querySelector('#collageLayoutContainer .active')?.dataset.layout;
             
             state.polaroid.frame = document.querySelector('#polaroidFrameContainer .active')?.dataset.frame;
+            state.polaroid.frameColor = document.getElementById('polaroidFrameColor').value;
             state.polaroid.text = document.getElementById('polaroidText').value;
             state.polaroid.rotation = parseInt(document.getElementById('polaroidRotation').value, 10);
             state.polaroid.zoom = parseInt(document.getElementById('polaroidZoom').value, 10);
@@ -508,7 +515,10 @@
             document.getElementById('collageModeBtn').classList.toggle('active', s.mode === 'collage');
             document.getElementById('polaroidModeBtn').classList.toggle('active', s.mode === 'polaroid');
 
-            document.getElementById('sizeAndBackgroundSettings').style.display = 'block';
+            const frameSpec = polaroidFrameSpecs[s.polaroid.frame];
+            polaroidColorSection.style.display = frameSpec && frameSpec.type === 'color' ? 'block' : 'none';
+            document.getElementById('sizeAndBackgroundSettings').style.display = frameSpec && frameSpec.type === 'effect' ? 'none' : 'block';
+
             document.getElementById('standardSettings').style.display = s.mode === 'single' || s.mode === 'collage' ? 'block' : 'none';
             document.getElementById('polaroidSettings').style.display = s.mode === 'polaroid' ? 'block' : 'none';
             document.getElementById('generalTools').style.display = s.mode === 'single' || s.mode === 'collage' ? 'block' : 'none';
@@ -541,6 +551,7 @@
             document.querySelectorAll('#collageLayoutContainer button').forEach(b => b.classList.toggle('active', b.dataset.layout === s.collage.layout));
             
             document.querySelectorAll('#polaroidFrameContainer button').forEach(b => b.classList.toggle('active', b.dataset.frame === s.polaroid.frame));
+            document.getElementById('polaroidFrameColor').value = s.polaroid.frameColor;
             document.getElementById('polaroidText').value = s.polaroid.text;
             document.getElementById('polaroidRotation').value = s.polaroid.rotation;
             document.getElementById('polaroidZoom').value = s.polaroid.zoom;
@@ -570,6 +581,7 @@
             if (saveToHistory) {
                 saveStateToHistory();
             }
+            updateUIFromState(state); // Ensure UI reflects state changes, e.g., hiding/showing color picker
             drawPreview();
 
             const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'polaroid' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
@@ -637,6 +649,17 @@
                 if (button) {
                     document.querySelector('#polaroidFrameContainer .active')?.classList.remove('active');
                     button.classList.add('active');
+                    
+                    const frameKey = button.dataset.frame;
+                    const frameSpec = polaroidFrameSpecs[frameKey];
+                    
+                    if (frameSpec.type === 'color') {
+                        state.polaroid.frameColor = frameSpec.defaultColor;
+                    } else if (frameSpec.type === 'effect') {
+                        // For effect frames, automatically switch to blur background
+                        document.getElementById('bgBlur').checked = true;
+                    }
+                    
                     updateAndDraw();
                 }
             });
@@ -1021,6 +1044,12 @@
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            const frameSpec = polaroidFrameSpecs[state.polaroid.frame];
+            if (state.mode === 'polaroid' && frameSpec && frameSpec.type === 'effect') {
+                state.bgType = 'blur';
+                document.getElementById('bgBlur').checked = true;
+            }
+
             drawBackground(ctx, canvas.width, canvas.height);
             drawMainContent(ctx, canvas.width, canvas.height);
             if (state.mode !== 'polaroid') {
@@ -1123,6 +1152,35 @@
 
             targetCtx.save();
             
+            // --- DEĞİŞİKLİK BAŞLANGICI ---
+            // For 'effect' types, we don't draw a solid frame, just the photo and its effect
+            if (frameSpec.type === 'effect') {
+                const margin = Math.min(w, h) * 0.05;
+                const photoW = w - 2 * margin;
+                const photoH = h - 2 * margin;
+                const photoX = margin;
+                const photoY = margin;
+
+                drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
+                
+                // Draw white border inside the photo
+                targetCtx.strokeStyle = 'rgba(255,255,255,0.9)';
+                targetCtx.lineWidth = margin * 0.05;
+                targetCtx.strokeRect(photoX, photoY, photoW, photoH);
+
+                // Draw sprocket holes
+                targetCtx.fillStyle = frameSpec.effectColor;
+                const holeW = photoW * 0.02;
+                const holeH = photoH * 0.04;
+                const holeMargin = holeW * 1.5;
+                for (let i = photoY + holeMargin; i < photoY + photoH - holeMargin; i += holeH * 1.5) {
+                    targetCtx.fillRect(photoX + holeMargin, i, holeW, holeH);
+                    targetCtx.fillRect(photoX + photoW - holeMargin - holeW, i, holeW, holeH);
+                }
+                targetCtx.restore();
+                return;
+            }
+
             const margin = Math.min(w, h) * 0.1;
             const availableW = w - 2 * margin;
             const availableH = h - 2 * margin;
@@ -1148,69 +1206,74 @@
             targetCtx.shadowOffsetX = 5 * scale;
             targetCtx.shadowOffsetY = 10 * scale;
 
-            if (frameSpec.type === 'pattern' && frameImageAssets[frameSpec.value] && frameImageAssets[frameSpec.value].complete) {
+            if (frameSpec.type === 'color') {
+                targetCtx.fillStyle = state.polaroid.frameColor;
+            } else if (frameSpec.type === 'pattern' && frameImageAssets[frameSpec.value] && frameImageAssets[frameSpec.value].complete) {
                 targetCtx.fillStyle = targetCtx.createPattern(frameImageAssets[frameSpec.value], 'repeat');
             } else {
-                targetCtx.fillStyle = frameSpec.value;
+                targetCtx.fillStyle = frameSpec.value || '#ffffff';
             }
             targetCtx.fillRect(frameX, frameY, frameW, frameH);
             
             targetCtx.shadowColor = 'transparent';
 
-            // --- DEĞİŞİKLİK BAŞLANGICI ---
-            // Fotoğraf alanını yerleşime göre çiz
             let photoX, photoY, photoW, photoH;
-            const layout = frameSpec.layout || 'classic'; // Varsayılan: klasik yerleşim
+            const layout = frameSpec.layout || 'classic';
 
             if (layout === 'equal') {
-                const p = 0.05; // Her taraftan %5 boşluk
+                const p = 0.05;
                 photoX = frameX + frameW * p;
                 photoY = frameY + frameH * p;
                 photoW = frameW * (1 - 2 * p);
                 photoH = frameH * (1 - 2 * p);
             } else if (layout === 'top-heavy') {
-                const pX = 0.05; // %5 yatay boşluk
-                const pTop = 0.25; // %25 üst boşluk (geniş)
-                const pBottom = 0.05; // %5 alt boşluk (dar)
+                const pX = 0.05; const pTop = 0.25; const pBottom = 0.05;
                 photoX = frameX + frameW * pX;
                 photoY = frameY + frameH * pTop;
                 photoW = frameW * (1 - 2 * pX);
                 photoH = frameH - (frameH * pTop) - (frameH * pBottom);
-            } else { // 'classic' yerleşim
-                const p = frameSpec.photoPadding; // Mevcut boşluk tanımını kullan
+            } else { // 'classic'
+                const p = frameSpec.photoPadding;
                 photoX = frameX + frameW * p;
-                photoY = frameY + frameW * p; // Üst boşluk yan boşlukla aynı
+                photoY = frameY + frameW * p;
                 photoW = frameW * (1 - 2 * p);
-                photoH = photoW; // Klasik kare fotoğraf
+                photoH = photoW;
             }
             
-            targetCtx.fillStyle = '#1a202c'; // Fotoğraf alanı yer tutucu rengi
+            targetCtx.fillStyle = '#1a202c';
             targetCtx.fillRect(photoX, photoY, photoW, photoH);
             drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
 
-            if (frameSpec.type === 'film') {
-                targetCtx.fillStyle = 'rgba(60, 60, 60, 0.8)';
-                const markSize = frameW * 0.02;
-                for(let i = 0; i < 5; i++) {
-                    targetCtx.fillRect(frameX + markSize, photoY + i * (photoH / 4.5), markSize, markSize);
-                    targetCtx.fillRect(frameX + frameW - 2 * markSize, photoY + i * (photoH / 4.5), markSize, markSize);
-                }
+            if (frameSpec.type === 'special' && frameKey === 'film-kare') {
+                targetCtx.save();
+                targetCtx.fillStyle = frameSpec.textColor;
+                targetCtx.font = `bold ${frameW * 0.025}px 'Roboto Mono', monospace`;
+                targetCtx.textAlign = 'center';
+                targetCtx.textBaseline = 'middle';
+                
+                // Right side text
+                targetCtx.translate(photoX + photoW + (frameW - (photoX + photoW - frameX))/2, photoY + photoH / 2);
+                targetCtx.rotate(Math.PI / 2);
+                targetCtx.fillText('KODAK HITS', 0, 0);
+                targetCtx.restore();
+
+                // Left side text
+                targetCtx.save();
+                targetCtx.translate(photoX - (photoX - frameX)/2, photoY + photoH / 2);
+                targetCtx.rotate(-Math.PI / 2);
+                targetCtx.fillText('KODAK HITS', 0, 0);
+                targetCtx.restore();
             }
 
-            // Metni çiz
             if(state.polaroid.text) {
                 targetCtx.fillStyle = frameSpec.textColor;
                 targetCtx.font = `${frameW * 0.05}px 'Caveat', cursive`;
                 targetCtx.textAlign = 'center';
                 targetCtx.textBaseline = 'middle';
-
-                // Metin Y pozisyonunu fotoğrafın altındaki boşluğa göre dinamik olarak hesapla
                 const bottomEdgeOfPhoto = photoY + photoH;
                 const bottomEdgeOfFrame = frameY + frameH;
                 const spaceBelowPhoto = bottomEdgeOfFrame - bottomEdgeOfPhoto;
-                
-                // Sadece yeterli alan varsa metni çiz
-                if (spaceBelowPhoto > (frameW * 0.06)) { // Alanın yazı tipi boyutundan biraz büyük olup olmadığını kontrol et
+                if (spaceBelowPhoto > (frameW * 0.06)) {
                     const textY = bottomEdgeOfPhoto + spaceBelowPhoto / 2;
                     targetCtx.fillText(state.polaroid.text, frameX + frameW / 2, textY, frameW * 0.9);
                 }
@@ -1641,7 +1704,7 @@
                 if (spec.type === 'pattern') {
                     preview.style.backgroundImage = `url(${spec.value})`;
                 } else {
-                    preview.style.backgroundColor = spec.value;
+                    preview.style.backgroundColor = spec.defaultColor || spec.value || '#ccc';
                 }
                 
                 const imgPlaceholder = document.createElement('div');
