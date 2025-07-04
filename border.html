@@ -52,9 +52,9 @@
         .peer:checked ~ label { background-color: rgba(20, 10, 50, 0.6); color: white; border-color: transparent; }
 
         /* Polaroid Çerçeve Stilleri */
-        .frame-btn { border: 2px solid transparent; transition: all 0.2s ease-in-out; }
+        .frame-btn { border: 2px solid transparent; transition: all 0.2s ease-in-out; overflow: hidden; }
         .frame-btn.active { border-color: #a78bfa; transform: scale(1.05); box-shadow: 0 0 15px rgba(167, 139, 250, 0.5); }
-        .frame-preview { width: 60px; height: 72px; border: 2px solid #4a5568; }
+        .frame-preview { width: 60px; height: 72px; border: 2px solid #4a5568; background-size: cover; background-position: center; }
         .frame-preview-img { width: 80%; height: 70%; background: #718096; }
 
         /* Modal Stilleri */
@@ -189,12 +189,13 @@
                             </div>
                             <div class="control-section">
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Arkaplan Stili</label>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <div><input type="radio" name="bgType" id="bgSolid" value="solid" checked class="hidden peer"><label for="bgSolid" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Düz Renk</label></div>
-                                    <div><input type="radio" name="bgType" id="bgGradient" value="gradient" class="hidden peer"><label for="bgGradient" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Gradyan</label></div>
-                                    <div><input type="radio" name="bgType" id="bgBlur" value="blur" class="hidden peer"><label for="bgBlur" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200">Bulanık</label></div>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <div><input type="radio" name="bgType" id="bgSolid" value="solid" checked class="hidden peer"><label for="bgSolid" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200 text-sm">Renk</label></div>
+                                    <div><input type="radio" name="bgType" id="bgGradient" value="gradient" class="hidden peer"><label for="bgGradient" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200 text-sm">Gradyan</label></div>
+                                    <div><input type="radio" name="bgType" id="bgBlur" value="blur" class="hidden peer"><label for="bgBlur" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200 text-sm">Bulanık</label></div>
+                                    <div><input type="radio" name="bgType" id="bgTransparent" value="transparent" class="hidden peer"><label for="bgTransparent" class="block text-center cursor-pointer rounded-lg border border-white/20 p-2 text-gray-200 text-sm">Transparan</label></div>
                                 </div>
-                                <div class="mt-4 grid grid-cols-2 gap-4">
+                                <div id="colorPickers" class="mt-4 grid grid-cols-2 gap-4">
                                     <input type="color" id="color1" value="#000000">
                                     <input type="color" id="color2" value="#4a5568" class="hidden">
                                 </div>
@@ -217,19 +218,8 @@
                         <div id="polaroidSettings" class="hidden">
                             <div class="control-section">
                                 <label class="block text-sm font-medium text-gray-200 mb-3">Çerçeve Stili</label>
-                                <div id="polaroidFrameContainer" class="grid grid-cols-3 sm:grid-cols-4 gap-4">
-                                    <button data-frame="classic" class="frame-btn active rounded-lg p-1">
-                                        <div class="frame-preview bg-white flex items-center justify-center rounded-sm"><div class="frame-preview-img"></div></div>
-                                        <span class="text-xs mt-1 block text-gray-200">Klasik</span>
-                                    </button>
-                                    <button data-frame="dark" class="frame-btn rounded-lg p-1">
-                                        <div class="frame-preview bg-gray-800 flex items-center justify-center rounded-sm"><div class="frame-preview-img"></div></div>
-                                        <span class="text-xs mt-1 block text-gray-200">Siyah</span>
-                                    </button>
-                                    <button data-frame="vintage" class="frame-btn rounded-lg p-1">
-                                        <div class="frame-preview bg-amber-100 flex items-center justify-center rounded-sm"><div class="frame-preview-img"></div></div>
-                                        <span class="text-xs mt-1 block text-gray-200">Vintage</span>
-                                    </button>
+                                <div id="polaroidFrameContainer" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    <!-- Çerçeveler JS ile eklenecek -->
                                 </div>
                             </div>
                              <div class="control-section">
@@ -368,7 +358,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Polaroid moduna Instagram boyutları, yakınlaştırma ve fotoğrafı kaydırma özelliği eklendi. ---
+        // --- YENİ: Transparan arkaplan seçeneği ve yeni Polaroid çerçeveleri (Film, Suluboya, Çiçekli, Galaksi, Altın, Eskitme) eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -388,7 +378,8 @@
         const collageUploaderDiv = document.getElementById('collageUploader');
         const collageThumbnailsWrapper = document.getElementById('collageThumbnailsWrapper');
         const collageThumbnailsContainer = document.getElementById('collageThumbnailsContainer');
-        
+        const polaroidFrameContainer = document.getElementById('polaroidFrameContainer');
+
         let db;
         let state = {};
         let history = [];
@@ -404,6 +395,7 @@
         let activePanTarget = { type: null, index: -1 };
         let initialImageOffset = { x: 0, y: 0 }; 
         let draggedThumbnailIndex = null;
+        let frameImageAssets = {};
 
         const presets = {
             'original': null, 
@@ -413,12 +405,24 @@
             'horizontal': { width: 1080, height: 566 },
             'profile': { width: 320, height: 320 }
         };
-
+        
         const polaroidFrameSpecs = {
-            'classic': { frameColor: '#ffffff', textColor: '#2d3748', aspectRatio: 88 / 107, photoPadding: 0.05 },
-            'dark': { frameColor: '#2d3748', textColor: '#e2e8f0', aspectRatio: 88 / 107, photoPadding: 0.05 },
-            'vintage': { frameColor: '#fffae5', textColor: '#5a4a3a', aspectRatio: 88 / 107, photoPadding: 0.05 },
+            'classic': { name: 'Klasik', type: 'color', value: '#ffffff', textColor: '#2d3748' },
+            'dark': { name: 'Siyah', type: 'color', value: '#2d3748', textColor: '#e2e8f0' },
+            'vintage': { name: 'Vintage', type: 'color', value: '#fffae5', textColor: '#5a4a3a' },
+            'film': { name: 'Film', type: 'film', value: '#f0f0f0', textColor: '#1a202c' },
+            'gold': { name: 'Altın', type: 'color', value: '#d4af37', textColor: '#3a2e0a' },
+            'watercolor': { name: 'Suluboya', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/watercolor.png', textColor: '#3a5a78' },
+            'floral': { name: 'Çiçekli', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/flowers.png', textColor: '#2a4b2a' },
+            'galaxy': { name: 'Galaksi', type: 'pattern', value: 'https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', textColor: '#e0e0ff' },
+            'grunge': { name: 'Eskitme', type: 'pattern', value: 'https://www.toptal.com/designers/subtlepatterns/uploads/paper-fibers.png', textColor: '#4a4a4a' },
         };
+        
+        Object.keys(polaroidFrameSpecs).forEach(key => {
+            polaroidFrameSpecs[key].aspectRatio = 88 / 107;
+            polaroidFrameSpecs[key].photoPadding = 0.05;
+        });
+        polaroidFrameSpecs['film'].photoPadding = 0.08;
 
         function getDefaultState() {
             return {
@@ -505,6 +509,8 @@
             document.getElementById('polaroidSettings').style.display = s.mode === 'polaroid' ? 'block' : 'none';
             document.getElementById('generalTools').style.display = s.mode === 'single' || s.mode === 'collage' ? 'block' : 'none';
             document.getElementById('fitFillContainer').style.visibility = s.mode === 'single' ? 'visible' : 'hidden';
+            document.getElementById('colorPickers').style.display = s.bgType === 'transparent' ? 'none' : 'grid';
+            document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
 
             document.getElementById('fitContainBtn').classList.toggle('active', s.fit === 'contain');
             document.getElementById('fitCoverBtn').classList.toggle('active', s.fit === 'cover');
@@ -522,6 +528,7 @@
             document.getElementById('bgSolid').checked = s.bgType === 'solid'; 
             document.getElementById('bgGradient').checked = s.bgType === 'gradient'; 
             document.getElementById('bgBlur').checked = s.bgType === 'blur';
+            document.getElementById('bgTransparent').checked = s.bgType === 'transparent';
             document.getElementById('color1').value = s.color1; 
             document.getElementById('color2').value = s.color2;
             
@@ -546,7 +553,6 @@
             document.getElementById('singleUploader').style.display = s.mode === 'single' || s.mode === 'polaroid' ? 'block' : 'none';
             collageUploaderDiv.style.display = s.mode === 'collage' ? 'block' : 'none';
             document.getElementById('collageSettings').style.display = s.mode === 'collage' ? 'block' : 'none';
-            document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
             document.getElementById('imageLoaderLabel').textContent = `1. ${s.mode === 'collage' ? 'Kolaj Fotoğrafları' : 'Fotoğraf'} Seçin`;
             document.querySelector('#sizePreset option[value="original"]').disabled = s.mode === 'collage' || s.mode === 'polaroid';
             if (s.mode === 'polaroid' && s.sizePreset === 'original') {
@@ -622,12 +628,13 @@
                 });
             });
             
-            document.querySelectorAll('#polaroidFrameContainer button').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+            polaroidFrameContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.frame-btn');
+                if (button) {
                     document.querySelector('#polaroidFrameContainer .active')?.classList.remove('active');
-                    e.currentTarget.classList.add('active');
+                    button.classList.add('active');
                     updateAndDraw();
-                });
+                }
             });
 
             allUIInputs.forEach(el => {
@@ -1008,6 +1015,9 @@
                 canvas.height = 1080;
             }
             
+            // Clear canvas for all modes, especially important for transparency
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             drawBackground(ctx, canvas.width, canvas.height);
             drawMainContent(ctx, canvas.width, canvas.height);
             if (state.mode !== 'polaroid') {
@@ -1039,6 +1049,8 @@
                 const x = (w - finalW) / 2; const y = (h - finalH) / 2;
                 targetCtx.drawImage(imgToBlur, x, y, finalW, finalH);
                 targetCtx.restore();
+            } else if (state.bgType === 'transparent') {
+                // Do nothing, canvas is already cleared.
             } else {
                 targetCtx.fillStyle = '#cccccc';
                 targetCtx.fillRect(0, 0, w, h);
@@ -1133,11 +1145,17 @@
             targetCtx.shadowOffsetX = 5 * scale;
             targetCtx.shadowOffsetY = 10 * scale;
 
-            targetCtx.fillStyle = frameSpec.frameColor;
+            // Draw frame background
+            if (frameSpec.type === 'pattern' && frameImageAssets[frameSpec.value] && frameImageAssets[frameSpec.value].complete) {
+                targetCtx.fillStyle = targetCtx.createPattern(frameImageAssets[frameSpec.value], 'repeat');
+            } else {
+                targetCtx.fillStyle = frameSpec.value;
+            }
             targetCtx.fillRect(frameX, frameY, frameW, frameH);
             
             targetCtx.shadowColor = 'transparent';
 
+            // Draw photo area
             const p = frameSpec.photoPadding;
             const photoX = frameX + frameW * p;
             const photoY = frameY + frameW * p;
@@ -1148,6 +1166,17 @@
             targetCtx.fillRect(photoX, photoY, photoW, photoH);
             drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
 
+            // Draw special frame effects
+            if (frameSpec.type === 'film') {
+                targetCtx.fillStyle = 'rgba(60, 60, 60, 0.8)';
+                const markSize = frameW * 0.02;
+                for(let i = 0; i < 5; i++) {
+                    targetCtx.fillRect(frameX + markSize, photoY + i * (photoH / 4.5), markSize, markSize);
+                    targetCtx.fillRect(frameX + frameW - 2 * markSize, photoY + i * (photoH / 4.5), markSize, markSize);
+                }
+            }
+
+            // Draw text
             if(state.polaroid.text) {
                 targetCtx.fillStyle = frameSpec.textColor;
                 targetCtx.font = `${frameW * 0.05}px 'Caveat', cursive`;
@@ -1370,12 +1399,16 @@
                 if (preset) {
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
+                } else if (state.sizePreset === 'original' && mainImage && state.mode !== 'polaroid') {
+                    tempCanvas.width = mainImage.width;
+                    tempCanvas.height = mainImage.height;
                 } else {
                      downloadBtn.disabled = false;
                      downloadBtn.textContent = 'İndir';
                      return;
                 }
 
+                tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
                 drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
                 drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                 if (state.mode !== 'polaroid') {
@@ -1551,8 +1584,53 @@
             setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
         
+        function preloadFrameAssets() {
+            for (const key in polaroidFrameSpecs) {
+                const spec = polaroidFrameSpecs[key];
+                if (spec.type === 'pattern') {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.src = spec.value;
+                    img.onload = () => updateAndDraw(); // Redraw when image loads
+                    frameImageAssets[spec.value] = img;
+                }
+            }
+        }
+
+        function populatePolaroidFrames() {
+            polaroidFrameContainer.innerHTML = '';
+            for (const key in polaroidFrameSpecs) {
+                const spec = polaroidFrameSpecs[key];
+                const button = document.createElement('button');
+                button.className = 'frame-btn rounded-lg p-1';
+                button.dataset.frame = key;
+                
+                const preview = document.createElement('div');
+                preview.className = 'frame-preview flex items-center justify-center rounded-sm';
+                if (spec.type === 'pattern') {
+                    preview.style.backgroundImage = `url(${spec.value})`;
+                } else {
+                    preview.style.backgroundColor = spec.value;
+                }
+                
+                const imgPlaceholder = document.createElement('div');
+                imgPlaceholder.className = 'frame-preview-img';
+                
+                const span = document.createElement('span');
+                span.className = 'text-xs mt-1 block text-gray-200';
+                span.textContent = spec.name;
+                
+                preview.appendChild(imgPlaceholder);
+                button.appendChild(preview);
+                button.appendChild(span);
+                polaroidFrameContainer.appendChild(button);
+            }
+        }
+
         function init() {
             initDB();
+            populatePolaroidFrames();
+            preloadFrameAssets();
             state = getDefaultState();
             updateUIFromState(state);
             updateAndDraw();
