@@ -398,7 +398,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Büyüteç modundaki arkaplan bulanıklık sorunu düzeltildi. ---
+        // --- YENİ: Büyüteç modundaki bulanıklık efekti Safari uyumluluğu için düzeltildi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -440,6 +440,10 @@
         
         let isDraggingMagnifyFrame = false;
         let magnifyDragOffset = { x: 0, y: 0 };
+        
+        // Safari uyumluluğu için bulanıklaştırma yardımcı tuvali
+        let blurCanvas = document.createElement('canvas');
+        let blurCtx = blurCanvas.getContext('2d');
 
         const presets = {
             'original': null, 
@@ -1259,7 +1263,7 @@
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
 
-            // --- 1. Calculate 'cover' dimensions ---
+            // --- 1. 'Cover' boyutlarını hesapla ---
             const canvasRatio = w / h;
             const imageRatio = image.width / image.height;
             let destW, destH, destX, destY;
@@ -1269,24 +1273,34 @@
                 destW = w; destH = w / imageRatio; destX = 0; destY = (h - destH) / 2;
             }
 
-            // --- STEP A: Draw the blurred background ---
-            targetCtx.save();
+            // --- ADIM A: Bulanık arka planı çiz (Safari uyumlu yöntem) ---
             if (blur > 0) {
-                targetCtx.filter = `blur(${blur}px)`;
+                // Yardımcı tuvalin doğru boyutta olduğundan emin ol
+                if (blurCanvas.width !== w || blurCanvas.height !== h) {
+                    blurCanvas.width = w;
+                    blurCanvas.height = h;
+                }
+                
+                blurCtx.clearRect(0, 0, w, h);
+                blurCtx.filter = `blur(${blur}px)`;
+                blurCtx.drawImage(image, destX, destY, destW, destH);
+                
+                // Bulanık sonucu ana tuvale çiz
+                targetCtx.drawImage(blurCanvas, 0, 0);
+                
+                // Filtreyi sıfırla
+                blurCtx.filter = 'none';
+            } else {
+                // Bulanıklık yoksa, orijinal resmi arka plan olarak çiz
+                targetCtx.drawImage(image, destX, destY, destW, destH);
             }
-            targetCtx.drawImage(image, destX, destY, destW, destH);
-            targetCtx.restore(); // This removes the filter.
 
-            // --- STEP B: Draw the clear, zoomed foreground ---
+            // --- ADIM B: Net, yakınlaştırılmış ön planı çiz ---
             targetCtx.save();
-            
-            // Create a clipping path for the frame
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
             targetCtx.clip();
-
-            // Inside the clip, we want to draw the image zoomed.
-            // We can do this by transforming the context.
+            
             const centerX = frameX + frameW / 2;
             const centerY = frameY + frameH / 2;
             
@@ -1294,14 +1308,12 @@
             targetCtx.scale(zoom, zoom);
             targetCtx.translate(-centerX, -centerY);
             
-            // Now, draw the original 'covered' image. The clip and transform
-            // will take care of showing only the correct zoomed portion.
-            // This will draw over the blurred background inside the clipped area.
+            // Orijinal 'cover' resmi tekrar çiz, ancak bu sefer net, dönüştürülmüş ve kırpılmış olarak
             targetCtx.drawImage(image, destX, destY, destW, destH);
             
-            targetCtx.restore(); // Removes clip and transform
+            targetCtx.restore(); // Kırpmayı ve dönüşümü kaldırır
 
-            // --- STEP C: Draw the border ---
+            // --- ADIM C: Çerçeveyi çiz ---
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
@@ -1945,4 +1957,3 @@
     </script>
 </body>
 </html>
-__firefox
