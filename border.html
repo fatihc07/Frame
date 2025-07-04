@@ -1259,65 +1259,79 @@
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
 
-            targetCtx.save();
-
-            // --- 1. Kanvas için 'cover' (kaplama) boyutlarını hesapla ---
+            // --- 1. Calculate 'cover' dimensions for the image on the canvas ---
             const canvasRatio = w / h;
             const imageRatio = image.width / image.height;
             let destW, destH, destX, destY;
 
-            if (imageRatio > canvasRatio) { // Resim daha genişse
+            if (imageRatio > canvasRatio) { // Image is wider
                 destH = h;
                 destW = h * imageRatio;
                 destX = (w - destW) / 2;
                 destY = 0;
-            } else { // Resim daha uzun veya aynı orandaysa
+            } else { // Image is taller or same ratio
                 destW = w;
                 destH = w / imageRatio;
                 destX = 0;
                 destY = (h - destH) / 2;
             }
 
-            // --- 2. Bulanık arkaplanı çiz ---
+            // --- 2. Draw the blurred background ---
             targetCtx.save();
-            targetCtx.filter = `blur(${blur}px)`;
-            // Tüm resmi 'cover' davranışıyla çiz
-            targetCtx.drawImage(image, 0, 0, image.width, image.height, destX, destY, destW, destH);
+            if (blur > 0) {
+                targetCtx.filter = `blur(${blur}px)`;
+            }
+            // Draw the full 'covered' image with blur
+            targetCtx.drawImage(image, destX, destY, destW, destH);
             targetCtx.restore();
 
-            // --- 3. Çerçevenin içine net ve yakınlaştırılmış görüntüyü çiz ---
+            // --- 3. Draw the clear, zoomed image inside the frame ---
             targetCtx.save();
             
-            // Çerçeve alanı için bir kırpma yolu oluştur
+            // Create clipping path for the frame area
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
             targetCtx.clip();
 
-            // Yakınlaştırma efekti oluşturmak için bir ölçek dönüşümü kullanacağız.
-            // Çerçevenin merkezine yakınlaştırmak istiyoruz.
-            // 1. Çerçevenin merkezine ötele
-            targetCtx.translate(frameX + frameW / 2, frameY + frameH / 2);
-            // 2. Bağlamı ölçeklendir
-            targetCtx.scale(zoom, zoom);
-            // 3. Geri ötele
-            targetCtx.translate(-(frameX + frameW / 2), -(frameY + frameH / 2));
-            
-            // Şimdi, orijinal, bulanık olmayan resmi tekrar çiz.
-            // Arka planla aynı 'cover' boyutlarında çizilecek,
-            // bu da mükemmel bir şekilde hizalanmasını sağlayacaktır. Kırpma ve dönüşümler
-            // yalnızca doğru yakınlaştırılmış bölümü göstermeyi sağlayacaktır.
-            targetCtx.drawImage(image, 0, 0, image.width, image.height, destX, destY, destW, destH);
-            
-            targetCtx.restore(); // Bu, kırpma ve dönüşümleri kaldırır
+            // Calculate the source rectangle (sx, sy, sw, sh) from the original image
+            // that should be drawn into the frame.
 
-            // --- 4. Çerçeve kenarlığını her şeyin üzerine çiz ---
+            // First, find the coordinates of the frame relative to the drawn 'cover' image
+            const relativeFrameX = frameX - destX;
+            const relativeFrameY = frameY - destY;
+
+            // Now, convert these canvas coordinates to source image coordinates
+            const scaleToSource = image.width / destW;
+            
+            let sx = relativeFrameX * scaleToSource;
+            let sy = relativeFrameY * scaleToSource;
+            let sWidth = frameW * scaleToSource;
+            let sHeight = frameH * scaleToSource;
+
+            // Apply the zoom. We want to take a smaller slice of the source image
+            // and blow it up to the size of the frame.
+            const zoomed_sWidth = sWidth / zoom;
+            const zoomed_sHeight = sHeight / zoom;
+
+            // Center the smaller source rectangle
+            sx += (sWidth - zoomed_sWidth) / 2;
+            sy += (sHeight - zoomed_sHeight) / 2;
+            
+            // Draw the calculated source portion into the destination frame
+            targetCtx.drawImage(
+                image,
+                sx, sy, zoomed_sWidth, zoomed_sHeight, // Source rectangle (from original image)
+                frameX, frameY, frameW, frameH // Destination rectangle (the frame on canvas)
+            );
+            
+            targetCtx.restore(); // Remove the clip
+
+            // --- 4. Draw the frame border ---
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
                 targetCtx.strokeRect(frameX, frameY, frameW, frameH);
             }
-
-            targetCtx.restore();
         }
 
         function getPolaroidFrameDetails(canvasW, canvasH) {
