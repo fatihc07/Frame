@@ -513,13 +513,14 @@
             document.getElementById('polaroidDate').value = s.polaroid.date;
             document.getElementById('polaroidExportFormat').value = s.polaroid.exportFormat;
             
-            document.getElementById('singleUploader').style.display = s.mode === 'single' ? 'block' : 'none';
+            document.getElementById('singleUploader').style.display = (s.mode === 'single' || s.mode === 'polaroid') ? 'block' : 'none';
             collageUploaderDiv.style.display = s.mode === 'collage' ? 'block' : 'none';
             document.getElementById('fitFillContainer').style.visibility = s.mode === 'single' ? 'visible' : 'hidden';
             document.getElementById('collageSettings').style.display = s.mode === 'collage' ? 'block' : 'none';
             document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
             document.getElementById('imageLoaderLabel').textContent = `1. ${s.mode === 'single' ? 'Ana' : 'Kolaj'} Fotoğraf(lar)ı Seçin`;
             document.querySelector('#sizePreset option[value="original"]').disabled = s.mode === 'collage';
+            document.getElementById('polaroidSettings').style.display = s.mode === 'polaroid' ? 'block' : 'none';
         }
 
         function updateAndDraw(saveToHistory = true) {
