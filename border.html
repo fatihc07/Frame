@@ -1259,80 +1259,56 @@
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
 
-            // --- 1. Calculate 'cover' dimensions for the image on the canvas ---
+            // --- 1. Calculate 'cover' dimensions ---
             const canvasRatio = w / h;
             const imageRatio = image.width / image.height;
             let destW, destH, destX, destY;
-
-            if (imageRatio > canvasRatio) { // Image is wider
-                destH = h;
-                destW = h * imageRatio;
-                destX = (w - destW) / 2;
-                destY = 0;
-            } else { // Image is taller or same ratio
-                destW = w;
-                destH = w / imageRatio;
-                destX = 0;
-                destY = (h - destH) / 2;
+            if (imageRatio > canvasRatio) {
+                destH = h; destW = h * imageRatio; destX = (w - destW) / 2; destY = 0;
+            } else {
+                destW = w; destH = w / imageRatio; destX = 0; destY = (h - destH) / 2;
             }
 
-            // --- 2. Draw the blurred background ---
+            // --- STEP A: Draw the blurred background ---
             targetCtx.save();
             if (blur > 0) {
                 targetCtx.filter = `blur(${blur}px)`;
             }
-            // Draw the full 'covered' image with blur
             targetCtx.drawImage(image, destX, destY, destW, destH);
-            targetCtx.restore();
+            targetCtx.restore(); // This removes the filter.
 
-            // --- 3. Draw the clear, zoomed image inside the frame ---
+            // --- STEP B: Draw the clear, zoomed foreground ---
             targetCtx.save();
             
-            // Create clipping path for the frame area
+            // Create a clipping path for the frame
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
             targetCtx.clip();
 
-            // Calculate the source rectangle (sx, sy, sw, sh) from the original image
-            // that should be drawn into the frame.
-
-            // First, find the coordinates of the frame relative to the drawn 'cover' image
-            const relativeFrameX = frameX - destX;
-            const relativeFrameY = frameY - destY;
-
-            // Now, convert these canvas coordinates to source image coordinates
-            const scaleToSource = image.width / destW;
+            // Inside the clip, we want to draw the image zoomed.
+            // We can do this by transforming the context.
+            const centerX = frameX + frameW / 2;
+            const centerY = frameY + frameH / 2;
             
-            let sx = relativeFrameX * scaleToSource;
-            let sy = relativeFrameY * scaleToSource;
-            let sWidth = frameW * scaleToSource;
-            let sHeight = frameH * scaleToSource;
-
-            // Apply the zoom. We want to take a smaller slice of the source image
-            // and blow it up to the size of the frame.
-            const zoomed_sWidth = sWidth / zoom;
-            const zoomed_sHeight = sHeight / zoom;
-
-            // Center the smaller source rectangle
-            sx += (sWidth - zoomed_sWidth) / 2;
-            sy += (sHeight - zoomed_sHeight) / 2;
+            targetCtx.translate(centerX, centerY);
+            targetCtx.scale(zoom, zoom);
+            targetCtx.translate(-centerX, -centerY);
             
-            // Draw the calculated source portion into the destination frame
-            targetCtx.drawImage(
-                image,
-                sx, sy, zoomed_sWidth, zoomed_sHeight, // Source rectangle (from original image)
-                frameX, frameY, frameW, frameH // Destination rectangle (the frame on canvas)
-            );
+            // Now, draw the original 'covered' image. The clip and transform
+            // will take care of showing only the correct zoomed portion.
+            // This will draw over the blurred background inside the clipped area.
+            targetCtx.drawImage(image, destX, destY, destW, destH);
             
-            targetCtx.restore(); // Remove the clip
+            targetCtx.restore(); // Removes clip and transform
 
-            // --- 4. Draw the frame border ---
+            // --- STEP C: Draw the border ---
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
                 targetCtx.strokeRect(frameX, frameY, frameW, frameH);
             }
         }
+
 
         function getPolaroidFrameDetails(canvasW, canvasH) {
             const frameSpec = polaroidFrameSpecs[state.polaroid.frame];
