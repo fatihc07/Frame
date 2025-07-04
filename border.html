@@ -165,7 +165,7 @@
                     <div id="settingsPanel" class="pt-4">
                         <h2 class="text-lg font-semibold text-gray-100 mb-4 text-center">2. Düzenleme Araçları</h2>
 
-                        <div id="sizeAndBackgroundSettings">
+                        <div id="canvasSizeSettings">
                              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="sizePreset" class="text-xs text-gray-300 mb-2 block">Kanvas Boyutu</label>
@@ -188,6 +188,9 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div id="backgroundStyleSettings">
                             <div class="control-section">
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Arkaplan Stili</label>
                                 <div class="grid grid-cols-4 gap-2">
@@ -395,8 +398,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Polaroid çerçeve rengi artık değiştirilebilir. Gönderdiğiniz görsellere göre yeni çerçeve stilleri eklendi. ---
-        // --- YENİ: Büyüteç efekti eklendi. Fotoğraf içinde hareketli, net ve yakınlaştırılmış bir çerçeve oluşturun. ---
+        // --- YENİ: Büyüteç modunda kanvas boyutu ayarları etkinleştirildi ve bulanıklık efekti düzeltildi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -582,7 +584,8 @@
             const isCollage = s.mode === 'collage';
             const isSingle = s.mode === 'single';
 
-            document.getElementById('sizeAndBackgroundSettings').style.display = isSingle || isCollage ? 'block' : 'none';
+            document.getElementById('canvasSizeSettings').style.display = isSingle || isCollage || isMagnify ? 'block' : 'none';
+            document.getElementById('backgroundStyleSettings').style.display = isSingle || isCollage ? 'block' : 'none';
             document.getElementById('standardSettings').style.display = isSingle || isCollage ? 'block' : 'none';
             document.getElementById('polaroidSettings').style.display = isPolaroid ? 'block' : 'none';
             document.getElementById('collageSettings').style.display = isCollage ? 'block' : 'none';
@@ -592,7 +595,10 @@
             if (isPolaroid) {
                  const frameSpec = polaroidFrameSpecs[s.polaroid.frame];
                  polaroidColorSection.style.display = frameSpec && frameSpec.type === 'color' ? 'block' : 'none';
-                 document.getElementById('sizeAndBackgroundSettings').style.display = frameSpec && frameSpec.type === 'effect' ? 'none' : 'block';
+                 // Polaroid effect frames should not show background settings
+                 if (frameSpec && frameSpec.type === 'effect') {
+                     document.getElementById('backgroundStyleSettings').style.display = 'none';
+                 }
             }
 
             document.getElementById('fitFillContainer').style.visibility = isSingle ? 'visible' : 'hidden';
@@ -1221,7 +1227,7 @@
             if (state.mode === 'polaroid' && mainImage) {
                 drawPolaroidFrame(targetCtx, w, h, scale);
             } else if (state.mode === 'magnify' && mainImage) {
-                drawMagnifyEffect(targetCtx, w, h, scale);
+                drawMagnifyEffectOnContext(targetCtx, w, h, mainImage, state.magnify);
             } else {
                 const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
                 const drawableW = w - p.left - p.right;
@@ -1249,50 +1255,47 @@
             targetCtx.restore();
         }
 
-        function drawMagnifyEffect(targetCtx, w, h, scale) {
-            if (!mainImage) return;
-            targetCtx.save();
+        function drawMagnifyEffectOnContext(targetCtx, w, h, image, mState) {
+            if (!image) return;
+            const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
 
             // 1. Bulanık arkaplanı çiz
-            targetCtx.filter = `blur(${state.magnify.blur}px)`;
-            targetCtx.drawImage(mainImage, 0, 0, mainImage.width, mainImage.height, 0, 0, w, h);
-            targetCtx.filter = 'none';
+            targetCtx.save();
+            targetCtx.filter = `blur(${blur}px)`;
+            // Görüntüyü arka plan olarak tuval boyutlarına göre uzat
+            targetCtx.drawImage(image, 0, 0, w, h);
+            targetCtx.restore();
 
-            // 2. Net alanı çizmek için kırpma bölgesi oluştur
-            const { frameX, frameY, frameW, frameH, zoom, borderColor, borderWidth } = state.magnify;
+            // 2. Net, büyütülmüş alan için kırpma bölgesi oluştur
             targetCtx.save();
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
             targetCtx.clip();
 
-            // 3. Kırpılan alana orijinal, yakınlaştırılmış görüntüyü çiz
-            const sourceW = frameW / zoom;
-            const sourceH = frameH / zoom;
-            const sourceX = frameX / zoom + (frameW / 2) * (1 - 1 / zoom);
-            const sourceY = frameY / zoom + (frameH / 2) * (1 - 1 / zoom);
-            
-            const imgCanvasRatioX = mainImage.width / w;
-            const imgCanvasRatioY = mainImage.height / h;
+            // 3. Kırpılmış bölgenin içine net, büyütülmüş görüntüyü çiz
+            // Tuval koordinatlarını/boyutlarını orijinal görüntü koordinatlarına/boyutlarına eşle
+            const canvasToImageRatioX = image.width / w;
+            const canvasToImageRatioY = image.height / h;
 
-            targetCtx.drawImage(
-                mainImage,
-                sourceX * imgCanvasRatioX,
-                sourceY * imgCanvasRatioY,
-                sourceW * imgCanvasRatioX,
-                sourceH * imgCanvasRatioY,
-                frameX, frameY, frameW, frameH
-            );
+            // Orijinal, net görüntüden kaynak dikdörtgenini hesapla
+            const sx = frameX * canvasToImageRatioX;
+            const sy = frameY * canvasToImageRatioY;
+            // Kaynak dikdörtgeninin boyutu, yakınlaştırmaya bölünmüş ve görüntü boyutlarına göre ölçeklenmiş çerçeve boyutudur
+            const sWidth = (frameW / zoom) * canvasToImageRatioX;
+            const sHeight = (frameH / zoom) * canvasToImageRatioY;
+            
+            // Orijinal görüntünün hesaplanan kaynak bölümünü tuval üzerindeki çerçeveye çiz
+            targetCtx.drawImage(image, sx, sy, sWidth, sHeight, frameX, frameY, frameW, frameH);
             targetCtx.restore(); // Kırpmayı kaldır
 
-            // 4. Çerçeveyi çiz
+            // 4. Büyüteç çerçevesinin kenarlığını çiz
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
                 targetCtx.strokeRect(frameX, frameY, frameW, frameH);
             }
-            
-            targetCtx.restore();
         }
+
 
         function getPolaroidFrameDetails(canvasW, canvasH) {
             const frameSpec = polaroidFrameSpecs[state.polaroid.frame];
@@ -1656,10 +1659,30 @@
                 const preset = presets[state.sizePreset];
                 
                 if (state.mode === 'magnify' && mainImage) {
-                    tempCanvas.width = mainImage.width;
-                    tempCanvas.height = mainImage.height;
-                    const scale = mainImage.width / canvas.width;
-                    drawMagnifyEffect(tempCtx, tempCanvas.width, tempCanvas.height, scale);
+                    if (!preset) {
+                        showToast("Lütfen bir kanvas boyutu seçin.", "error");
+                        downloadBtn.disabled = false;
+                        downloadBtn.textContent = 'İndir';
+                        return;
+                    }
+                    tempCanvas.width = preset.width * qualityMultiplier;
+                    tempCanvas.height = preset.height * qualityMultiplier;
+
+                    const scaleX = tempCanvas.width / canvas.width;
+                    const scaleY = tempCanvas.height / canvas.height;
+
+                    const renderMagnifyState = {
+                        ...state.magnify,
+                        frameX: state.magnify.frameX * scaleX,
+                        frameY: state.magnify.frameY * scaleY,
+                        frameW: state.magnify.frameW * scaleX,
+                        frameH: state.magnify.frameH * scaleY,
+                        borderWidth: state.magnify.borderWidth * Math.min(scaleX, scaleY),
+                        blur: state.magnify.blur * Math.min(scaleX, scaleY)
+                    };
+                    
+                    drawMagnifyEffectOnContext(tempCtx, tempCanvas.width, tempCanvas.height, mainImage, renderMagnifyState);
+
                 } else if (preset) {
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
@@ -1670,12 +1693,12 @@
                         drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                     }
                 } else if (state.sizePreset === 'original' && mainImage && state.mode === 'single') {
-                    tempCanvas.width = mainImage.width;
-                    tempCanvas.height = mainImage.height;
-                     tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    tempCanvas.width = (mainImage.width + state.padding.left + state.padding.right) * qualityMultiplier;
+                    tempCanvas.height = (mainImage.height + state.padding.top + state.padding.bottom) * qualityMultiplier;
+                    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
                     drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
-                    drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, 1);
-                    drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, 1);
+                    drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                    drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                 } else {
                      downloadBtn.disabled = false;
                      downloadBtn.textContent = 'İndir';
