@@ -398,7 +398,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Büyüteç modundaki arkaplan bulanıklık sorunu düzeltildi. ---
+        // --- YENİ: Büyüteç moduna Command/Ctrl tuşu ile arka planı kaydırma özelliği eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -793,18 +793,12 @@
                 };
                 panStart = { x: e.clientX, y: e.clientY };
                 
-                if (state.mode === 'magnify') {
-                    const { frameX, frameY, frameW, frameH } = state.magnify;
-                    if (mouse.x > frameX && mouse.x < frameX + frameW && mouse.y > frameY && mouse.y < frameY + frameH) {
-                        isDraggingMagnifyFrame = true;
-                        magnifyDragOffset = { x: mouse.x - frameX, y: mouse.y - frameY };
-                        canvasWrapper.style.cursor = 'grabbing';
-                    }
-                } else if (isModifierDown) {
-                    if (state.mode === 'single' || state.mode === 'polaroid') {
+                if (isModifierDown) {
+                    if (state.mode === 'single' || state.mode === 'polaroid' || state.mode === 'magnify') {
                         isPanning = true;
                         activePanTarget = { type: state.mode, index: -1 };
                         initialImageOffset = { ...state.imageOffset };
+                        canvasWrapper.style.cursor = 'grabbing';
                     } else if (state.mode === 'collage') { 
                         const p = state.padding;
                         const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
@@ -814,9 +808,16 @@
                             isPanning = true;
                             activePanTarget = { type: 'collage', index: clickedIndex };
                             initialImageOffset = { ...state.collage.imageOffsets[clickedIndex] };
+                            canvasWrapper.style.cursor = 'grabbing';
                         }
                     }
-                     if(isPanning) canvasWrapper.style.cursor = 'grabbing';
+                } else if (state.mode === 'magnify') {
+                    const { frameX, frameY, frameW, frameH } = state.magnify;
+                    if (mouse.x > frameX && mouse.x < frameX + frameW && mouse.y > frameY && mouse.y < frameY + frameH) {
+                        isDraggingMagnifyFrame = true;
+                        magnifyDragOffset = { x: mouse.x - frameX, y: mouse.y - frameY };
+                        canvasWrapper.style.cursor = 'grabbing';
+                    }
                 }
             });
             
@@ -829,7 +830,6 @@
                     state.magnify.frameX = mouseX - magnifyDragOffset.x;
                     state.magnify.frameY = mouseY - magnifyDragOffset.y;
                     
-                    // Sınır kontrolü
                     state.magnify.frameX = Math.max(0, Math.min(state.magnify.frameX, canvas.width - state.magnify.frameW));
                     state.magnify.frameY = Math.max(0, Math.min(state.magnify.frameY, canvas.height - state.magnify.frameH));
 
@@ -849,9 +849,9 @@
                 
                 let targetImage, container, currentOffset, zoom = 1;
 
-                if (activePanTarget.type === 'single') {
+                if (activePanTarget.type === 'single' || activePanTarget.type === 'magnify') {
                     targetImage = mainImage;
-                    const p = state.padding;
+                    const p = (activePanTarget.type === 'single') ? state.padding : { top: 0, right: 0, bottom: 0, left: 0 };
                     container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
                     currentOffset = state.imageOffset;
                 } else if (activePanTarget.type === 'polaroid') {
@@ -892,18 +892,24 @@
                 };
                 
                 let sW, sH;
-                if(imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; }
-                else { sW = targetImage.width; sH = sW / areaRatio; }
+                const fit = (activePanTarget.type === 'single') ? state.fit : 'cover';
+                if (fit === 'cover') {
+                    if (imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; } 
+                    else { sW = targetImage.width; sH = sW / areaRatio; }
+                } else { // contain
+                    if (imgRatio > areaRatio) { sW = targetImage.width; sH = sW / areaRatio; }
+                    else { sH = targetImage.height; sW = sH * areaRatio; }
+                }
                 
                 sW /= zoom; sH /= zoom;
 
-                const maxOffsetX = Math.max(0, (targetImage.width - sW) / 2);
-                const maxOffsetY = Math.max(0, (targetImage.height - sH) / 2);
+                const maxOffsetX = Math.max(0, (targetImage.width - sW));
+                const maxOffsetY = Math.max(0, (targetImage.height - sH));
 
-                newOffset.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, newOffset.x));
-                newOffset.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, newOffset.y));
+                newOffset.x = Math.max(-maxOffsetX/2, Math.min(maxOffsetX/2, newOffset.x));
+                newOffset.y = Math.max(-maxOffsetY/2, Math.min(maxOffsetY/2, newOffset.y));
 
-                if (activePanTarget.type === 'single' || activePanTarget.type === 'polaroid') {
+                if (activePanTarget.type === 'single' || activePanTarget.type === 'polaroid' || activePanTarget.type === 'magnify') {
                     state.imageOffset = newOffset;
                 } else {
                     state.collage.imageOffsets[activePanTarget.index] = newOffset;
@@ -971,14 +977,14 @@
             const canPanSingle = state.mode === 'single' && mainImage && state.fit === 'cover';
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
             const canPanPolaroid = state.mode === 'polaroid' && mainImage;
-            const canDragMagnify = state.mode === 'magnify' && mainImage;
+            const canPanMagnify = state.mode === 'magnify' && mainImage;
 
             if (isDraggingMagnifyFrame || isPanning) {
                  canvasWrapper.style.cursor = 'grabbing';
-            } else if (canDragMagnify) {
-                 canvasWrapper.style.cursor = 'move';
-            } else if (isModifierDown && (canPanSingle || canPanCollage || canPanPolaroid)) {
+            } else if (isModifierDown && (canPanSingle || canPanCollage || canPanPolaroid || canPanMagnify)) {
                 canvasWrapper.style.cursor = 'grab';
+            } else if (!isModifierDown && state.mode === 'magnify') {
+                canvasWrapper.style.cursor = 'move';
             } else {
                 canvasWrapper.style.cursor = 'default';
             }
@@ -1005,7 +1011,6 @@
                     canvasWrapper.style.display = 'flex';
                     canvasWrapper.classList.remove('hidden');
                     state.imageOffset = { x: 0, y: 0 };
-                    // Büyüteç modu için varsayılan çerçeve konumunu ayarla
                     if (state.mode === 'magnify') {
                          const preset = presets[state.sizePreset] || { width: 1080, height: 1080 };
                          state.magnify.frameX = (preset.width - state.magnify.frameW) / 2;
@@ -1258,35 +1263,41 @@
         function drawMagnifyEffectOnContext(targetCtx, w, h, image, mState) {
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
+            const offset = state.imageOffset || { x: 0, y: 0 };
 
-            // --- 1. Calculate 'cover' dimensions ---
+            // --- 1. 'Cover' kaynak dikdörtgenini hesapla ---
             const canvasRatio = w / h;
             const imageRatio = image.width / image.height;
-            let destW, destH, destX, destY;
-            if (imageRatio > canvasRatio) {
-                destH = h; destW = h * imageRatio; destX = (w - destW) / 2; destY = 0;
-            } else {
-                destW = w; destH = w / imageRatio; destX = 0; destY = (h - destH) / 2;
-            }
+            let sW = image.width;
+            let sH = image.height;
 
-            // --- STEP A: Draw the blurred background ---
+            if (imageRatio > canvasRatio) {
+                sW = image.height * canvasRatio;
+            } else {
+                sH = image.width / canvasRatio;
+            }
+            
+            let sX = (image.width - sW) / 2 + offset.x;
+            let sY = (image.height - sH) / 2 + offset.y;
+
+            // Kaynak dikdörtgenin resim sınırları içinde kalmasını sağla
+            sX = Math.max(0, Math.min(sX, image.width - sW));
+            sY = Math.max(0, Math.min(sY, image.height - sH));
+            
+            // --- ADIM A: Bulanık arka planı çiz ---
             targetCtx.save();
             if (blur > 0) {
                 targetCtx.filter = `blur(${blur}px)`;
             }
-            targetCtx.drawImage(image, destX, destY, destW, destH);
-            targetCtx.restore(); // This removes the filter.
+            targetCtx.drawImage(image, sX, sY, sW, sH, 0, 0, w, h);
+            targetCtx.restore();
 
-            // --- STEP B: Draw the clear, zoomed foreground ---
+            // --- ADIM B: Net, yakınlaştırılmış ön planı çiz ---
             targetCtx.save();
-            
-            // Create a clipping path for the frame
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
             targetCtx.clip();
-
-            // Inside the clip, we want to draw the image zoomed.
-            // We can do this by transforming the context.
+            
             const centerX = frameX + frameW / 2;
             const centerY = frameY + frameH / 2;
             
@@ -1294,14 +1305,11 @@
             targetCtx.scale(zoom, zoom);
             targetCtx.translate(-centerX, -centerY);
             
-            // Now, draw the original 'covered' image. The clip and transform
-            // will take care of showing only the correct zoomed portion.
-            // This will draw over the blurred background inside the clipped area.
-            targetCtx.drawImage(image, destX, destY, destW, destH);
+            targetCtx.drawImage(image, sX, sY, sW, sH, 0, 0, w, h);
             
-            targetCtx.restore(); // Removes clip and transform
+            targetCtx.restore();
 
-            // --- STEP C: Draw the border ---
+            // --- ADIM C: Çerçeveyi çiz ---
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
@@ -1620,6 +1628,10 @@
                 
                 sX = (img.width - sW) / 2 + (offset.x || 0);
                 sY = (img.height - sH) / 2 + (offset.y || 0);
+
+                // Kaynak dikdörtgenin resim sınırları içinde kalmasını sağla
+                sX = Math.max(0, Math.min(sX, img.width - sW));
+                sY = Math.max(0, Math.min(sY, img.height - sH));
             }
             
             ctx.drawImage(img, sX, sY, sW, sH, x, y, w, h);
@@ -1945,4 +1957,3 @@
     </script>
 </body>
 </html>
-__firefox
