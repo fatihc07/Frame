@@ -1259,41 +1259,76 @@
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
 
-            // 1. Bulanık arkaplanı çiz
+            targetCtx.save();
+
+            // --- 1. Calculate 'cover' dimensions for the image on the canvas ---
+            const canvasRatio = w / h;
+            const imageRatio = image.width / image.height;
+            let destW, destH, destX, destY;
+
+            if (imageRatio > canvasRatio) { // Image is wider than canvas, so it will be clipped on the sides
+                destH = h;
+                destW = h * imageRatio;
+                destX = (w - destW) / 2;
+                destY = 0;
+            } else { // Image is taller or same ratio, so it will be clipped on top/bottom
+                destW = w;
+                destH = w / imageRatio;
+                destX = 0;
+                destY = (h - destH) / 2;
+            }
+
+            // --- 2. Draw the blurred background ---
             targetCtx.save();
             targetCtx.filter = `blur(${blur}px)`;
-            // Görüntüyü arka plan olarak tuval boyutlarına göre uzat
-            targetCtx.drawImage(image, 0, 0, w, h);
+            targetCtx.drawImage(image, destX, destY, destW, destH);
             targetCtx.restore();
 
-            // 2. Net, büyütülmüş alan için kırpma bölgesi oluştur
+            // --- 3. Draw the clear, zoomed image inside the frame ---
             targetCtx.save();
+            // Create clipping path for the frame
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
             targetCtx.clip();
 
-            // 3. Kırpılmış bölgenin içine net, büyütülmüş görüntüyü çiz
-            // Tuval koordinatlarını/boyutlarını orijinal görüntü koordinatlarına/boyutlarına eşle
-            const canvasToImageRatioX = image.width / w;
-            const canvasToImageRatioY = image.height / h;
-
-            // Orijinal, net görüntüden kaynak dikdörtgenini hesapla
-            const sx = frameX * canvasToImageRatioX;
-            const sy = frameY * canvasToImageRatioY;
-            // Kaynak dikdörtgeninin boyutu, yakınlaştırmaya bölünmüş ve görüntü boyutlarına göre ölçeklenmiş çerçeve boyutudur
-            const sWidth = (frameW / zoom) * canvasToImageRatioX;
-            const sHeight = (frameH / zoom) * canvasToImageRatioY;
+            // Calculate the source rectangle from the original image for the zoom effect
+            // We need to map the frame's position relative to the covered image (destX/Y/W/H)
+            // back to the source image's coordinates.
             
-            // Orijinal görüntünün hesaplanan kaynak bölümünü tuval üzerindeki çerçeveye çiz
-            targetCtx.drawImage(image, sx, sy, sWidth, sHeight, frameX, frameY, frameW, frameH);
-            targetCtx.restore(); // Kırpmayı kaldır
+            // Position of the frame relative to the on-canvas image
+            const relativeFrameX = frameX - destX;
+            const relativeFrameY = frameY - destY;
 
-            // 4. Büyüteç çerçevesinin kenarlığını çiz
+            // Scale factor from on-canvas image size to original image size
+            const scaleToSource = image.width / destW;
+
+            // Source rectangle in original image coordinates
+            let sx = relativeFrameX * scaleToSource;
+            let sy = relativeFrameY * scaleToSource;
+            let sWidth = frameW * scaleToSource;
+            let sHeight = frameH * scaleToSource;
+
+            // Apply zoom by shrinking the source rectangle around its center
+            const newSWidth = sWidth / zoom;
+            const newSHeight = sHeight / zoom;
+            sx += (sWidth - newSWidth) / 2;
+            sy += (sHeight - newSHeight) / 2;
+            sWidth = newSWidth;
+            sHeight = newSHeight;
+
+            // Draw the zoomed portion into the frame
+            targetCtx.drawImage(image, sx, sy, sWidth, sHeight, frameX, frameY, frameW, frameH);
+            
+            targetCtx.restore(); // Remove clipping path
+
+            // --- 4. Draw the frame border ---
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
                 targetCtx.strokeRect(frameX, frameY, frameW, frameH);
             }
+
+            targetCtx.restore();
         }
 
 
