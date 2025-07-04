@@ -132,9 +132,10 @@
                     <p class="mt-2 text-gray-300">Fotoğraflarınıza sanatsal dokunuşlar katın.</p>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-2 p-1 bg-black/10 rounded-lg">
-                     <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold">Tek Fotoğraf</button>
-                     <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold">Kolaj</button>
+                <div class="grid grid-cols-3 gap-2 p-1 bg-black/10 rounded-lg">
+                    <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold">Tek Fotoğraf</button>
+                    <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold">Kolaj</button>
+                    <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold">Polaroid</button>
                 </div>
 
                 <div class="space-y-4">
@@ -272,6 +273,36 @@
                     </div>
                 </div>
 
+                <div id="polaroidSettings" class="hidden control-section">
+                    <label class="block text-sm font-medium text-gray-200 mb-4">Polaroid Ayarları</label>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="mb-1 block">Tasarım</label>
+                            <select id="polaroidDesign" class="w-full p-2 rounded-lg">
+                                <option value="classic">Klasik</option>
+                                <option value="modern">Modern</option>
+                                <option value="tilted">Eğik</option>
+                                <option value="bw">Siyah Beyaz</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="mb-1 block">Alt Yazı</label>
+                            <input type="text" id="polaroidCaption" placeholder="Alt yazı..." class="w-full p-2 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="mb-1 block">Tarih</label>
+                            <input type="date" id="polaroidDate" class="w-full p-2 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="mb-1 block">Çıktı Formatı</label>
+                            <select id="polaroidExportFormat" class="w-full p-2 rounded-lg">
+                                <option value="png">PNG</option>
+                                <option value="jpeg">JPEG</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-white/20 mt-6">
                     <div class="flex gap-2">
                         <button id="undoBtn" disabled title="Geri Al" class="bg-black/20 text-white font-bold p-3 rounded-lg hover:bg-black/30 disabled:opacity-50 disabled:cursor-not-allowed"><i class="gg-undo"></i></button>
@@ -382,7 +413,14 @@
                     imageOffsets: []
                 },
                 text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
-                watermark: { opacity: 50, size: 20, position: 'bottom-right' }
+                watermark: { opacity: 50, size: 20, position: 'bottom-right' },
+                polaroid: {
+                    enabled: false,
+                    design: 'classic',
+                    caption: '',
+                    date: '',
+                    exportFormat: 'png',
+                },
             };
         }
         
@@ -428,6 +466,12 @@
                 size: parseInt(document.getElementById('watermarkSize').value, 10),
                 position: document.getElementById('watermarkPosition').value,
             };
+            state.polaroid = {
+                design: document.getElementById('polaroidDesign').value,
+                caption: document.getElementById('polaroidCaption').value,
+                date: document.getElementById('polaroidDate').value,
+                exportFormat: document.getElementById('polaroidExportFormat').value,
+            };
         }
 
         function updateUIFromState(s) {
@@ -464,6 +508,10 @@
             document.getElementById('watermarkOpacity').value = s.watermark.opacity; 
             document.getElementById('watermarkSize').value = s.watermark.size; 
             document.getElementById('watermarkPosition').value = s.watermark.position;
+            document.getElementById('polaroidDesign').value = s.polaroid.design;
+            document.getElementById('polaroidCaption').value = s.polaroid.caption;
+            document.getElementById('polaroidDate').value = s.polaroid.date;
+            document.getElementById('polaroidExportFormat').value = s.polaroid.exportFormat;
             
             document.getElementById('singleUploader').style.display = s.mode === 'single' ? 'block' : 'none';
             collageUploaderDiv.style.display = s.mode === 'collage' ? 'block' : 'none';
@@ -683,6 +731,12 @@
                     deleteCollageImage(indexToDelete);
                 }
             });
+
+            document.getElementById('polaroidModeBtn').addEventListener('click', () => { if (state.mode !== 'polaroid') switchMode('polaroid'); });
+            document.getElementById('polaroidDesign').addEventListener('change', () => { state.polaroid.design = document.getElementById('polaroidDesign').value; updateAndDraw(); });
+            document.getElementById('polaroidCaption').addEventListener('input', () => { state.polaroid.caption = document.getElementById('polaroidCaption').value; updateAndDraw(); });
+            document.getElementById('polaroidDate').addEventListener('input', () => { state.polaroid.date = document.getElementById('polaroidDate').value; updateAndDraw(); });
+            document.getElementById('polaroidExportFormat').addEventListener('change', () => { state.polaroid.exportFormat = document.getElementById('polaroidExportFormat').value; });
         }
         
         function switchMode(mode) {
@@ -883,23 +937,35 @@
         }
 
         function drawPreview() {
-            const hasImage = (state.mode === 'single' && mainImage) || (state.mode === 'collage' && collageImages.length > 0);
-            if (!hasImage) {
-                previewPlaceholder.classList.remove('hidden');
-                canvasWrapper.classList.add('hidden');
-                return;
-            };
-            const preset = presets[state.sizePreset];
-            if (state.sizePreset === 'original' && mainImage) {
-                canvas.width = mainImage.width + state.padding.left + state.padding.right;
-                canvas.height = mainImage.height + state.padding.top + state.padding.bottom;
-            } else if (preset) {
-                canvas.width = preset.width;
-                canvas.height = preset.height;
-            } else { return; }
-            drawBackground(ctx, canvas.width, canvas.height);
-            drawMainContent(ctx, canvas.width, canvas.height);
-            drawTextAndWatermark(ctx, canvas.width, canvas.height);
+            previewPlaceholder.classList.add('hidden');
+            canvasWrapper.classList.remove('hidden');
+            let w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            if (state.mode === 'polaroid') {
+                // Tek fotoğraf veya kolajı polaroid çerçeveye oturt
+                let img = null;
+                if (mainImage && state.mode === 'polaroid') img = mainImage;
+                else if (collageImages.length > 0) {
+                    // Kolajı geçici bir canvas'a çiz
+                    let tempCanvas = document.createElement('canvas');
+                    let tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = w;
+                    tempCanvas.height = h;
+                    drawCollageLayout(tempCtx, w, h, 1);
+                    img = new Image();
+                    img.src = tempCanvas.toDataURL();
+                }
+                if (img) {
+                    // Polaroid çerçeve boyutunu belirle
+                    let polaroidW = w * 0.9;
+                    let polaroidH = h * 0.75;
+                    drawPolaroid(ctx, img, (w - polaroidW) / 2, (h - polaroidH) / 2, polaroidW, polaroidH, state.polaroid.design, state.polaroid.caption, state.polaroid.date);
+                }
+            } else {
+                drawBackground(ctx, w, h);
+                drawMainContent(ctx, w, h);
+                drawTextAndWatermark(ctx, w, h);
+            }
         }
 
         function drawBackground(targetCtx, w, h) {
@@ -1164,23 +1230,56 @@
                 const tempCtx = tempCanvas.getContext('2d');
                 const qualityMultiplier = state.sizePreset === 'original' ? 1 : 2.5;
                 const preset = presets[state.sizePreset];
-                if (state.sizePreset === 'original' && mainImage) {
-                    tempCanvas.width = mainImage.width + state.padding.left + state.padding.right;
-                    tempCanvas.height = mainImage.height + state.padding.top + state.padding.bottom;
-                } else if(preset) {
-                    tempCanvas.width = preset.width * qualityMultiplier;
-                    tempCanvas.height = preset.height * qualityMultiplier;
+                let w, h;
+                if (state.mode === 'polaroid') {
+                    w = preset ? preset.width * qualityMultiplier : 1080 * qualityMultiplier;
+                    h = preset ? preset.height * qualityMultiplier : 1350 * qualityMultiplier;
+                    tempCanvas.width = w;
+                    tempCanvas.height = h;
+                    let img = null;
+                    if (mainImage) img = mainImage;
+                    else if (collageImages.length > 0) {
+                        let tempColCanvas = document.createElement('canvas');
+                        let tempColCtx = tempColCanvas.getContext('2d');
+                        tempColCanvas.width = w;
+                        tempColCanvas.height = h * 0.75;
+                        drawCollageLayout(tempColCtx, tempColCanvas.width, tempColCanvas.height, 1);
+                        img = new Image();
+                        img.src = tempColCanvas.toDataURL();
+                    }
+                    if (img) {
+                        let polaroidW = w * 0.95;
+                        let polaroidH = h * 0.8;
+                        drawPolaroid(tempCtx, img, (w - polaroidW) / 2, (h - polaroidH) / 2, polaroidW, polaroidH, state.polaroid.design, state.polaroid.caption, state.polaroid.date);
+                    }
                 } else {
-                     downloadBtn.disabled = false;
-                     downloadBtn.textContent = 'İndir';
-                     return;
+                    if (state.sizePreset === 'original' && mainImage) {
+                        w = mainImage.width + state.padding.left + state.padding.right;
+                        h = mainImage.height + state.padding.top + state.padding.bottom;
+                    } else if(preset) {
+                        w = preset.width * qualityMultiplier;
+                        h = preset.height * qualityMultiplier;
+                    } else {
+                        downloadBtn.disabled = false;
+                        downloadBtn.textContent = 'İndir';
+                        return;
+                    }
+                    tempCanvas.width = w;
+                    tempCanvas.height = h;
+                    drawBackground(tempCtx, w, h);
+                    drawMainContent(tempCtx, w, h, qualityMultiplier);
+                    drawTextAndWatermark(tempCtx, w, h, qualityMultiplier);
                 }
-                drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
-                drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                const format = state.mode === 'polaroid' ? state.polaroid.exportFormat : 'png';
+                let dataUrl;
+                if (format === 'jpeg') {
+                    dataUrl = tempCanvas.toDataURL('image/jpeg', 0.95);
+                } else {
+                    dataUrl = tempCanvas.toDataURL('image/png', 1.0);
+                }
                 const link = document.createElement('a');
-                link.href = tempCanvas.toDataURL('image/png', 1.0);
-                link.download = `${originalFileName}-duzenlenmis.png`;
+                link.href = dataUrl;
+                link.download = `${originalFileName}-duzenlenmis.${format}`;
                 link.click();
                 downloadBtn.disabled = false;
                 downloadBtn.textContent = 'İndir';
@@ -1357,6 +1456,81 @@
         }
         
         window.onload = init;
+
+        // POLAROID ÇİZİM FONKSİYONLARI
+        function drawPolaroidClassic(ctx, img, x, y, w, h, caption = '', date = '') {
+            const border = w * 0.05;
+            const bottomBorder = border * 3;
+            ctx.save();
+            ctx.fillStyle = '#f8f8f8';
+            ctx.fillRect(x, y, w, h + bottomBorder);
+            ctx.drawImage(img, x + border, y + border, w - 2 * border, h - 2 * border);
+            ctx.font = `${border * 1.2}px 'Playfair Display', cursive`;
+            ctx.fillStyle = '#444';
+            ctx.textAlign = 'center';
+            if (caption) ctx.fillText(caption, x + w / 2, y + h + bottomBorder * 0.55);
+            if (date) ctx.fillText(date, x + w / 2, y + h + bottomBorder * 0.85);
+            ctx.restore();
+        }
+        function drawPolaroidModern(ctx, img, x, y, w, h, caption = '', date = '') {
+            const border = w * 0.04;
+            const bottomBorder = border * 4;
+            ctx.save();
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = '#bbb';
+            ctx.shadowBlur = border;
+            ctx.fillRect(x, y, w, h + bottomBorder);
+            ctx.shadowBlur = 0;
+            ctx.drawImage(img, x + border, y + border, w - 2 * border, h - 2 * border);
+            ctx.font = `${border * 1.3}px 'Pacifico', cursive`;
+            ctx.fillStyle = '#222';
+            ctx.textAlign = 'center';
+            if (caption) ctx.fillText(caption, x + w / 2, y + h + bottomBorder * 0.5);
+            if (date) ctx.fillText(date, x + w / 2, y + h + bottomBorder * 0.8);
+            ctx.restore();
+        }
+        function drawPolaroidTilted(ctx, img, x, y, w, h, caption = '', date = '') {
+            const border = w * 0.05;
+            const bottomBorder = border * 3;
+            ctx.save();
+            ctx.translate(x + w / 2, y + (h + bottomBorder) / 2);
+            ctx.rotate(-0.07);
+            ctx.translate(-w / 2, -(h + bottomBorder) / 2);
+            ctx.fillStyle = '#f4f4f4';
+            ctx.shadowColor = '#888';
+            ctx.shadowBlur = border * 1.5;
+            ctx.fillRect(0, 0, w, h + bottomBorder);
+            ctx.shadowBlur = 0;
+            ctx.drawImage(img, border, border, w - 2 * border, h - 2 * border);
+            ctx.font = `${border * 1.1}px 'Indie Flower', cursive`;
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            if (caption) ctx.fillText(caption, w / 2, h + bottomBorder * 0.55);
+            if (date) ctx.fillText(date, w / 2, h + bottomBorder * 0.85);
+            ctx.restore();
+        }
+        function drawPolaroidBW(ctx, img, x, y, w, h, caption = '', date = '') {
+            const border = w * 0.05;
+            const bottomBorder = border * 3;
+            ctx.save();
+            ctx.fillStyle = '#ededed';
+            ctx.fillRect(x, y, w, h + bottomBorder);
+            ctx.filter = 'grayscale(1)';
+            ctx.drawImage(img, x + border, y + border, w - 2 * border, h - 2 * border);
+            ctx.filter = 'none';
+            ctx.font = `${border * 1.1}px 'Roboto Mono', monospace`;
+            ctx.fillStyle = '#222';
+            ctx.textAlign = 'center';
+            if (caption) ctx.fillText(caption, x + w / 2, y + h + bottomBorder * 0.55);
+            if (date) ctx.fillText(date, x + w / 2, y + h + bottomBorder * 0.85);
+            ctx.restore();
+        }
+        function drawPolaroid(ctx, img, x, y, w, h, design, caption, date) {
+            if (design === 'classic') drawPolaroidClassic(ctx, img, x, y, w, h, caption, date);
+            else if (design === 'modern') drawPolaroidModern(ctx, img, x, y, w, h, caption, date);
+            else if (design === 'tilted') drawPolaroidTilted(ctx, img, x, y, w, h, caption, date);
+            else if (design === 'bw') drawPolaroidBW(ctx, img, x, y, w, h, caption, date);
+        }
     </script>
 </body>
 </html>
