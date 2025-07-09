@@ -27,9 +27,9 @@
 
         .control-section { padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.2); }
         .focus-ring:focus { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.5); outline: none; }
-        .mode-btn, .fit-btn, .layout-btn { background-color: rgba(0, 0, 0, 0.1); color: #e2e8f0; transition: all 0.2s ease-in-out; }
-        .mode-btn:hover, .fit-btn:hover, .layout-btn:hover { background-color: rgba(0, 0, 0, 0.2); }
-        .mode-btn.active, .fit-btn.active, .layout-btn.active { background-color: rgba(20, 10, 50, 0.6); color: white; box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.2); }
+        .mode-btn, .fit-btn, .layout-btn, .pattern-btn { background-color: rgba(0, 0, 0, 0.1); color: #e2e8f0; transition: all 0.2s ease-in-out; }
+        .mode-btn:hover, .fit-btn:hover, .layout-btn:hover, .pattern-btn:hover { background-color: rgba(0, 0, 0, 0.2); }
+        .mode-btn.active, .fit-btn.active, .layout-btn.active, .pattern-btn.active { background-color: rgba(20, 10, 50, 0.6); color: white; box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.2); }
         .upload-area { transition: all 0.2s ease-in-out; border-color: rgba(255, 255, 255, 0.3);}
         .upload-area.drag-over { border-color: #a78bfa; background-color: rgba(167, 139, 250, 0.2); }
 
@@ -138,12 +138,13 @@
                     <p class="mt-2 text-gray-300">Fotoğraflarınıza sanatsal dokunuşlar katın.</p>
                 </div>
                 
-                <div class="grid grid-cols-5 gap-2 p-1 bg-black/10 rounded-lg">
+                <div class="grid grid-cols-3 md:grid-cols-6 gap-2 p-1 bg-black/10 rounded-lg">
                      <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold text-sm">Tekli</button>
                      <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Kolaj</button>
                      <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Polaroid</button>
                      <button id="magnifyModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Büyüteç</button>
                      <button id="doubleExposureModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Çift Pozlama</button>
+                     <button id="lightEffectModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Işık Efekti</button>
                 </div>
 
                 <div class="space-y-4">
@@ -201,6 +202,14 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div id="imageAdjustments" class="control-section">
+                             <label class="block text-sm font-medium text-gray-200">Genel Ayarlamalar</label>
+                             <div class="mt-4">
+                                <div class="flex justify-between items-center mb-1"><label for="exposure" class="text-xs text-gray-300">Pozlama</label><span id="exposureValue" class="text-sm font-semibold text-violet-300">0</span></div>
+                                <input type="range" id="exposure" value="0" min="-100" max="100" class="w-full">
+                             </div>
                         </div>
 
                         <div id="backgroundStyleSettings">
@@ -363,6 +372,49 @@
                             </div>
                         </div>
 
+                        <div id="lightEffectSettings" class="hidden control-section">
+                            <div class="space-y-6 text-gray-200">
+                                <div>
+                                    <label class="block text-sm font-medium mb-3">Işık Deseni</label>
+                                    <div id="lightPatternContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                                        <!-- Desenler JS ile eklenecek -->
+                                    </div>
+                                </div>
+                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="lightEffectOpacity" class="mb-1 block text-sm">Opaklık</label>
+                                        <input type="range" id="lightEffectOpacity" value="50" min="0" max="100" class="w-full">
+                                    </div>
+                                    <div>
+                                        <label for="lightEffectColor" class="mb-1 block text-sm">Işık Rengi</label>
+                                        <input type="color" id="lightEffectColor" value="#FFFFFF">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="lightEffectAngle" class="mb-1 block text-sm">Açı</label>
+                                        <input type="range" id="lightEffectAngle" value="45" min="0" max="360" class="w-full">
+                                    </div>
+                                    <div>
+                                        <label for="lightEffectScale" class="mb-1 block text-sm">Ölçek</label>
+                                        <input type="range" id="lightEffectScale" value="100" min="20" max="300" class="w-full">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="lightEffectBlendMode" class="mb-1 block text-sm">Karışım Modu</label>
+                                    <select id="lightEffectBlendMode" class="w-full h-12 px-3 rounded-lg focus-ring">
+                                        <option value="overlay" selected>Overlay</option>
+                                        <option value="screen">Screen</option>
+                                        <option value="soft-light">Soft Light</option>
+                                        <option value="hard-light">Hard Light</option>
+                                        <option value="color-dodge">Color Dodge</option>
+                                        <option value="lighten">Lighten</option>
+                                        <option value="source-over">Normal</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="generalTools">
                             <div class="control-section">
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Metin Ekle</label>
@@ -454,7 +506,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Çift Pozlama modu eklendi. ---
+        // --- YENİ: Pozlama ayarı, yeni ışık efektleri ve efekt kaydırma özelliği eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -479,6 +531,7 @@
         const collageThumbnailsContainer = document.getElementById('collageThumbnailsContainer');
         const polaroidFrameContainer = document.getElementById('polaroidFrameContainer');
         const polaroidColorSection = document.getElementById('polaroidColorSection');
+        const lightPatternContainer = document.getElementById('lightPatternContainer');
 
         let db;
         let state = {};
@@ -501,6 +554,19 @@
         
         let isDraggingMagnifyFrame = false;
         let magnifyDragOffset = { x: 0, y: 0 };
+        
+        const lightPatterns = {
+            'blinds': { name: 'Jaluzi' },
+            'window': { name: 'Pencere' },
+            'lines': { name: 'Çizgiler' },
+            'diagonal-lines': { name: 'Çapraz' },
+            'grid': { name: 'Izgara' },
+            'god-rays': { name: 'Hüzme' },
+            'bokeh': { name: 'Bokeh' },
+            'leak1': { name: 'Sızıntı 1' },
+            'leak2': { name: 'Sızıntı 2' },
+            'spotlight': { name: 'Spot Işığı' },
+        };
 
         const presets = {
             'original': null, 
@@ -539,6 +605,9 @@
                 padding: { top: 0, right: 0, bottom: 0, left: 0 }, syncPadding: true,
                 bgType: 'solid', color1: '#000000', color2: '#4a5568',
                 imageOffset: { x: 0, y: 0 },
+                imageAdjustments: {
+                    exposure: 0,
+                },
                 collage: { 
                     gap: 10, 
                     layout: 'auto',
@@ -564,6 +633,15 @@
                     topImageOffset: { x: 0, y: 0 },
                     bottomImageOffset: { x: 0, y: 0 }
                 },
+                lightEffect: {
+                    pattern: 'blinds',
+                    opacity: 40,
+                    color: '#FFFFFF',
+                    angle: 45,
+                    scale: 100,
+                    blendMode: 'overlay',
+                    offset: { x: 0, y: 0 }
+                },
                 text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
                 watermark: { opacity: 50, size: 20, position: 'bottom-right' }
             };
@@ -571,12 +649,14 @@
         
         function syncStateWithUI() {
             // Modu belirle
-            if (document.getElementById('singleModeBtn').classList.contains('active')) state.mode = 'single';
-            else if (document.getElementById('collageModeBtn').classList.contains('active')) state.mode = 'collage';
-            else if (document.getElementById('polaroidModeBtn').classList.contains('active')) state.mode = 'polaroid';
-            else if (document.getElementById('magnifyModeBtn').classList.contains('active')) state.mode = 'magnify';
-            else if (document.getElementById('doubleExposureModeBtn').classList.contains('active')) state.mode = 'doubleExposure';
-
+            document.querySelectorAll('.mode-btn.active').forEach(b => {
+                if(b.id === 'singleModeBtn') state.mode = 'single';
+                else if(b.id === 'collageModeBtn') state.mode = 'collage';
+                else if(b.id === 'polaroidModeBtn') state.mode = 'polaroid';
+                else if(b.id === 'magnifyModeBtn') state.mode = 'magnify';
+                else if(b.id === 'doubleExposureModeBtn') state.mode = 'doubleExposure';
+                else if(b.id === 'lightEffectModeBtn') state.mode = 'lightEffect';
+            });
 
             // Tekli mod ayarları
             const newFit = document.getElementById('fitContainBtn').classList.contains('active') ? 'contain' : 'cover';
@@ -602,6 +682,9 @@
             state.bgType = document.querySelector('input[name="bgType"]:checked').value;
             state.color1 = document.getElementById('color1').value;
             state.color2 = document.getElementById('color2').value;
+
+            // Genel Ayarlamalar
+            state.imageAdjustments.exposure = parseInt(document.getElementById('exposure').value, 10);
             
             // Kolaj ayarları
             state.collage.gap = parseInt(document.getElementById('collageGap').value, 10);
@@ -631,6 +714,14 @@
             state.doubleExposure.opacity = parseInt(document.getElementById('doubleExposureOpacity').value, 10);
             state.doubleExposure.blendMode = document.getElementById('blendMode').value;
 
+            // Işık Efekti ayarları
+            state.lightEffect.pattern = document.querySelector('#lightPatternContainer .active')?.dataset.pattern;
+            state.lightEffect.opacity = parseInt(document.getElementById('lightEffectOpacity').value, 10);
+            state.lightEffect.color = document.getElementById('lightEffectColor').value;
+            state.lightEffect.angle = parseInt(document.getElementById('lightEffectAngle').value, 10);
+            state.lightEffect.scale = parseInt(document.getElementById('lightEffectScale').value, 10);
+            state.lightEffect.blendMode = document.getElementById('lightEffectBlendMode').value;
+
             // Genel araçlar
             state.text = {
                 content: document.getElementById('textInput').value,
@@ -647,26 +738,29 @@
         }
 
         function updateUIFromState(s) {
-            document.getElementById('singleModeBtn').classList.toggle('active', s.mode === 'single');
-            document.getElementById('collageModeBtn').classList.toggle('active', s.mode === 'collage');
-            document.getElementById('polaroidModeBtn').classList.toggle('active', s.mode === 'polaroid');
-            document.getElementById('magnifyModeBtn').classList.toggle('active', s.mode === 'magnify');
-            document.getElementById('doubleExposureModeBtn').classList.toggle('active', s.mode === 'doubleExposure');
-
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                const mode = btn.id.replace('ModeBtn', '');
+                btn.classList.toggle('active', s.mode === mode);
+            });
 
             const isMagnify = s.mode === 'magnify';
             const isPolaroid = s.mode === 'polaroid';
             const isCollage = s.mode === 'collage';
             const isSingle = s.mode === 'single';
             const isDoubleExposure = s.mode === 'doubleExposure';
+            const isLightEffect = s.mode === 'lightEffect';
 
-            document.getElementById('canvasSizeSettings').style.display = isSingle || isCollage || isMagnify || isDoubleExposure ? 'block' : 'none';
+            const hasImage = mainImage || (collageImages && collageImages.length > 0) || (topImage && bottomImage);
+            document.getElementById('imageAdjustments').style.display = hasImage ? 'block' : 'none';
+
+            document.getElementById('canvasSizeSettings').style.display = isSingle || isCollage || isMagnify || isDoubleExposure || isLightEffect ? 'block' : 'none';
             document.getElementById('backgroundStyleSettings').style.display = isSingle || isCollage || isDoubleExposure ? 'block' : 'none';
             document.getElementById('standardSettings').style.display = isSingle || isCollage ? 'block' : 'none';
             document.getElementById('polaroidSettings').style.display = isPolaroid ? 'block' : 'none';
             document.getElementById('collageSettings').style.display = isCollage ? 'block' : 'none';
             document.getElementById('magnifySettings').style.display = isMagnify ? 'block' : 'none';
             document.getElementById('doubleExposureSettings').style.display = isDoubleExposure ? 'block' : 'none';
+            document.getElementById('lightEffectSettings').style.display = isLightEffect ? 'block' : 'none';
             document.getElementById('generalTools').style.display = isSingle || isCollage ? 'block' : 'none';
             
             if (isPolaroid) {
@@ -677,7 +771,7 @@
                  }
             }
 
-            document.getElementById('fitFillContainer').style.visibility = isSingle ? 'visible' : 'hidden';
+            document.getElementById('fitFillContainer').style.visibility = (isSingle || isLightEffect) ? 'visible' : 'hidden';
             document.getElementById('colorPickers').style.display = s.bgType === 'transparent' ? 'none' : 'grid';
             document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
 
@@ -685,6 +779,9 @@
             document.getElementById('fitCoverBtn').classList.toggle('active', s.fit === 'cover');
             document.getElementById('sizePreset').value = s.sizePreset;
             
+            document.getElementById('exposure').value = s.imageAdjustments.exposure;
+            document.getElementById('exposureValue').textContent = s.imageAdjustments.exposure;
+
             document.getElementById('paddingTop').value = s.padding.top; 
             document.getElementById('paddingRight').value = s.padding.right; 
             document.getElementById('paddingBottom').value = s.padding.bottom; 
@@ -721,6 +818,13 @@
             document.getElementById('doubleExposureOpacityValue').textContent = `${s.doubleExposure.opacity}%`;
             document.getElementById('blendMode').value = s.doubleExposure.blendMode;
 
+            document.querySelectorAll('#lightPatternContainer button').forEach(b => b.classList.toggle('active', b.dataset.pattern === s.lightEffect.pattern));
+            document.getElementById('lightEffectOpacity').value = s.lightEffect.opacity;
+            document.getElementById('lightEffectColor').value = s.lightEffect.color;
+            document.getElementById('lightEffectAngle').value = s.lightEffect.angle;
+            document.getElementById('lightEffectScale').value = s.lightEffect.scale;
+            document.getElementById('lightEffectBlendMode').value = s.lightEffect.blendMode;
+
             document.getElementById('textInput').value = s.text.content; 
             document.getElementById('textColor').value = s.text.color; 
             document.getElementById('textSize').value = s.text.size; 
@@ -730,13 +834,13 @@
             document.getElementById('watermarkSize').value = s.watermark.size; 
             document.getElementById('watermarkPosition').value = s.watermark.position;
             
-            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify ? 'block' : 'none';
+            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify || isLightEffect ? 'block' : 'none';
             collageUploaderDiv.style.display = isCollage ? 'block' : 'none';
             doubleExposureUploaderDiv.style.display = isDoubleExposure ? 'block' : 'none';
 
             document.getElementById('imageLoaderLabel').textContent = `1. ${isCollage ? 'Kolaj Fotoğrafları' : isDoubleExposure ? 'Katmanları Seçin' : 'Fotoğraf Seçin'}`;
-            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure;
-            if ((isPolaroid || isMagnify || isDoubleExposure) && s.sizePreset === 'original') {
+            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure || isLightEffect;
+            if ((isPolaroid || isMagnify || isDoubleExposure || isLightEffect) && s.sizePreset === 'original') {
                 s.sizePreset = 'square'; // Varsayılan boyut
                 document.getElementById('sizePreset').value = 'square';
             }
@@ -790,12 +894,16 @@
         }
         
         function setupEventListeners() {
-            document.getElementById('singleModeBtn').addEventListener('click', () => { if (state.mode !== 'single') switchMode('single'); });
-            document.getElementById('collageModeBtn').addEventListener('click', () => { if (state.mode !== 'collage') switchMode('collage'); });
-            document.getElementById('polaroidModeBtn').addEventListener('click', () => { if (state.mode !== 'polaroid') switchMode('polaroid'); });
-            document.getElementById('magnifyModeBtn').addEventListener('click', () => { if (state.mode !== 'magnify') switchMode('magnify'); });
-            document.getElementById('doubleExposureModeBtn').addEventListener('click', () => { if (state.mode !== 'doubleExposure') switchMode('doubleExposure'); });
-
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const newMode = btn.id.replace('ModeBtn', '');
+                    if (state.mode !== newMode) {
+                        document.querySelector('.mode-btn.active').classList.remove('active');
+                        btn.classList.add('active');
+                        switchMode(newMode);
+                    }
+                });
+            });
             
             document.getElementById('fitContainBtn').addEventListener('click', () => { setFitMode('contain'); });
             document.getElementById('fitCoverBtn').addEventListener('click', () => { setFitMode('cover'); });
@@ -828,6 +936,15 @@
                         document.getElementById('bgBlur').checked = true;
                     }
                     
+                    updateAndDraw();
+                }
+            });
+
+            lightPatternContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.pattern-btn');
+                if (button) {
+                    document.querySelector('#lightPatternContainer .active')?.classList.remove('active');
+                    button.classList.add('active');
                     updateAndDraw();
                 }
             });
@@ -881,15 +998,18 @@
                 panStart = { x: e.clientX, y: e.clientY };
                 
                 if (isModifierDown) {
-                    if (state.mode === 'single' || state.mode === 'polaroid' || state.mode === 'magnify') {
+                    if (state.mode === 'lightEffect') {
+                        isPanning = true;
+                        activePanTarget = { type: 'lightEffect' };
+                        initialImageOffset = { ...state.lightEffect.offset };
+                        canvasWrapper.style.cursor = 'grabbing';
+                    } else if (state.mode === 'single' || state.mode === 'polaroid' || state.mode === 'magnify') {
                         isPanning = true;
                         activePanTarget = { type: 'main' };
                         initialImageOffset = { ...state.imageOffset };
                         canvasWrapper.style.cursor = 'grabbing';
                     } else if (state.mode === 'doubleExposure') {
                         isPanning = true;
-                        // Determine which layer to pan. For simplicity, let's offer panning both simultaneously or just the top one.
-                        // Let's pan the top layer by default.
                         activePanTarget = { type: 'doubleExposure_top' };
                         initialImageOffset = { ...state.doubleExposure.topImageOffset };
                         canvasWrapper.style.cursor = 'grabbing';
@@ -957,6 +1077,13 @@
                 const dx_canvas = (e.clientX - panStart.x) * previewScale;
                 const dy_canvas = (e.clientY - panStart.y) * previewScale;
                 
+                if (activePanTarget.type === 'lightEffect') {
+                    state.lightEffect.offset.x = initialImageOffset.x + dx_canvas;
+                    state.lightEffect.offset.y = initialImageOffset.y + dy_canvas;
+                    drawPreview();
+                    return;
+                }
+
                 let targetImage, container, currentOffset, zoom = 1;
 
                 if (activePanTarget.type === 'main' || activePanTarget.type === 'polaroid' || activePanTarget.type === 'magnify') {
@@ -990,8 +1117,16 @@
                 const imgRatio = targetImage.width / targetImage.height;
                 const areaRatio = container.w / container.h;
                 let renderScale;
-                if (imgRatio > areaRatio) { renderScale = container.h / (targetImage.height / zoom); } 
-                else { renderScale = container.w / (targetImage.width / zoom); }
+                let fit = 'cover';
+                if (activePanTarget.type === 'main') fit = state.fit;
+
+                if (fit === 'cover') {
+                    if (imgRatio > areaRatio) { renderScale = container.h / (targetImage.height / zoom); } 
+                    else { renderScale = container.w / (targetImage.width / zoom); }
+                } else { // contain
+                     if (imgRatio > areaRatio) { renderScale = container.w / (targetImage.width / zoom); } 
+                     else { renderScale = container.h / (targetImage.height / zoom); }
+                }
 
                 const dx_source = dx_canvas / renderScale;
                 const dy_source = dy_canvas / renderScale;
@@ -1002,7 +1137,6 @@
                 };
                 
                 let sW, sH;
-                const fit = (activePanTarget.type === 'main') ? state.fit : 'cover';
                 if (fit === 'cover') {
                     if (imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; } 
                     else { sW = targetImage.width; sH = sW / areaRatio; }
@@ -1051,28 +1185,30 @@
         
         function switchMode(mode) {
             // Reset images when switching modes to avoid conflicts
-            mainImage = null;
-            collageImages = [];
-            topImage = null;
-            bottomImage = null;
+            if (mode !== 'doubleExposure') {
+                topImage = null;
+                bottomImage = null;
+                topImageLoader.value = null;
+                bottomImageLoader.value = null;
+                state.doubleExposure.topImageOffset = { x: 0, y: 0 };
+                state.doubleExposure.bottomImageOffset = { x: 0, y: 0 };
+            }
+            if (mode !== 'collage') {
+                collageImages = [];
+                collageImageLoader.value = null;
+                collageThumbnailsContainer.innerHTML = '';
+                collageThumbnailsWrapper.classList.add('hidden');
+                state.collage.imageOffsets = [];
+            }
+            if (!['single', 'polaroid', 'magnify', 'lightEffect'].includes(mode)) {
+                // mainImage is shared, so don't reset unless necessary
+            }
             
-            // Reset file inputs
-            imageLoader.value = null; 
-            collageImageLoader.value = null;
-            topImageLoader.value = null;
-            bottomImageLoader.value = null;
-
-            collageThumbnailsContainer.innerHTML = '';
-            collageThumbnailsWrapper.classList.add('hidden');
-            
-            state.imageOffset = { x: 0, y: 0 };
-            state.collage.imageOffsets = [];
-            state.doubleExposure.topImageOffset = { x: 0, y: 0 };
-            state.doubleExposure.bottomImageOffset = { x: 0, y: 0 };
-            
-            previewPlaceholder.classList.remove('hidden');
-            canvasWrapper.classList.add('hidden');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!mainImage && !topImage && !bottomImage && collageImages.length === 0) {
+                previewPlaceholder.classList.remove('hidden');
+                canvasWrapper.classList.add('hidden');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
             
             state.mode = mode;
             updateUIFromState(state);
@@ -1087,15 +1223,16 @@
         }
 
         function updateCursor() {
-            const canPanSingle = state.mode === 'single' && mainImage && state.fit === 'cover';
+            const canPanMainImage = state.mode === 'single' && mainImage && state.fit === 'cover';
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
             const canPanPolaroid = state.mode === 'polaroid' && mainImage;
             const canPanMagnify = state.mode === 'magnify' && mainImage;
             const canPanDoubleExposure = state.mode === 'doubleExposure' && topImage;
+            const canPanLightEffectPattern = state.mode === 'lightEffect' && mainImage;
 
             if (isDraggingMagnifyFrame || isPanning) {
                  canvasWrapper.style.cursor = 'grabbing';
-            } else if (isModifierDown && (canPanSingle || canPanCollage || canPanPolaroid || canPanMagnify || canPanDoubleExposure)) {
+            } else if (isModifierDown && (canPanMainImage || canPanCollage || canPanPolaroid || canPanMagnify || canPanDoubleExposure || canPanLightEffectPattern)) {
                 canvasWrapper.style.cursor = 'grab';
             } else if (!isModifierDown && state.mode === 'magnify') {
                 canvasWrapper.style.cursor = 'move';
@@ -1336,7 +1473,7 @@
                 }
             }
 
-            if (state.mode !== 'magnify') {
+            if (state.mode !== 'magnify' && state.mode !== 'lightEffect') {
                 drawBackground(ctx, canvas.width, canvas.height);
             }
             drawMainContent(ctx, canvas.width, canvas.height);
@@ -1387,6 +1524,8 @@
                 drawMagnifyEffectOnContext(targetCtx, w, h, mainImage, state.magnify);
             } else if (state.mode === 'doubleExposure' && topImage && bottomImage) {
                 drawDoubleExposureEffect(targetCtx, w, h, scale);
+            } else if (state.mode === 'lightEffect' && mainImage) {
+                drawLightEffect(targetCtx, w, h, scale);
             } else {
                 const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
                 const drawableW = w - p.left - p.right;
@@ -1413,6 +1552,116 @@
             }
             targetCtx.restore();
         }
+        
+        function drawLightEffect(targetCtx, w, h, scale = 1) {
+            if (!mainImage) return;
+            targetCtx.save();
+
+            // 1. Draw base image
+            drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset);
+
+            // 2. Generate and draw light pattern
+            const s = state.lightEffect;
+            const patternCanvas = generateLightPattern(s.pattern, w, h, s.color);
+            
+            targetCtx.globalCompositeOperation = s.blendMode;
+            targetCtx.globalAlpha = s.opacity / 100;
+            
+            targetCtx.translate(w / 2, h / 2);
+            targetCtx.rotate(s.angle * Math.PI / 180);
+            const scaleFactor = s.scale / 100;
+            targetCtx.scale(scaleFactor, scaleFactor);
+            targetCtx.translate(-w / 2, -h / 2);
+
+            targetCtx.drawImage(patternCanvas, s.offset.x, s.offset.y, w, h);
+
+            targetCtx.restore();
+        }
+
+        function generateLightPattern(pattern, width, height, color) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.fillStyle = color;
+
+            switch (pattern) {
+                case 'blinds':
+                    for (let i = -height; i < height * 2; i += 40) { tempCtx.fillRect(0, i, width, 20); }
+                    break;
+                case 'window':
+                    const barWidth = Math.min(width, height) * 0.05;
+                    tempCtx.fillRect(width / 2 - barWidth / 2, 0, barWidth, height);
+                    tempCtx.fillRect(0, height / 2 - barWidth / 2, width, barWidth);
+                    break;
+                case 'lines':
+                    for (let i = 0; i < width * 2; i += 15) { tempCtx.fillRect(i, -height, 3, height*2); }
+                    break;
+                case 'diagonal-lines':
+                    tempCtx.lineWidth = 8;
+                    tempCtx.strokeStyle = color;
+                    for (let i = -width; i < width * 1.5; i += 25) {
+                        tempCtx.beginPath();
+                        tempCtx.moveTo(i, 0);
+                        tempCtx.lineTo(i + height, height);
+                        tempCtx.stroke();
+                    }
+                    break;
+                case 'grid':
+                    for (let i = 0; i < width; i += 50) { tempCtx.fillRect(i, 0, 2, height); }
+                    for (let j = 0; j < height; j += 50) { tempCtx.fillRect(0, j, width, 2); }
+                    break;
+                case 'god-rays':
+                    const centerX = width / 2;
+                    for (let i = 0; i < 36; i++) {
+                        tempCtx.save();
+                        tempCtx.translate(centerX, -100);
+                        tempCtx.rotate((i * 10 + (Math.random() - 0.5) * 5) * Math.PI / 180);
+                        const gradient = tempCtx.createLinearGradient(0, 0, 0, height * 1.5);
+                        gradient.addColorStop(0, color);
+                        gradient.addColorStop(0.5 + Math.random() * 0.3, 'transparent');
+                        tempCtx.fillStyle = gradient;
+                        tempCtx.fillRect(-width * 0.02, 0, width * 0.04, height * 1.5);
+                        tempCtx.restore();
+                    }
+                    break;
+                case 'bokeh':
+                     for (let i = 0; i < 50; i++) {
+                        const x = Math.random() * width;
+                        const y = Math.random() * height;
+                        const radius = Math.random() * 50 + 10;
+                        tempCtx.globalAlpha = Math.random() * 0.5 + 0.1;
+                        tempCtx.beginPath();
+                        tempCtx.arc(x, y, radius, 0, Math.PI * 2);
+                        tempCtx.fill();
+                    }
+                    tempCtx.globalAlpha = 1.0;
+                    break;
+                case 'leak1':
+                    const gradient1 = tempCtx.createRadialGradient(0, 0, 0, 0, 0, Math.max(width, height) * 0.7);
+                    gradient1.addColorStop(0, color);
+                    gradient1.addColorStop(1, 'transparent');
+                    tempCtx.fillStyle = gradient1;
+                    tempCtx.fillRect(0, 0, width, height);
+                    break;
+                case 'leak2':
+                    const gradient2 = tempCtx.createRadialGradient(width, height, 0, width, height, Math.max(width, height));
+                    gradient2.addColorStop(0, color);
+                    gradient2.addColorStop(0.5, 'transparent');
+                    tempCtx.fillStyle = gradient2;
+                    tempCtx.fillRect(0, 0, width, height);
+                    break;
+                case 'spotlight':
+                    const gradient3 = tempCtx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.min(width,height)/2.5);
+                    gradient3.addColorStop(0, color);
+                    gradient3.addColorStop(1, 'transparent');
+                    tempCtx.fillStyle = gradient3;
+                    tempCtx.fillRect(0, 0, width, height);
+                    break;
+            }
+            return tempCanvas;
+        }
+
 
         function drawDoubleExposureEffect(targetCtx, w, h, scale = 1) {
             if (!topImage || !bottomImage) return;
@@ -1436,18 +1685,10 @@
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
             const offset = state.imageOffset || { x: 0, y: 0 };
-            const canvasRatio = w / h;
-            const imageRatio = image.width / image.height;
-            let sW = image.width, sH = image.height;
-            if (imageRatio > canvasRatio) { sW = image.height * canvasRatio; } else { sH = image.width / canvasRatio; }
-            let sX = (image.width - sW) / 2 + offset.x;
-            let sY = (image.height - sH) / 2 + offset.y;
-            sX = Math.max(0, Math.min(sX, image.width - sW));
-            sY = Math.max(0, Math.min(sY, image.height - sH));
             
             targetCtx.save();
             if (blur > 0) { targetCtx.filter = `blur(${blur}px)`; }
-            targetCtx.drawImage(image, sX, sY, sW, sH, 0, 0, w, h);
+            drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
             targetCtx.restore();
 
             targetCtx.save();
@@ -1459,7 +1700,7 @@
             targetCtx.translate(centerX, centerY);
             targetCtx.scale(zoom, zoom);
             targetCtx.translate(-centerX, -centerY);
-            targetCtx.drawImage(image, sX, sY, sW, sH, 0, 0, w, h);
+            drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
             targetCtx.restore();
 
             if (borderWidth > 0) {
@@ -1841,6 +2082,10 @@
         
         function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }, zoom = 1, shape = 'rect') {
             ctx.save();
+            
+            const exposure = state.imageAdjustments.exposure;
+            ctx.filter = `brightness(${1 + exposure / 100})`;
+
             ctx.beginPath();
             if (shape === 'circle') {
                 ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2, true);
@@ -1956,9 +2201,11 @@
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
                     tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
+                    if (state.mode !== 'lightEffect') {
+                        drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
+                    }
                     drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                    if (state.mode !== 'polaroid' && state.mode !== 'doubleExposure') {
+                    if (state.mode !== 'polaroid' && state.mode !== 'doubleExposure' && state.mode !== 'lightEffect') {
                         drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                     }
                 } else {
@@ -2185,10 +2432,40 @@
                 polaroidFrameContainer.appendChild(button);
             }
         }
+        
+        function populateLightPatterns() {
+            lightPatternContainer.innerHTML = '';
+            for (const key in lightPatterns) {
+                const pattern = lightPatterns[key];
+                const button = document.createElement('button');
+                button.className = 'pattern-btn rounded-lg p-1 text-center';
+                button.dataset.pattern = key;
+
+                const previewCanvas = document.createElement('canvas');
+                previewCanvas.width = 60;
+                previewCanvas.height = 60;
+                previewCanvas.className = 'bg-gray-700 rounded-md mx-auto pointer-events-none';
+                const previewCtx = previewCanvas.getContext('2d');
+                previewCtx.save();
+                previewCtx.scale(0.2, 0.2); // Scale down for preview
+                const patternImg = generateLightPattern(key, 300, 300, '#FFF');
+                previewCtx.drawImage(patternImg, 0, 0);
+                previewCtx.restore();
+                
+                const span = document.createElement('span');
+                span.className = 'text-xs mt-1 block text-gray-200';
+                span.textContent = pattern.name;
+
+                button.appendChild(previewCanvas);
+                button.appendChild(span);
+                lightPatternContainer.appendChild(button);
+            }
+        }
 
         function init() {
             initDB();
             populatePolaroidFrames();
+            populateLightPatterns();
             preloadFrameAssets();
             state = getDefaultState();
             updateUIFromState(state);
@@ -2201,4 +2478,4 @@
     </script>
 </body>
 </html>
--çift pozlama son versiyon
+ışık güncellemesi
