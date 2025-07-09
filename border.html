@@ -403,8 +403,8 @@
                                 <div>
                                     <label for="lightEffectBlendMode" class="mb-1 block text-sm">Karışım Modu</label>
                                     <select id="lightEffectBlendMode" class="w-full h-12 px-3 rounded-lg focus-ring">
-                                        <option value="overlay" selected>Overlay</option>
-                                        <option value="screen">Screen</option>
+                                        <option value="screen" selected>Screen</option>
+                                        <option value="overlay">Overlay</option>
                                         <option value="soft-light">Soft Light</option>
                                         <option value="hard-light">Hard Light</option>
                                         <option value="color-dodge">Color Dodge</option>
@@ -506,7 +506,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Pozlama ayarı, yeni ışık efektleri ve efekt kaydırma özelliği eklendi. ---
+        // --- HATA DÜZELTMESİ: Işık Efekti modunda pozlama (exposure) ayarının doğru çalışması sağlandı. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -639,7 +639,7 @@
                     color: '#FFFFFF',
                     angle: 45,
                     scale: 100,
-                    blendMode: 'overlay',
+                    blendMode: 'screen',
                     offset: { x: 0, y: 0 }
                 },
                 text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
@@ -1498,7 +1498,7 @@
                 targetCtx.fillStyle = state.color1;
                 targetCtx.fillRect(0, 0, w, h);
                 targetCtx.save();
-                targetCtx.filter = 'blur(30px) brightness(0.8)';
+                targetCtx.filter = `blur(30px) brightness(${1 + state.imageAdjustments.exposure / 100})`;
                 const imgRatio = imgToBlur.width / imgToBlur.height;
                 const canvasRatio = w / h;
                 let finalW = w, finalH = h;
@@ -1553,14 +1553,18 @@
             targetCtx.restore();
         }
         
+        // ===================================================================
+        // === HATA DÜZELTMESİ BAŞLANGICI: Işık Efekti & Pozlama Etkileşimi ===
+        // ===================================================================
+
         function drawLightEffect(targetCtx, w, h, scale = 1) {
             if (!mainImage) return;
             targetCtx.save();
 
-            // 1. Draw base image
+            // 1. Temel görüntüyü pozlama ayarı uygulanmış şekilde çizin.
             drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset);
 
-            // 2. Generate and draw light pattern
+            // 2. Işık desenini ayarlanmış görüntünün üzerine çizin.
             const s = state.lightEffect;
             const patternCanvas = generateLightPattern(s.pattern, w, h, s.color);
             
@@ -1577,6 +1581,10 @@
 
             targetCtx.restore();
         }
+
+        // =================================================================
+        // === HATA DÜZELTMESİ BİTİŞİ: Işık Efekti & Pozlama Etkileşimi ===
+        // =================================================================
 
         function generateLightPattern(pattern, width, height, color) {
             const tempCanvas = document.createElement('canvas');
@@ -1687,10 +1695,13 @@
             const offset = state.imageOffset || { x: 0, y: 0 };
             
             targetCtx.save();
-            if (blur > 0) { targetCtx.filter = `blur(${blur}px)`; }
+            let filters = [];
+            if (blur > 0) filters.push(`blur(${blur}px)`);
+            targetCtx.filter = filters.join(' ');
             drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
             targetCtx.restore();
 
+            // Odaklanmış ön planı çiz
             targetCtx.save();
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
@@ -1703,6 +1714,7 @@
             drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
             targetCtx.restore();
 
+            // Çerçeveyi çiz
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
@@ -2080,11 +2092,17 @@
             return rects;
         }
         
+        // ===================================================================
+        // === HATA DÜZELTMESİ BAŞLANGICI: Işık Efekti & Pozlama Etkileşimi ===
+        // ===================================================================
+
         function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }, zoom = 1, shape = 'rect') {
             ctx.save();
             
             const exposure = state.imageAdjustments.exposure;
-            ctx.filter = `brightness(${1 + exposure / 100})`;
+            const currentFilter = ctx.filter || '';
+            // Pozlama filtresini mevcut filtrelere ekle (örn. blur)
+            ctx.filter = `brightness(${1 + exposure / 100}) ${currentFilter}`.trim();
 
             ctx.beginPath();
             if (shape === 'circle') {
@@ -2124,6 +2142,10 @@
             ctx.drawImage(img, sX, sY, sW, sH, x, y, w, h);
             ctx.restore();
         }
+        
+        // =================================================================
+        // === HATA DÜZELTMESİ BİTİŞİ: Işık Efekti & Pozlama Etkileşimi ===
+        // =================================================================
 
         function drawTextAndWatermark(targetCtx, w, h, scale = 1) {
             targetCtx.save();
@@ -2478,4 +2500,4 @@
     </script>
 </body>
 </html>
-ışık güncellemesi
+ışık v2
