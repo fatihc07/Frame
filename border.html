@@ -138,13 +138,14 @@
                     <p class="mt-2 text-gray-300">Fotoğraflarınıza sanatsal dokunuşlar katın.</p>
                 </div>
                 
-                <div class="grid grid-cols-3 md:grid-cols-6 gap-2 p-1 bg-black/10 rounded-lg">
+                <div class="grid grid-cols-3 md:grid-cols-7 gap-2 p-1 bg-black/10 rounded-lg">
                      <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold text-sm">Tekli</button>
                      <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Kolaj</button>
                      <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Polaroid</button>
                      <button id="magnifyModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Büyüteç</button>
                      <button id="doubleExposureModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Çift Pozlama</button>
                      <button id="lightEffectModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Işık Efekti</button>
+                     <button id="popOutModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Pop-Out</button>
                 </div>
 
                 <div class="space-y-4">
@@ -415,6 +416,38 @@
                             </div>
                         </div>
 
+                        <div id="popOutSettings" class="hidden control-section">
+                            <div class="space-y-6 text-gray-200">
+                                <div>
+                                    <label for="popOutBackgroundEffect" class="block text-sm font-medium mb-2">Arkaplan Efekti</label>
+                                    <select id="popOutBackgroundEffect" class="w-full h-12 px-3 rounded-lg focus-ring">
+                                        <option value="grayscale" selected>Siyah & Beyaz</option>
+                                        <option value="blur">Bulanık</option>
+                                        <option value="sepia">Sepya</option>
+                                        <option value="none">Efekt Yok</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="popOutSize" class="mb-1 block text-sm">Ön Plan Boyutu</label>
+                                        <input type="range" id="popOutSize" value="70" min="20" max="95" class="w-full">
+                                    </div>
+                                    <div>
+                                        <label for="popOutBorderWidth" class="mb-1 block text-sm">Kenar Kalınlığı</label>
+                                        <input type="range" id="popOutBorderWidth" value="5" min="0" max="50" class="w-full">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="popOutBorderColor" class="mb-1 block text-sm">Kenar Rengi</label>
+                                    <input type="color" id="popOutBorderColor" value="#FFFFFF">
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="popOutTextToggle" class="h-4 w-4 rounded border-gray-500 text-violet-400 bg-transparent focus:ring-violet-500">
+                                    <label for="popOutTextToggle" class="ml-2 block text-sm text-gray-200">Örnek Metin Ekle ("New Post")</label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="generalTools">
                             <div class="control-section">
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Metin Ekle</label>
@@ -506,7 +539,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- HATA DÜZELTMESİ: Işık Efekti modunda pozlama (exposure) ayarının doğru çalışması sağlandı. ---
+        // --- YENİ ÖZELLİK: Pop-Out modu eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -642,6 +675,13 @@
                     blendMode: 'screen',
                     offset: { x: 0, y: 0 }
                 },
+                popOut: {
+                    backgroundEffect: 'grayscale',
+                    size: 70,
+                    borderWidth: 5,
+                    borderColor: '#FFFFFF',
+                    addText: false
+                },
                 text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
                 watermark: { opacity: 50, size: 20, position: 'bottom-right' }
             };
@@ -649,14 +689,10 @@
         
         function syncStateWithUI() {
             // Modu belirle
-            document.querySelectorAll('.mode-btn.active').forEach(b => {
-                if(b.id === 'singleModeBtn') state.mode = 'single';
-                else if(b.id === 'collageModeBtn') state.mode = 'collage';
-                else if(b.id === 'polaroidModeBtn') state.mode = 'polaroid';
-                else if(b.id === 'magnifyModeBtn') state.mode = 'magnify';
-                else if(b.id === 'doubleExposureModeBtn') state.mode = 'doubleExposure';
-                else if(b.id === 'lightEffectModeBtn') state.mode = 'lightEffect';
-            });
+            const activeModeBtn = document.querySelector('.mode-btn.active');
+            if (activeModeBtn) {
+                state.mode = activeModeBtn.id.replace('ModeBtn', '');
+            }
 
             // Tekli mod ayarları
             const newFit = document.getElementById('fitContainBtn').classList.contains('active') ? 'contain' : 'cover';
@@ -722,6 +758,13 @@
             state.lightEffect.scale = parseInt(document.getElementById('lightEffectScale').value, 10);
             state.lightEffect.blendMode = document.getElementById('lightEffectBlendMode').value;
 
+            // Pop-Out ayarları
+            state.popOut.backgroundEffect = document.getElementById('popOutBackgroundEffect').value;
+            state.popOut.size = parseInt(document.getElementById('popOutSize').value, 10);
+            state.popOut.borderWidth = parseInt(document.getElementById('popOutBorderWidth').value, 10);
+            state.popOut.borderColor = document.getElementById('popOutBorderColor').value;
+            state.popOut.addText = document.getElementById('popOutTextToggle').checked;
+
             // Genel araçlar
             state.text = {
                 content: document.getElementById('textInput').value,
@@ -749,11 +792,12 @@
             const isSingle = s.mode === 'single';
             const isDoubleExposure = s.mode === 'doubleExposure';
             const isLightEffect = s.mode === 'lightEffect';
+            const isPopOut = s.mode === 'popOut';
 
             const hasImage = mainImage || (collageImages && collageImages.length > 0) || (topImage && bottomImage);
             document.getElementById('imageAdjustments').style.display = hasImage ? 'block' : 'none';
 
-            document.getElementById('canvasSizeSettings').style.display = isSingle || isCollage || isMagnify || isDoubleExposure || isLightEffect ? 'block' : 'none';
+            document.getElementById('canvasSizeSettings').style.display = !isPolaroid ? 'block' : 'none';
             document.getElementById('backgroundStyleSettings').style.display = isSingle || isCollage || isDoubleExposure ? 'block' : 'none';
             document.getElementById('standardSettings').style.display = isSingle || isCollage ? 'block' : 'none';
             document.getElementById('polaroidSettings').style.display = isPolaroid ? 'block' : 'none';
@@ -761,6 +805,7 @@
             document.getElementById('magnifySettings').style.display = isMagnify ? 'block' : 'none';
             document.getElementById('doubleExposureSettings').style.display = isDoubleExposure ? 'block' : 'none';
             document.getElementById('lightEffectSettings').style.display = isLightEffect ? 'block' : 'none';
+            document.getElementById('popOutSettings').style.display = isPopOut ? 'block' : 'none';
             document.getElementById('generalTools').style.display = isSingle || isCollage ? 'block' : 'none';
             
             if (isPolaroid) {
@@ -771,7 +816,7 @@
                  }
             }
 
-            document.getElementById('fitFillContainer').style.visibility = (isSingle || isLightEffect) ? 'visible' : 'hidden';
+            document.getElementById('fitFillContainer').style.visibility = (isSingle || isLightEffect || isPopOut) ? 'visible' : 'hidden';
             document.getElementById('colorPickers').style.display = s.bgType === 'transparent' ? 'none' : 'grid';
             document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
 
@@ -825,6 +870,12 @@
             document.getElementById('lightEffectScale').value = s.lightEffect.scale;
             document.getElementById('lightEffectBlendMode').value = s.lightEffect.blendMode;
 
+            document.getElementById('popOutBackgroundEffect').value = s.popOut.backgroundEffect;
+            document.getElementById('popOutSize').value = s.popOut.size;
+            document.getElementById('popOutBorderWidth').value = s.popOut.borderWidth;
+            document.getElementById('popOutBorderColor').value = s.popOut.borderColor;
+            document.getElementById('popOutTextToggle').checked = s.popOut.addText;
+
             document.getElementById('textInput').value = s.text.content; 
             document.getElementById('textColor').value = s.text.color; 
             document.getElementById('textSize').value = s.text.size; 
@@ -834,13 +885,13 @@
             document.getElementById('watermarkSize').value = s.watermark.size; 
             document.getElementById('watermarkPosition').value = s.watermark.position;
             
-            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify || isLightEffect ? 'block' : 'none';
+            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify || isLightEffect || isPopOut ? 'block' : 'none';
             collageUploaderDiv.style.display = isCollage ? 'block' : 'none';
             doubleExposureUploaderDiv.style.display = isDoubleExposure ? 'block' : 'none';
 
             document.getElementById('imageLoaderLabel').textContent = `1. ${isCollage ? 'Kolaj Fotoğrafları' : isDoubleExposure ? 'Katmanları Seçin' : 'Fotoğraf Seçin'}`;
-            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure || isLightEffect;
-            if ((isPolaroid || isMagnify || isDoubleExposure || isLightEffect) && s.sizePreset === 'original') {
+            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure || isLightEffect || isPopOut;
+            if ((isPolaroid || isMagnify || isDoubleExposure || isLightEffect || isPopOut) && s.sizePreset === 'original') {
                 s.sizePreset = 'square'; // Varsayılan boyut
                 document.getElementById('sizePreset').value = 'square';
             }
@@ -1003,7 +1054,7 @@
                         activePanTarget = { type: 'lightEffect' };
                         initialImageOffset = { ...state.lightEffect.offset };
                         canvasWrapper.style.cursor = 'grabbing';
-                    } else if (state.mode === 'single' || state.mode === 'polaroid' || state.mode === 'magnify') {
+                    } else if (['single', 'polaroid', 'magnify', 'popOut'].includes(state.mode)) {
                         isPanning = true;
                         activePanTarget = { type: 'main' };
                         initialImageOffset = { ...state.imageOffset };
@@ -1086,12 +1137,15 @@
 
                 let targetImage, container, currentOffset, zoom = 1;
 
-                if (activePanTarget.type === 'main' || activePanTarget.type === 'polaroid' || activePanTarget.type === 'magnify') {
+                if (activePanTarget.type === 'main') {
                     targetImage = mainImage;
-                    const p = (activePanTarget.type === 'main') ? state.padding : { top: 0, right: 0, bottom: 0, left: 0 };
+                    let p = { top: 0, right: 0, bottom: 0, left: 0 };
+                    if (state.mode === 'single') p = state.padding;
+                    
                     container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
                     currentOffset = state.imageOffset;
-                    if (activePanTarget.type === 'polaroid') {
+                    
+                    if (state.mode === 'polaroid') {
                         const frameDetails = getPolaroidFrameDetails(canvas.width, canvas.height);
                         container = { w: frameDetails.photoW, h: frameDetails.photoH };
                         zoom = state.polaroid.zoom / 100;
@@ -1118,7 +1172,7 @@
                 const areaRatio = container.w / container.h;
                 let renderScale;
                 let fit = 'cover';
-                if (activePanTarget.type === 'main') fit = state.fit;
+                if (activePanTarget.type === 'main' && state.mode === 'single') fit = state.fit;
 
                 if (fit === 'cover') {
                     if (imgRatio > areaRatio) { renderScale = container.h / (targetImage.height / zoom); } 
@@ -1152,7 +1206,7 @@
                 newOffset.x = Math.max(-maxOffsetX/2, Math.min(maxOffsetX/2, newOffset.x));
                 newOffset.y = Math.max(-maxOffsetY/2, Math.min(maxOffsetY/2, newOffset.y));
 
-                if (activePanTarget.type === 'main' || activePanTarget.type === 'polaroid' || activePanTarget.type === 'magnify') {
+                if (activePanTarget.type === 'main') {
                     state.imageOffset = newOffset;
                 } else if (activePanTarget.type === 'doubleExposure_top') {
                     state.doubleExposure.topImageOffset = newOffset;
@@ -1200,9 +1254,6 @@
                 collageThumbnailsWrapper.classList.add('hidden');
                 state.collage.imageOffsets = [];
             }
-            if (!['single', 'polaroid', 'magnify', 'lightEffect'].includes(mode)) {
-                // mainImage is shared, so don't reset unless necessary
-            }
             
             if (!mainImage && !topImage && !bottomImage && collageImages.length === 0) {
                 previewPlaceholder.classList.remove('hidden');
@@ -1223,18 +1274,16 @@
         }
 
         function updateCursor() {
-            const canPanMainImage = state.mode === 'single' && mainImage && state.fit === 'cover';
+            const canPanMainImage = (state.mode === 'single' && state.fit === 'cover') || ['polaroid', 'magnify', 'popOut'].includes(state.mode);
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
-            const canPanPolaroid = state.mode === 'polaroid' && mainImage;
-            const canPanMagnify = state.mode === 'magnify' && mainImage;
             const canPanDoubleExposure = state.mode === 'doubleExposure' && topImage;
             const canPanLightEffectPattern = state.mode === 'lightEffect' && mainImage;
 
             if (isDraggingMagnifyFrame || isPanning) {
                  canvasWrapper.style.cursor = 'grabbing';
-            } else if (isModifierDown && (canPanMainImage || canPanCollage || canPanPolaroid || canPanMagnify || canPanDoubleExposure || canPanLightEffectPattern)) {
+            } else if (isModifierDown && mainImage && (canPanMainImage || canPanCollage || canPanDoubleExposure || canPanLightEffectPattern)) {
                 canvasWrapper.style.cursor = 'grab';
-            } else if (!isModifierDown && state.mode === 'magnify') {
+            } else if (!isModifierDown && state.mode === 'magnify' && mainImage) {
                 canvasWrapper.style.cursor = 'move';
             } else {
                 canvasWrapper.style.cursor = 'default';
@@ -1473,7 +1522,7 @@
                 }
             }
 
-            if (state.mode !== 'magnify' && state.mode !== 'lightEffect') {
+            if (state.mode !== 'magnify' && state.mode !== 'lightEffect' && state.mode !== 'popOut') {
                 drawBackground(ctx, canvas.width, canvas.height);
             }
             drawMainContent(ctx, canvas.width, canvas.height);
@@ -1526,6 +1575,8 @@
                 drawDoubleExposureEffect(targetCtx, w, h, scale);
             } else if (state.mode === 'lightEffect' && mainImage) {
                 drawLightEffect(targetCtx, w, h, scale);
+            } else if (state.mode === 'popOut' && mainImage) {
+                drawPopOutEffect(targetCtx, w, h, scale);
             } else {
                 const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
                 const drawableW = w - p.left - p.right;
@@ -1552,10 +1603,6 @@
             }
             targetCtx.restore();
         }
-        
-        // ===================================================================
-        // === HATA DÜZELTMESİ BAŞLANGICI: Işık Efekti & Pozlama Etkileşimi ===
-        // ===================================================================
 
         function drawLightEffect(targetCtx, w, h, scale = 1) {
             if (!mainImage) return;
@@ -1581,10 +1628,6 @@
 
             targetCtx.restore();
         }
-
-        // =================================================================
-        // === HATA DÜZELTMESİ BİTİŞİ: Işık Efekti & Pozlama Etkileşimi ===
-        // =================================================================
 
         function generateLightPattern(pattern, width, height, color) {
             const tempCanvas = document.createElement('canvas');
@@ -1670,7 +1713,6 @@
             return tempCanvas;
         }
 
-
         function drawDoubleExposureEffect(targetCtx, w, h, scale = 1) {
             if (!topImage || !bottomImage) return;
             
@@ -1722,6 +1764,61 @@
             }
         }
 
+        function getPopOutBackgroundFilter(effect) {
+            switch(effect) {
+                case 'grayscale': return 'grayscale(100%)';
+                case 'blur': return 'blur(15px)';
+                case 'sepia': return 'sepia(100%)';
+                default: return 'none';
+            }
+        }
+        
+        function drawPopOutEffect(targetCtx, w, h, scale = 1) {
+            if (!mainImage) return;
+            const s = state.popOut;
+
+            // 1. Arkaplanı çiz
+            targetCtx.save();
+            targetCtx.filter = getPopOutBackgroundFilter(s.backgroundEffect);
+            drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, 'cover', state.imageOffset);
+            targetCtx.restore();
+
+            // 2. Ön planı çiz
+            const fgSizeRatio = s.size / 100;
+            const fgW = w * fgSizeRatio;
+            const fgH = h * fgSizeRatio;
+            const fgX = (w - fgW) / 2;
+            const fgY = (h - fgH) / 2;
+            const borderWidth = s.borderWidth * scale;
+
+            // Kenarlık
+            if (borderWidth > 0) {
+                targetCtx.fillStyle = s.borderColor;
+                targetCtx.shadowColor = 'rgba(0,0,0,0.3)';
+                targetCtx.shadowBlur = 20 * scale;
+                targetCtx.shadowOffsetY = 5 * scale;
+                targetCtx.fillRect(fgX - borderWidth, fgY - borderWidth, fgW + (borderWidth * 2), fgH + (borderWidth * 2));
+                targetCtx.shadowColor = 'transparent';
+            }
+
+            // Renkli ön plan resmi
+            drawRoundedImage(targetCtx, mainImage, fgX, fgY, fgW, fgH, 0, 'cover', state.imageOffset);
+            
+            // Örnek Metin
+            if (s.addText) {
+                targetCtx.font = `bold ${w * 0.04}px 'Playfair Display'`;
+                targetCtx.fillStyle = '#FFFFFF';
+                targetCtx.textAlign = 'left';
+                targetCtx.textBaseline = 'top';
+                targetCtx.shadowColor = 'rgba(0,0,0,0.5)';
+                targetCtx.shadowBlur = 5 * scale;
+                targetCtx.shadowOffsetX = 1 * scale;
+                targetCtx.shadowOffsetY = 1 * scale;
+                targetCtx.fillText("New", fgX + (w * 0.02), fgY + (h * 0.02));
+                targetCtx.fillText("Post", fgX + (w * 0.02), fgY + (h * 0.02) + (w * 0.04));
+                targetCtx.shadowColor = 'transparent';
+            }
+        }
 
         function getPolaroidFrameDetails(canvasW, canvasH) {
             const frameSpec = polaroidFrameSpecs[state.polaroid.frame];
@@ -2092,10 +2189,6 @@
             return rects;
         }
         
-        // ===================================================================
-        // === HATA DÜZELTMESİ BAŞLANGICI: Işık Efekti & Pozlama Etkileşimi ===
-        // ===================================================================
-
         function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }, zoom = 1, shape = 'rect') {
             ctx.save();
             
@@ -2142,10 +2235,6 @@
             ctx.drawImage(img, sX, sY, sW, sH, x, y, w, h);
             ctx.restore();
         }
-        
-        // =================================================================
-        // === HATA DÜZELTMESİ BİTİŞİ: Işık Efekti & Pozlama Etkileşimi ===
-        // =================================================================
 
         function drawTextAndWatermark(targetCtx, w, h, scale = 1) {
             targetCtx.save();
@@ -2223,11 +2312,11 @@
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
                     tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    if (state.mode !== 'lightEffect') {
+                    if (!['lightEffect', 'popOut'].includes(state.mode)) {
                         drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
                     }
                     drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                    if (state.mode !== 'polaroid' && state.mode !== 'doubleExposure' && state.mode !== 'lightEffect') {
+                    if (!['polaroid', 'doubleExposure', 'lightEffect', 'magnify', 'popOut'].includes(state.mode)) {
                         drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                     }
                 } else {
@@ -2500,4 +2589,4 @@
     </script>
 </body>
 </html>
-ışık v2
+--pop out effect
