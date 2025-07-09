@@ -138,11 +138,12 @@
                     <p class="mt-2 text-gray-300">Fotoğraflarınıza sanatsal dokunuşlar katın.</p>
                 </div>
                 
-                <div class="grid grid-cols-4 gap-2 p-1 bg-black/10 rounded-lg">
-                     <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold">Tekli</button>
-                     <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold">Kolaj</button>
-                     <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold">Polaroid</button>
-                     <button id="magnifyModeBtn" class="mode-btn py-2 rounded-md font-semibold">Büyüteç</button>
+                <div class="grid grid-cols-5 gap-2 p-1 bg-black/10 rounded-lg">
+                     <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold text-sm">Tekli</button>
+                     <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Kolaj</button>
+                     <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Polaroid</button>
+                     <button id="magnifyModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Büyüteç</button>
+                     <button id="doubleExposureModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Çift Pozlama</button>
                 </div>
 
                 <div class="space-y-4">
@@ -158,6 +159,18 @@
                             <div id="collageThumbnailsWrapper" class="hidden">
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Resimleri Sırala (Sürükle) veya Sil (X)</label>
                                 <div id="collageThumbnailsContainer"></div>
+                            </div>
+                        </div>
+                         <div id="doubleExposureUploader" class="hidden space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="bottomImageLoader" class="block text-xs font-medium text-gray-200 mb-1">Alt Katman</label>
+                                    <input type="file" id="bottomImageLoader" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-500/30 file:text-blue-50 hover:file:bg-blue-500/50 cursor-pointer focus-ring rounded-lg">
+                                </div>
+                                <div>
+                                    <label for="topImageLoader" class="block text-xs font-medium text-gray-200 mb-1">Üst Katman</label>
+                                    <input type="file" id="topImageLoader" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-500/30 file:text-pink-50 hover:file:bg-pink-500/50 cursor-pointer focus-ring rounded-lg">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -312,6 +325,44 @@
                              </div>
                         </div>
 
+                        <div id="doubleExposureSettings" class="hidden control-section">
+                            <div class="grid grid-cols-1 gap-6 text-gray-300">
+                                <div class="flex items-center justify-center">
+                                    <button id="swapLayersBtn" class="bg-indigo-500/50 text-indigo-50 font-semibold py-2 px-4 rounded-lg hover:bg-indigo-500/70 transition-colors">
+                                        Katmanları Değiştir
+                                    </button>
+                                </div>
+                                <div>
+                                    <label for="doubleExposureOpacity" class="mb-1 block text-sm">Üst Katman Opaklığı</label>
+                                    <div class="flex items-center gap-4">
+                                        <input type="range" id="doubleExposureOpacity" value="50" min="0" max="100" class="w-full">
+                                        <span id="doubleExposureOpacityValue" class="text-sm font-semibold text-violet-300 w-12 text-center">50%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="blendMode" class="mb-1 block text-sm">Karışım Modu</label>
+                                    <select id="blendMode" class="w-full h-12 px-3 rounded-lg focus-ring">
+                                        <option value="source-over">Normal</option>
+                                        <option value="screen" selected>Screen</option>
+                                        <option value="multiply">Multiply</option>
+                                        <option value="overlay">Overlay</option>
+                                        <option value="lighten">Lighten</option>
+                                        <option value="darken">Darken</option>
+                                        <option value="color-dodge">Color Dodge</option>
+                                        <option value="color-burn">Color Burn</option>
+                                        <option value="hard-light">Hard Light</option>
+                                        <option value="soft-light">Soft Light</option>
+                                        <option value="difference">Difference</option>
+                                        <option value="exclusion">Exclusion</option>
+                                        <option value="hue">Hue</option>
+                                        <option value="saturation">Saturation</option>
+                                        <option value="color">Color</option>
+                                        <option value="luminosity">Luminosity</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="generalTools">
                             <div class="control-section">
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Metin Ekle</label>
@@ -403,10 +454,12 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ: Büyüteç moduna Command/Ctrl tuşu ile arka planı kaydırma özelliği eklendi. ---
+        // --- YENİ: Çift Pozlama modu eklendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
+        const bottomImageLoader = document.getElementById('bottomImageLoader');
+        const topImageLoader = document.getElementById('topImageLoader');
         const downloadBtn = document.getElementById('downloadBtn');
         const saveProjectBtn = document.getElementById('saveProjectBtn');
         const loadProjectBtn = document.getElementById('loadProjectBtn');
@@ -421,6 +474,7 @@
         const closeModalBtn = document.getElementById('closeModalBtn');
         const projectListContainer = document.getElementById('projectList');
         const collageUploaderDiv = document.getElementById('collageUploader');
+        const doubleExposureUploaderDiv = document.getElementById('doubleExposureUploader');
         const collageThumbnailsWrapper = document.getElementById('collageThumbnailsWrapper');
         const collageThumbnailsContainer = document.getElementById('collageThumbnailsContainer');
         const polaroidFrameContainer = document.getElementById('polaroidFrameContainer');
@@ -431,6 +485,8 @@
         let history = [];
         let historyIndex = -1;
         let mainImage = null;
+        let topImage = null;
+        let bottomImage = null;
         let collageImages = [];
         let watermarkImage = null;
         let originalFileName = 'fotoğraf';
@@ -502,6 +558,12 @@
                     zoom: 1.5, blur: 10,
                     borderColor: '#ffffff', borderWidth: 10
                 },
+                doubleExposure: {
+                    opacity: 50,
+                    blendMode: 'screen',
+                    topImageOffset: { x: 0, y: 0 },
+                    bottomImageOffset: { x: 0, y: 0 }
+                },
                 text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
                 watermark: { opacity: 50, size: 20, position: 'bottom-right' }
             };
@@ -513,6 +575,8 @@
             else if (document.getElementById('collageModeBtn').classList.contains('active')) state.mode = 'collage';
             else if (document.getElementById('polaroidModeBtn').classList.contains('active')) state.mode = 'polaroid';
             else if (document.getElementById('magnifyModeBtn').classList.contains('active')) state.mode = 'magnify';
+            else if (document.getElementById('doubleExposureModeBtn').classList.contains('active')) state.mode = 'doubleExposure';
+
 
             // Tekli mod ayarları
             const newFit = document.getElementById('fitContainBtn').classList.contains('active') ? 'contain' : 'cover';
@@ -563,6 +627,10 @@
                 borderWidth: parseInt(document.getElementById('magnifyBorderWidth').value, 10)
             };
 
+            // Çift Pozlama ayarları
+            state.doubleExposure.opacity = parseInt(document.getElementById('doubleExposureOpacity').value, 10);
+            state.doubleExposure.blendMode = document.getElementById('blendMode').value;
+
             // Genel araçlar
             state.text = {
                 content: document.getElementById('textInput').value,
@@ -583,24 +651,27 @@
             document.getElementById('collageModeBtn').classList.toggle('active', s.mode === 'collage');
             document.getElementById('polaroidModeBtn').classList.toggle('active', s.mode === 'polaroid');
             document.getElementById('magnifyModeBtn').classList.toggle('active', s.mode === 'magnify');
+            document.getElementById('doubleExposureModeBtn').classList.toggle('active', s.mode === 'doubleExposure');
+
 
             const isMagnify = s.mode === 'magnify';
             const isPolaroid = s.mode === 'polaroid';
             const isCollage = s.mode === 'collage';
             const isSingle = s.mode === 'single';
+            const isDoubleExposure = s.mode === 'doubleExposure';
 
-            document.getElementById('canvasSizeSettings').style.display = isSingle || isCollage || isMagnify ? 'block' : 'none';
-            document.getElementById('backgroundStyleSettings').style.display = isSingle || isCollage ? 'block' : 'none';
+            document.getElementById('canvasSizeSettings').style.display = isSingle || isCollage || isMagnify || isDoubleExposure ? 'block' : 'none';
+            document.getElementById('backgroundStyleSettings').style.display = isSingle || isCollage || isDoubleExposure ? 'block' : 'none';
             document.getElementById('standardSettings').style.display = isSingle || isCollage ? 'block' : 'none';
             document.getElementById('polaroidSettings').style.display = isPolaroid ? 'block' : 'none';
             document.getElementById('collageSettings').style.display = isCollage ? 'block' : 'none';
             document.getElementById('magnifySettings').style.display = isMagnify ? 'block' : 'none';
+            document.getElementById('doubleExposureSettings').style.display = isDoubleExposure ? 'block' : 'none';
             document.getElementById('generalTools').style.display = isSingle || isCollage ? 'block' : 'none';
             
             if (isPolaroid) {
                  const frameSpec = polaroidFrameSpecs[s.polaroid.frame];
                  polaroidColorSection.style.display = frameSpec && frameSpec.type === 'color' ? 'block' : 'none';
-                 // Polaroid effect frames should not show background settings
                  if (frameSpec && frameSpec.type === 'effect') {
                      document.getElementById('backgroundStyleSettings').style.display = 'none';
                  }
@@ -646,6 +717,10 @@
             document.getElementById('magnifyBorderColor').value = s.magnify.borderColor;
             document.getElementById('magnifyBorderWidth').value = s.magnify.borderWidth;
 
+            document.getElementById('doubleExposureOpacity').value = s.doubleExposure.opacity;
+            document.getElementById('doubleExposureOpacityValue').textContent = `${s.doubleExposure.opacity}%`;
+            document.getElementById('blendMode').value = s.doubleExposure.blendMode;
+
             document.getElementById('textInput').value = s.text.content; 
             document.getElementById('textColor').value = s.text.color; 
             document.getElementById('textSize').value = s.text.size; 
@@ -657,11 +732,13 @@
             
             document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify ? 'block' : 'none';
             collageUploaderDiv.style.display = isCollage ? 'block' : 'none';
-            document.getElementById('imageLoaderLabel').textContent = `1. ${isCollage ? 'Kolaj Fotoğrafları' : 'Fotoğraf'} Seçin`;
-            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify;
-            if ((isPolaroid || isMagnify) && s.sizePreset === 'original') {
-                s.sizePreset = 'story'; // Büyüteç ve Polaroid için varsayılan boyut
-                document.getElementById('sizePreset').value = 'story';
+            doubleExposureUploaderDiv.style.display = isDoubleExposure ? 'block' : 'none';
+
+            document.getElementById('imageLoaderLabel').textContent = `1. ${isCollage ? 'Kolaj Fotoğrafları' : isDoubleExposure ? 'Katmanları Seçin' : 'Fotoğraf Seçin'}`;
+            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure;
+            if ((isPolaroid || isMagnify || isDoubleExposure) && s.sizePreset === 'original') {
+                s.sizePreset = 'square'; // Varsayılan boyut
+                document.getElementById('sizePreset').value = 'square';
             }
         }
 
@@ -673,7 +750,7 @@
             updateUIFromState(state);
             drawPreview();
 
-            const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0);
+            const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0) || (state.mode === 'doubleExposure' && topImage && bottomImage);
             saveProjectBtn.disabled = !hasImage;
             downloadBtn.disabled = !hasImage;
         }
@@ -717,6 +794,8 @@
             document.getElementById('collageModeBtn').addEventListener('click', () => { if (state.mode !== 'collage') switchMode('collage'); });
             document.getElementById('polaroidModeBtn').addEventListener('click', () => { if (state.mode !== 'polaroid') switchMode('polaroid'); });
             document.getElementById('magnifyModeBtn').addEventListener('click', () => { if (state.mode !== 'magnify') switchMode('magnify'); });
+            document.getElementById('doubleExposureModeBtn').addEventListener('click', () => { if (state.mode !== 'doubleExposure') switchMode('doubleExposure'); });
+
             
             document.getElementById('fitContainBtn').addEventListener('click', () => { setFitMode('contain'); });
             document.getElementById('fitCoverBtn').addEventListener('click', () => { setFitMode('cover'); });
@@ -762,6 +841,9 @@
             
             imageLoader.addEventListener('change', (e) => handleImageUpload(e.target.files[0]));
             collageImageLoader.addEventListener('change', (e) => handleCollageUpload(e.target.files));
+            topImageLoader.addEventListener('change', (e) => handleLayerUpload(e.target.files[0], 'top'));
+            bottomImageLoader.addEventListener('change', (e) => handleLayerUpload(e.target.files[0], 'bottom'));
+            document.getElementById('swapLayersBtn').addEventListener('click', swapLayers);
             document.getElementById('watermarkLoader').addEventListener('change', handleWatermarkUpload);
 
             document.body.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); });
@@ -788,7 +870,7 @@
             window.addEventListener('keyup', e => { if (e.key === 'Meta' || e.key === 'Control') { isModifierDown = false; updateCursor(); } });
             
             canvasWrapper.addEventListener('mousedown', e => {
-                const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0);
+                const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0) || (state.mode === 'doubleExposure' && topImage && bottomImage);
                 if (!hasImage) return;
 
                 const canvasRect = canvas.getBoundingClientRect();
@@ -801,8 +883,15 @@
                 if (isModifierDown) {
                     if (state.mode === 'single' || state.mode === 'polaroid' || state.mode === 'magnify') {
                         isPanning = true;
-                        activePanTarget = { type: state.mode, index: -1 };
+                        activePanTarget = { type: 'main' };
                         initialImageOffset = { ...state.imageOffset };
+                        canvasWrapper.style.cursor = 'grabbing';
+                    } else if (state.mode === 'doubleExposure') {
+                        isPanning = true;
+                        // Determine which layer to pan. For simplicity, let's offer panning both simultaneously or just the top one.
+                        // Let's pan the top layer by default.
+                        activePanTarget = { type: 'doubleExposure_top' };
+                        initialImageOffset = { ...state.doubleExposure.topImageOffset };
                         canvasWrapper.style.cursor = 'grabbing';
                     } else if (state.mode === 'collage') { 
                         const p = state.padding;
@@ -810,44 +899,22 @@
                         const layout = getCollageLayout(state.collage.layout, collageImages, area, state.collage.gap);
                         
                         let clickedIndex = -1;
-
-                        // Iterate backwards to check top-most elements first (for overlapping layouts)
                         for (let i = layout.length - 1; i >= 0; i--) {
                             const rect = layout[i];
                             let hit = false;
-
                             if (rect.rotation) {
-                                const cx = rect.x + rect.w / 2;
-                                const cy = rect.y + rect.h / 2;
-                                const angle = -rect.rotation * Math.PI / 180; // Inverse rotation
-                                
-                                const tmx = mouse.x - cx;
-                                const tmy = mouse.y - cy;
-
-                                const rmx = tmx * Math.cos(angle) - tmy * Math.sin(angle);
-                                const rmy = tmx * Math.sin(angle) + tmy * Math.cos(angle);
-
-                                if (rmx >= -rect.w / 2 && rmx <= rect.w / 2 && rmy >= -rect.h / 2 && rmy <= rect.h / 2) {
-                                    hit = true;
-                                }
+                                const cx = rect.x + rect.w / 2; const cy = rect.y + rect.h / 2; const angle = -rect.rotation * Math.PI / 180;
+                                const tmx = mouse.x - cx; const tmy = mouse.y - cy;
+                                const rmx = tmx * Math.cos(angle) - tmy * Math.sin(angle); const rmy = tmx * Math.sin(angle) + tmy * Math.cos(angle);
+                                if (rmx >= -rect.w / 2 && rmx <= rect.w / 2 && rmy >= -rect.h / 2 && rmy <= rect.h / 2) hit = true;
                             } else if (rect.shape === 'circle') {
-                                const cx = rect.x + rect.w / 2;
-                                const cy = rect.y + rect.h / 2;
-                                const radius = Math.min(rect.w, rect.h) / 2;
+                                const cx = rect.x + rect.w / 2; const cy = rect.y + rect.h / 2; const radius = Math.min(rect.w, rect.h) / 2;
                                 const dist = Math.sqrt(Math.pow(mouse.x - cx, 2) + Math.pow(mouse.y - cy, 2));
-                                if (dist <= radius) {
-                                    hit = true;
-                                }
-                            } else { // Standard rectangle
-                                if (mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h) {
-                                    hit = true;
-                                }
+                                if (dist <= radius) hit = true;
+                            } else {
+                                if (mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h) hit = true;
                             }
-
-                            if (hit) {
-                                clickedIndex = i;
-                                break; // Stop after finding the first hit (from top)
-                            }
+                            if (hit) { clickedIndex = i; break; }
                         }
 
                         if (clickedIndex > -1) {
@@ -872,13 +939,10 @@
                     const canvasRect = canvas.getBoundingClientRect();
                     const mouseX = (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width);
                     const mouseY = (e.clientY - canvasRect.top) * (canvas.height / canvasRect.height);
-
                     state.magnify.frameX = mouseX - magnifyDragOffset.x;
                     state.magnify.frameY = mouseY - magnifyDragOffset.y;
-                    
                     state.magnify.frameX = Math.max(0, Math.min(state.magnify.frameX, canvas.width - state.magnify.frameW));
                     state.magnify.frameY = Math.max(0, Math.min(state.magnify.frameY, canvas.height - state.magnify.frameH));
-
                     drawPreview();
                     return;
                 }
@@ -895,22 +959,25 @@
                 
                 let targetImage, container, currentOffset, zoom = 1;
 
-                if (activePanTarget.type === 'single' || activePanTarget.type === 'magnify') {
+                if (activePanTarget.type === 'main' || activePanTarget.type === 'polaroid' || activePanTarget.type === 'magnify') {
                     targetImage = mainImage;
-                    const p = (activePanTarget.type === 'single') ? state.padding : { top: 0, right: 0, bottom: 0, left: 0 };
+                    const p = (activePanTarget.type === 'main') ? state.padding : { top: 0, right: 0, bottom: 0, left: 0 };
                     container = { w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
                     currentOffset = state.imageOffset;
-                } else if (activePanTarget.type === 'polaroid') {
-                    targetImage = mainImage;
-                    const frameDetails = getPolaroidFrameDetails(canvas.width, canvas.height);
-                    container = { w: frameDetails.photoW, h: frameDetails.photoH };
-                    currentOffset = state.imageOffset;
-                    zoom = state.polaroid.zoom / 100;
+                    if (activePanTarget.type === 'polaroid') {
+                        const frameDetails = getPolaroidFrameDetails(canvas.width, canvas.height);
+                        container = { w: frameDetails.photoW, h: frameDetails.photoH };
+                        zoom = state.polaroid.zoom / 100;
+                    }
+                } else if (activePanTarget.type === 'doubleExposure_top') {
+                    targetImage = topImage;
+                    container = { w: canvas.width, h: canvas.height };
+                    currentOffset = state.doubleExposure.topImageOffset;
                 } else if (activePanTarget.type === 'collage') {
                     const p = state.padding;
                     const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
                     const layout = getCollageLayout(state.collage.layout, collageImages, area, state.collage.gap);
-                    if (!layout[activePanTarget.index]) return; // Safety check
+                    if (!layout[activePanTarget.index]) return;
                     container = layout[activePanTarget.index];
                     targetImage = collageImages[activePanTarget.index];
                     currentOffset = state.collage.imageOffsets[activePanTarget.index];
@@ -922,13 +989,9 @@
 
                 const imgRatio = targetImage.width / targetImage.height;
                 const areaRatio = container.w / container.h;
-                
                 let renderScale;
-                if (imgRatio > areaRatio) { 
-                    renderScale = container.h / (targetImage.height / zoom);
-                } else { 
-                    renderScale = container.w / (targetImage.width / zoom);
-                }
+                if (imgRatio > areaRatio) { renderScale = container.h / (targetImage.height / zoom); } 
+                else { renderScale = container.w / (targetImage.width / zoom); }
 
                 const dx_source = dx_canvas / renderScale;
                 const dy_source = dy_canvas / renderScale;
@@ -939,11 +1002,11 @@
                 };
                 
                 let sW, sH;
-                const fit = (activePanTarget.type === 'single') ? state.fit : 'cover';
+                const fit = (activePanTarget.type === 'main') ? state.fit : 'cover';
                 if (fit === 'cover') {
                     if (imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; } 
                     else { sW = targetImage.width; sH = sW / areaRatio; }
-                } else { // contain
+                } else {
                     if (imgRatio > areaRatio) { sW = targetImage.width; sH = sW / areaRatio; }
                     else { sH = targetImage.height; sW = sH * areaRatio; }
                 }
@@ -952,13 +1015,14 @@
 
                 const maxOffsetX = Math.max(0, (targetImage.width - sW));
                 const maxOffsetY = Math.max(0, (targetImage.height - sH));
-
                 newOffset.x = Math.max(-maxOffsetX/2, Math.min(maxOffsetX/2, newOffset.x));
                 newOffset.y = Math.max(-maxOffsetY/2, Math.min(maxOffsetY/2, newOffset.y));
 
-                if (activePanTarget.type === 'single' || activePanTarget.type === 'polaroid' || activePanTarget.type === 'magnify') {
+                if (activePanTarget.type === 'main' || activePanTarget.type === 'polaroid' || activePanTarget.type === 'magnify') {
                     state.imageOffset = newOffset;
-                } else {
+                } else if (activePanTarget.type === 'doubleExposure_top') {
+                    state.doubleExposure.topImageOffset = newOffset;
+                } else if (activePanTarget.type === 'collage') {
                     state.collage.imageOffsets[activePanTarget.index] = newOffset;
                 }
 
@@ -986,23 +1050,25 @@
         }
         
         function switchMode(mode) {
-            if (state.mode === 'collage' || mode === 'collage') {
-                mainImage = null;
-                collageImages = [];
-                imageLoader.value = null; 
-                collageImageLoader.value = null;
-                collageThumbnailsContainer.innerHTML = '';
-                collageThumbnailsWrapper.classList.add('hidden');
-            }
-            if (mode !== 'collage') {
-                collageImages = [];
-            }
-            if (mode !== 'single' && mode !== 'polaroid' && mode !== 'magnify') {
-                mainImage = null;
-            }
+            // Reset images when switching modes to avoid conflicts
+            mainImage = null;
+            collageImages = [];
+            topImage = null;
+            bottomImage = null;
+            
+            // Reset file inputs
+            imageLoader.value = null; 
+            collageImageLoader.value = null;
+            topImageLoader.value = null;
+            bottomImageLoader.value = null;
+
+            collageThumbnailsContainer.innerHTML = '';
+            collageThumbnailsWrapper.classList.add('hidden');
             
             state.imageOffset = { x: 0, y: 0 };
             state.collage.imageOffsets = [];
+            state.doubleExposure.topImageOffset = { x: 0, y: 0 };
+            state.doubleExposure.bottomImageOffset = { x: 0, y: 0 };
             
             previewPlaceholder.classList.remove('hidden');
             canvasWrapper.classList.add('hidden');
@@ -1025,10 +1091,11 @@
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
             const canPanPolaroid = state.mode === 'polaroid' && mainImage;
             const canPanMagnify = state.mode === 'magnify' && mainImage;
+            const canPanDoubleExposure = state.mode === 'doubleExposure' && topImage;
 
             if (isDraggingMagnifyFrame || isPanning) {
                  canvasWrapper.style.cursor = 'grabbing';
-            } else if (isModifierDown && (canPanSingle || canPanCollage || canPanPolaroid || canPanMagnify)) {
+            } else if (isModifierDown && (canPanSingle || canPanCollage || canPanPolaroid || canPanMagnify || canPanDoubleExposure)) {
                 canvasWrapper.style.cursor = 'grab';
             } else if (!isModifierDown && state.mode === 'magnify') {
                 canvasWrapper.style.cursor = 'move';
@@ -1068,6 +1135,44 @@
                 mainImage.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        function handleLayerUpload(file, layer) {
+            if (!file) return;
+            originalFileName = 'cift-pozlama';
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    if (layer === 'top') {
+                        topImage = img;
+                        state.doubleExposure.topImageOffset = { x: 0, y: 0 };
+                    } else {
+                        bottomImage = img;
+                        state.doubleExposure.bottomImageOffset = { x: 0, y: 0 };
+                    }
+                    
+                    if (topImage && bottomImage) {
+                        previewPlaceholder.classList.add('hidden');
+                        canvasWrapper.style.display = 'flex';
+                        canvasWrapper.classList.remove('hidden');
+                    }
+                    updateAndDraw();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function swapLayers() {
+            if (!topImage || !bottomImage) {
+                showToast("Lütfen önce her iki katman için de resim seçin.", "error");
+                return;
+            }
+            [topImage, bottomImage] = [bottomImage, topImage];
+            [topImageLoader.files, bottomImageLoader.files] = [bottomImageLoader.files, topImageLoader.files]; // This might not work perfectly due to security
+            showToast("Katmanlar değiştirildi.", "info");
+            updateAndDraw();
         }
         
         function handleCollageUpload(files) {
@@ -1202,7 +1307,7 @@
         }
 
         function drawPreview() {
-            const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0);
+            const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0) || (state.mode === 'doubleExposure' && topImage && bottomImage);
             if (!hasImage) {
                 previewPlaceholder.classList.remove('hidden');
                 canvasWrapper.classList.add('hidden');
@@ -1251,8 +1356,8 @@
                 gradient.addColorStop(1, state.color2);
                 targetCtx.fillStyle = gradient;
                 targetCtx.fillRect(0, 0, w, h);
-            } else if (state.bgType === 'blur' && (mainImage || collageImages.length > 0)) {
-                const imgToBlur = mainImage || collageImages[0];
+            } else if (state.bgType === 'blur' && (mainImage || collageImages.length > 0 || bottomImage)) {
+                const imgToBlur = mainImage || collageImages[0] || bottomImage;
                 targetCtx.fillStyle = state.color1;
                 targetCtx.fillRect(0, 0, w, h);
                 targetCtx.save();
@@ -1280,6 +1385,8 @@
                 drawPolaroidFrame(targetCtx, w, h, scale);
             } else if (state.mode === 'magnify' && mainImage) {
                 drawMagnifyEffectOnContext(targetCtx, w, h, mainImage, state.magnify);
+            } else if (state.mode === 'doubleExposure' && topImage && bottomImage) {
+                drawDoubleExposureEffect(targetCtx, w, h, scale);
             } else {
                 const p = { top: state.padding.top * scale, right: state.padding.right * scale, bottom: state.padding.bottom * scale, left: state.padding.left * scale };
                 const drawableW = w - p.left - p.right;
@@ -1307,56 +1414,54 @@
             targetCtx.restore();
         }
 
+        function drawDoubleExposureEffect(targetCtx, w, h, scale = 1) {
+            if (!topImage || !bottomImage) return;
+            
+            targetCtx.save();
+
+            // Draw bottom image
+            drawRoundedImage(targetCtx, bottomImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.bottomImageOffset);
+
+            // Apply blend mode and opacity
+            targetCtx.globalCompositeOperation = state.doubleExposure.blendMode;
+            targetCtx.globalAlpha = state.doubleExposure.opacity / 100;
+
+            // Draw top image
+            drawRoundedImage(targetCtx, topImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.topImageOffset);
+
+            targetCtx.restore(); // Resets globalAlpha and globalCompositeOperation
+        }
+
         function drawMagnifyEffectOnContext(targetCtx, w, h, image, mState) {
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
             const offset = state.imageOffset || { x: 0, y: 0 };
-
-            // --- 1. 'Cover' kaynak dikdörtgenini hesapla ---
             const canvasRatio = w / h;
             const imageRatio = image.width / image.height;
-            let sW = image.width;
-            let sH = image.height;
-
-            if (imageRatio > canvasRatio) {
-                sW = image.height * canvasRatio;
-            } else {
-                sH = image.width / canvasRatio;
-            }
-            
+            let sW = image.width, sH = image.height;
+            if (imageRatio > canvasRatio) { sW = image.height * canvasRatio; } else { sH = image.width / canvasRatio; }
             let sX = (image.width - sW) / 2 + offset.x;
             let sY = (image.height - sH) / 2 + offset.y;
-
-            // Kaynak dikdörtgenin resim sınırları içinde kalmasını sağla
             sX = Math.max(0, Math.min(sX, image.width - sW));
             sY = Math.max(0, Math.min(sY, image.height - sH));
             
-            // --- ADIM A: Bulanık arka planı çiz ---
             targetCtx.save();
-            if (blur > 0) {
-                targetCtx.filter = `blur(${blur}px)`;
-            }
+            if (blur > 0) { targetCtx.filter = `blur(${blur}px)`; }
             targetCtx.drawImage(image, sX, sY, sW, sH, 0, 0, w, h);
             targetCtx.restore();
 
-            // --- ADIM B: Net, yakınlaştırılmış ön planı çiz ---
             targetCtx.save();
             targetCtx.beginPath();
             targetCtx.rect(frameX, frameY, frameW, frameH);
             targetCtx.clip();
-            
             const centerX = frameX + frameW / 2;
             const centerY = frameY + frameH / 2;
-            
             targetCtx.translate(centerX, centerY);
             targetCtx.scale(zoom, zoom);
             targetCtx.translate(-centerX, -centerY);
-            
             targetCtx.drawImage(image, sX, sY, sW, sH, 0, 0, w, h);
-            
             targetCtx.restore();
 
-            // --- ADIM C: Çerçeveyi çiz ---
             if (borderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = borderWidth;
@@ -1401,13 +1506,10 @@
                 const photoH = h - 2 * margin;
                 const photoX = margin;
                 const photoY = margin;
-
                 drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
-                
                 targetCtx.strokeStyle = 'rgba(255,255,255,0.9)';
                 targetCtx.lineWidth = margin * 0.05;
                 targetCtx.strokeRect(photoX, photoY, photoW, photoH);
-
                 targetCtx.fillStyle = frameSpec.effectColor;
                 const holeW = photoW * 0.02;
                 const holeH = photoH * 0.04;
@@ -1423,7 +1525,6 @@
             const margin = Math.min(w, h) * 0.1;
             const availableW = w - 2 * margin;
             const availableH = h - 2 * margin;
-
             let frameW, frameH;
             if (availableW / frameSpec.aspectRatio <= availableH) {
                 frameW = availableW;
@@ -1432,7 +1533,6 @@
                 frameH = availableH;
                 frameW = frameH * frameSpec.aspectRatio;
             }
-
             const frameX = (w - frameW) / 2;
             const frameY = (h - frameH) / 2;
             
@@ -1489,12 +1589,10 @@
                 targetCtx.font = `bold ${frameW * 0.025}px 'Roboto Mono', monospace`;
                 targetCtx.textAlign = 'center';
                 targetCtx.textBaseline = 'middle';
-                
                 targetCtx.translate(photoX + photoW + (frameW - (photoX + photoW - frameX))/2, photoY + photoH / 2);
                 targetCtx.rotate(Math.PI / 2);
                 targetCtx.fillText('KODAK HITS', 0, 0);
                 targetCtx.restore();
-
                 targetCtx.save();
                 targetCtx.translate(photoX - (photoX - frameX)/2, photoY + photoH / 2);
                 targetCtx.rotate(-Math.PI / 2);
@@ -1774,7 +1872,6 @@
                 sX = (img.width - sW) / 2 + (offset.x || 0);
                 sY = (img.height - sH) / 2 + (offset.y || 0);
 
-                // Kaynak dikdörtgenin resim sınırları içinde kalmasını sağla
                 sX = Math.max(0, Math.min(sX, img.width - sW));
                 sY = Math.max(0, Math.min(sY, img.height - sH));
             }
@@ -1828,40 +1925,26 @@
                 const qualityMultiplier = 2.5;
                 const preset = presets[state.sizePreset];
                 
+                if (!preset && !(state.sizePreset === 'original' && mainImage && state.mode === 'single')) {
+                     showToast("Lütfen bir kanvas boyutu seçin.", "error");
+                     downloadBtn.disabled = false;
+                     downloadBtn.textContent = 'İndir';
+                     return;
+                }
+
                 if (state.mode === 'magnify' && mainImage) {
-                    if (!preset) {
-                        showToast("Lütfen bir kanvas boyutu seçin.", "error");
-                        downloadBtn.disabled = false;
-                        downloadBtn.textContent = 'İndir';
-                        return;
-                    }
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
-
                     const scaleX = tempCanvas.width / canvas.width;
                     const scaleY = tempCanvas.height / canvas.height;
-
                     const renderMagnifyState = {
                         ...state.magnify,
-                        frameX: state.magnify.frameX * scaleX,
-                        frameY: state.magnify.frameY * scaleY,
-                        frameW: state.magnify.frameW * scaleX,
-                        frameH: state.magnify.frameH * scaleY,
+                        frameX: state.magnify.frameX * scaleX, frameY: state.magnify.frameY * scaleY,
+                        frameW: state.magnify.frameW * scaleX, frameH: state.magnify.frameH * scaleY,
                         borderWidth: state.magnify.borderWidth * Math.min(scaleX, scaleY),
                         blur: state.magnify.blur * Math.min(scaleX, scaleY)
                     };
-                    
                     drawMagnifyEffectOnContext(tempCtx, tempCanvas.width, tempCanvas.height, mainImage, renderMagnifyState);
-
-                } else if (preset) {
-                    tempCanvas.width = preset.width * qualityMultiplier;
-                    tempCanvas.height = preset.height * qualityMultiplier;
-                    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
-                    drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                    if (state.mode !== 'polaroid') {
-                        drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                    }
                 } else if (state.sizePreset === 'original' && mainImage && state.mode === 'single') {
                     tempCanvas.width = (mainImage.width + state.padding.left + state.padding.right) * qualityMultiplier;
                     tempCanvas.height = (mainImage.height + state.padding.top + state.padding.bottom) * qualityMultiplier;
@@ -1869,6 +1952,15 @@
                     drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
                     drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                     drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                } else if (preset) {
+                    tempCanvas.width = preset.width * qualityMultiplier;
+                    tempCanvas.height = preset.height * qualityMultiplier;
+                    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
+                    drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                    if (state.mode !== 'polaroid' && state.mode !== 'doubleExposure') {
+                        drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
+                    }
                 } else {
                      downloadBtn.disabled = false;
                      downloadBtn.textContent = 'İndir';
@@ -1908,6 +2000,8 @@
                 name: projectName,
                 state: state,
                 mainImage: await imageToBlob(mainImage),
+                topImage: await imageToBlob(topImage),
+                bottomImage: await imageToBlob(bottomImage),
                 collageImages: await Promise.all(collageImages.map(img => imageToBlob(img))),
                 watermarkImage: await imageToBlob(watermarkImage),
                 savedAt: new Date()
@@ -1932,6 +2026,7 @@
                 projects.forEach(p => {
                     let previewUrl = 'https://placehold.co/100x75/4a5568/ffffff?text=O%CC%88nizleme';
                     if (p.mainImage) previewUrl = URL.createObjectURL(p.mainImage);
+                    else if (p.bottomImage) previewUrl = URL.createObjectURL(p.bottomImage);
                     else if (p.collageImages && p.collageImages.length > 0) previewUrl = URL.createObjectURL(p.collageImages[0]);
                     const projectEl = document.createElement('div');
                     projectEl.className = 'glass-card flex items-center p-4 rounded-lg mb-4 hover:bg-white/10 transition-colors duration-200';
@@ -1956,7 +2051,7 @@
             if (!id) return;
             if (e.target.classList.contains('load-btn')) { loadProjectById(parseInt(id)); } 
             else if (e.target.classList.contains('delete-btn')) {
-                 if (window.confirm("Bu projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+                 if (confirm("Bu projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
                      deleteProjectById(parseInt(id));
                  }
             }
@@ -1987,10 +2082,14 @@
                 
                 Promise.all([
                     blobToImage(pData.mainImage),
+                    blobToImage(pData.topImage),
+                    blobToImage(pData.bottomImage),
                     Promise.all((pData.collageImages || []).map(b => blobToImage(b))),
                     blobToImage(pData.watermarkImage)
-                ]).then(([loadedMain, loadedCollage, loadedWatermark]) => {
+                ]).then(([loadedMain, loadedTop, loadedBottom, loadedCollage, loadedWatermark]) => {
                     mainImage = loadedMain;
+                    topImage = loadedTop;
+                    bottomImage = loadedBottom;
                     collageImages = loadedCollage;
                     watermarkImage = loadedWatermark;
                     
@@ -1999,7 +2098,7 @@
                     }
 
                     updateUIFromState(state);
-                    const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0);
+                    const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0) || (state.mode === 'doubleExposure' && topImage && bottomImage);
                     if(hasImage) {
                         previewPlaceholder.classList.add('hidden');
                         canvasWrapper.style.display = 'flex';
@@ -2102,4 +2201,4 @@
     </script>
 </body>
 </html>
---büyüteç son versiyonu-->
+-çift pozlama son versiyon
