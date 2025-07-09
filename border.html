@@ -1089,13 +1089,22 @@
                 
                 // Check for PopOut text drag first
                 if (state.mode === 'popOut' && state.popOut.text) {
-                    const textMetrics = getPopOutTextMetrics(canvas.width, canvas.height);
-                    if (mouse.x >= textMetrics.x && mouse.x <= textMetrics.x + textMetrics.width &&
-                        mouse.y >= textMetrics.y - textMetrics.actualBoundingBoxAscent && mouse.y <= textMetrics.y + textMetrics.actualBoundingBoxDescent) {
+                    const metrics = getPopOutTextMetrics(canvas.width, canvas.height);
+                    const textX = state.popOut.textX;
+                    const textY = state.popOut.textY;
+                    const textWidth = metrics.width;
+                    const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+                    const x1 = textX - textWidth / 2;
+                    const x2 = textX + textWidth / 2;
+                    const y1 = textY - metrics.actualBoundingBoxAscent;
+                    const y2 = textY + metrics.actualBoundingBoxDescent;
+
+                    if (mouse.x >= x1 && mouse.x <= x2 && mouse.y >= y1 && mouse.y <= y2) {
                         isDraggingPopOutText = true;
                         popOutTextDragOffset = {
-                            x: mouse.x - state.popOut.textX,
-                            y: mouse.y - state.popOut.textY
+                            x: mouse.x - textX,
+                            y: mouse.y - textY
                         };
                         canvasWrapper.style.cursor = 'grabbing';
                         return; // Prioritize text dragging
@@ -1335,14 +1344,17 @@
         }
 
         function updateCursor() {
+            if (isDraggingMagnifyFrame || isPanning || isDraggingPopOutText) {
+                 canvasWrapper.style.cursor = 'grabbing';
+                 return;
+            } 
+            
             const canPanMainImage = (state.mode === 'single' && state.fit === 'cover') || ['polaroid', 'magnify', 'popOut'].includes(state.mode);
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
             const canPanDoubleExposure = state.mode === 'doubleExposure' && topImage;
             const canPanLightEffectPattern = state.mode === 'lightEffect' && mainImage;
 
-            if (isDraggingMagnifyFrame || isPanning || isDraggingPopOutText) {
-                 canvasWrapper.style.cursor = 'grabbing';
-            } else if (isModifierDown && mainImage && (canPanMainImage || canPanCollage || canPanDoubleExposure || canPanLightEffectPattern)) {
+            if (isModifierDown && mainImage && (canPanMainImage || canPanCollage || canPanDoubleExposure || canPanLightEffectPattern)) {
                 canvasWrapper.style.cursor = 'grab';
             } else if (!isModifierDown && state.mode === 'magnify' && mainImage) {
                 canvasWrapper.style.cursor = 'move';
@@ -1834,20 +1846,28 @@
         function getPopOutBackgroundFilter(effect) {
             switch(effect) {
                 case 'grayscale': return 'grayscale(100%)';
-                case 'blur': return 'blur(15px)';
+                case 'blur': return `blur(${state.bgBlurAmount}px)`;
                 case 'sepia': return 'sepia(100%)';
                 default: return 'none';
             }
         }
         
-        function getPopOutTextMetrics(w, h, scale = 1) {
+        function getPopOutTextMetrics(w, h) {
             const s = state.popOut;
-            const fontSize = w * 0.05 * scale;
+            const fontSize = w * 0.05;
             ctx.font = `bold ${fontSize}px '${s.font}'`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const metrics = ctx.measureText(s.text);
-            return metrics;
+            
+            // Return a simplified object with all necessary properties
+            return {
+                width: metrics.width,
+                actualBoundingBoxAscent: metrics.actualBoundingBoxAscent,
+                actualBoundingBoxDescent: metrics.actualBoundingBoxDescent,
+                x: state.popOut.textX,
+                y: state.popOut.textY
+            };
         }
 
         function drawPopOutEffect(targetCtx, w, h, scale = 1) {
@@ -1883,7 +1903,7 @@
             
             // Metin
             if (s.text) {
-                const fontSize = w * 0.05 * scale;
+                const fontSize = w * 0.05; // Font size relative to the target canvas
                 targetCtx.font = `bold ${fontSize}px '${s.font}'`;
                 targetCtx.fillStyle = '#FFFFFF';
                 targetCtx.textAlign = 'center';
@@ -1893,13 +1913,21 @@
                 targetCtx.shadowOffsetX = 1 * scale;
                 targetCtx.shadowOffsetY = 1 * scale;
                 
-                // Initialize position if not set
-                if (s.textX === null || s.textY === null) {
-                    s.textX = w / 2;
-                    s.textY = h - (h * 0.1);
+                let textX, textY;
+
+                if (scale > 1) { // We are downloading
+                    textX = s.textX === null ? w / 2 : s.textX * scale;
+                    textY = s.textY === null ? h - (h * 0.1) : s.textY * scale;
+                } else { // We are in preview
+                    if (s.textX === null || s.textY === null) {
+                        s.textX = w / 2;
+                        s.textY = h - (h * 0.1);
+                    }
+                    textX = s.textX;
+                    textY = s.textY;
                 }
                 
-                targetCtx.fillText(s.text, s.textX, s.textY);
+                targetCtx.fillText(s.text, textX, textY);
                 targetCtx.shadowColor = 'transparent';
             }
         }
@@ -2673,4 +2701,4 @@
     </script>
 </body>
 </html>
-pop up v3
+pop up v4
