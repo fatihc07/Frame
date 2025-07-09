@@ -293,11 +293,16 @@
                                     <div class="flex flex-wrap gap-2" id="collageLayoutContainer">
                                         <button data-layout="auto" class="layout-btn active text-sm px-3 py-1 rounded">Oto</button>
                                         <button data-layout="grid" class="layout-btn text-sm px-3 py-1 rounded">Izgara</button>
+                                        <button data-layout="masonry" class="layout-btn text-sm px-3 py-1 rounded">Masonry</button>
+                                        <button data-layout="asym-mosaic" class="layout-btn text-sm px-3 py-1 rounded">Asimetrik</button>
                                         <button data-layout="hero" class="layout-btn text-sm px-3 py-1 rounded">Hero</button>
+                                        <button data-layout="center-focus" class="layout-btn text-sm px-3 py-1 rounded">Odak</button>
+                                        <button data-layout="center-circle" class="layout-btn text-sm px-3 py-1 rounded">Dairesel</button>
+                                        <button data-layout="film-strip" class="layout-btn text-sm px-3 py-1 rounded">Film Şeridi</button>
+                                        <button data-layout="scattered-polaroids" class="layout-btn text-sm px-3 py-1 rounded">Dağınık</button>
                                         <button data-layout="columns" class="layout-btn text-sm px-3 py-1 rounded">Sütun</button>
                                         <button data-layout="rows" class="layout-btn text-sm px-3 py-1 rounded">Sıra</button>
                                         <button data-layout="mosaic" class="layout-btn text-sm px-3 py-1 rounded">Mozaik</button>
-                                        <button data-layout="center-focus" class="layout-btn text-sm px-3 py-1 rounded">Odak</button>
                                         <button data-layout="overlap" class="layout-btn text-sm px-3 py-1 rounded">Üst Üste</button>
                                         <button data-layout="diagonal" class="layout-btn text-sm px-3 py-1 rounded">Çapraz</button>
                                         <button data-layout="three-stack" class="layout-btn text-sm px-3 py-1 rounded">Üçlü Yığın</button>
@@ -1477,33 +1482,125 @@
             const gap = state.collage.gap * scale;
             const cornerRadius = state.collage.cornerRadius * scale;
             const area = { x: p.left, y: p.top, w: w - p.left - p.right, h: h - p.top - p.bottom };
-            const layout = getCollageLayout(state.collage.layout, collageImages.length, area, gap);
+            const layout = getCollageLayout(state.collage.layout, collageImages, area, gap);
             
+            if (state.collage.layout === 'film-strip' && collageImages.length > 0) {
+                targetCtx.fillStyle = '#222';
+                const framePadding = area.h * 0.1;
+                targetCtx.fillRect(area.x, area.y + framePadding, area.w, area.h - 2 * framePadding);
+                
+                const holeSize = framePadding * 0.4;
+                const holeMargin = framePadding * 0.3;
+                targetCtx.fillStyle = '#ddd';
+                for(let i = area.x + holeMargin; i < area.x + area.w - holeMargin; i += holeSize * 2.5) {
+                    targetCtx.fillRect(i, area.y + framePadding + holeMargin, holeSize, holeSize);
+                    targetCtx.fillRect(i, area.y + area.h - framePadding - holeMargin - holeSize, holeSize, holeSize);
+                }
+            }
+
             collageImages.slice(0, layout.length).forEach((img, i) => {
                 const rect = layout[i];
                 if (rect && rect.w > 0 && rect.h > 0) {
                     const offset = state.collage.imageOffsets[i] || { x: 0, y: 0 };
-                    drawRoundedImage(targetCtx, img, rect.x, rect.y, rect.w, rect.h, cornerRadius, 'cover', offset);
+                    
+                    targetCtx.save();
+                    if (rect.rotation) {
+                        targetCtx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+                        targetCtx.rotate(rect.rotation * Math.PI / 180);
+                        targetCtx.shadowColor = 'rgba(0,0,0,0.4)';
+                        targetCtx.shadowBlur = 15 * scale;
+                        targetCtx.shadowOffsetY = 5 * scale;
+                        targetCtx.fillStyle = '#fff';
+                        const p = rect.w * 0.05;
+                        targetCtx.fillRect(-(rect.w/2), -(rect.h/2), rect.w, rect.h);
+                        drawRoundedImage(targetCtx, img, -(rect.w/2)+p, -(rect.h/2)+p, rect.w-2*p, rect.h*0.8-p, 0, 'cover', offset);
+                    } else {
+                        drawRoundedImage(targetCtx, img, rect.x, rect.y, rect.w, rect.h, cornerRadius, 'cover', offset, 1, rect.shape);
+                    }
+                    targetCtx.restore();
                 }
             });
         }
         
-        function getCollageLayout(type, numImages, area, gap) {
+        function getCollageLayout(type, images, area, gap) {
             const rects = [];
+            const numImages = images.length;
             if (numImages === 0) return rects;
-            const addRect = (x, y, w, h) => rects.push({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
+            const addRect = (x, y, w, h, shape = 'rect', rotation = 0) => rects.push({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h), shape, rotation });
 
             if (type === 'auto') {
                 if (numImages === 1) type = 'columns';
                 else if (numImages === 2) type = 'columns';
-                else if (numImages === 3) type = 'hero';
+                else if (numImages === 3) type = 'asym-mosaic';
                 else if (numImages === 4) type = 'grid';
-                else if (numImages === 5) type = 'center-focus';
-                else if (numImages === 6) type = 'pano';
-                else type = 'grid';
+                else if (numImages === 5) type = 'center-circle';
+                else type = 'masonry';
             }
 
             switch (type) {
+                case 'masonry':
+                    const cols_masonry = numImages > 6 ? 3 : 2;
+                    const colWidth_masonry = (area.w - (cols_masonry - 1) * gap) / cols_masonry;
+                    let colHeights_masonry = Array(cols_masonry).fill(area.y);
+                    images.forEach(img => {
+                        const shortestColIndex = colHeights_masonry.indexOf(Math.min(...colHeights_masonry));
+                        const imgHeight = (img.height / img.width) * colWidth_masonry;
+                        addRect(area.x + shortestColIndex * (colWidth_masonry + gap), colHeights_masonry[shortestColIndex], colWidth_masonry, imgHeight);
+                        colHeights_masonry[shortestColIndex] += imgHeight + gap;
+                    });
+                    break;
+                case 'film-strip':
+                    const framePaddingRatio = 0.15;
+                    const itemH = area.h * (1 - 2 * framePaddingRatio);
+                    if (itemH <= 0) break;
+                    const totalWidth = images.reduce((acc, img) => acc + (img.width / img.height * itemH), 0);
+                    const neededGap = (numImages - 1) * gap;
+                    const scale = totalWidth > 0 ? (area.w - neededGap) / totalWidth : 0;
+                    let currentX = area.x;
+                    images.forEach(img => {
+                        const itemW = (img.width / img.height * itemH) * scale;
+                        addRect(currentX, area.y + area.h * framePaddingRatio, itemW, itemH);
+                        currentX += itemW + gap;
+                    });
+                    break;
+                case 'center-circle':
+                    if (numImages > 0) {
+                        const centerSize = Math.min(area.w, area.h) * 0.5;
+                        addRect(area.x + (area.w - centerSize) / 2, area.y + (area.h - centerSize) / 2, centerSize, centerSize, 'circle');
+                        const others = numImages - 1;
+                        if (others > 0) {
+                            const thumbSize = Math.min(area.w, area.h) * 0.2;
+                            if (others >= 1) addRect(area.x + gap, area.y + gap, thumbSize, thumbSize);
+                            if (others >= 2) addRect(area.x + area.w - thumbSize - gap, area.y + gap, thumbSize, thumbSize);
+                            if (others >= 3) addRect(area.x + gap, area.y + area.h - thumbSize - gap, thumbSize, thumbSize);
+                            if (others >= 4) addRect(area.x + area.w - thumbSize - gap, area.y + area.h - thumbSize - gap, thumbSize, thumbSize);
+                        }
+                    }
+                    break;
+                case 'asym-mosaic':
+                     if (numImages === 1) { addRect(area.x, area.y, area.w, area.h); }
+                    else if (numImages === 2) { const w = (area.w - gap) / 2; addRect(area.x, area.y, w, area.h); addRect(area.x + w + gap, area.y, w, area.h); }
+                    else { 
+                        const w1 = area.w * 0.6 - gap / 2;
+                        const w2 = area.w * 0.4 - gap / 2;
+                        addRect(area.x, area.y, w1, area.h);
+                        const sideCount = numImages - 1;
+                        const thumbH = (area.h - (sideCount - 1) * gap) / sideCount;
+                        for (let i = 0; i < sideCount; i++) {
+                            addRect(area.x + w1 + gap, area.y + i * (thumbH + gap), w2, thumbH);
+                        }
+                    }
+                    break;
+                case 'scattered-polaroids':
+                    for (let i = 0; i < numImages; i++) {
+                        const w = area.w / (numImages > 4 ? 3.5 : 2.5);
+                        const h = w / (88/107);
+                        const x = area.x + Math.random() * (area.w - w);
+                        const y = area.y + Math.random() * (area.h - h);
+                        const rot = Math.random() * 30 - 15;
+                        addRect(x, y, w, h, 'rect', rot);
+                    }
+                    break;
                 case 'columns':
                     const colW = (area.w - (numImages - 1) * gap) / numImages;
                     for (let i=0; i<numImages; i++) { addRect(area.x + i * (colW + gap), area.y, colW, area.h); }
@@ -1602,14 +1699,20 @@
             return rects;
         }
         
-        function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }, zoom = 1) {
+        function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }, zoom = 1, shape = 'rect') {
             ctx.save();
-            if (r > 0) {
-                ctx.beginPath();
-                ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
-                ctx.closePath();
-                ctx.clip();
+            ctx.beginPath();
+            if (shape === 'circle') {
+                ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2, true);
+            } else { // rounded rectangle
+                ctx.moveTo(x + r, y); 
+                ctx.arcTo(x + w, y, x + w, y + h, r); 
+                ctx.arcTo(x + w, y + h, x, y + h, r); 
+                ctx.arcTo(x, y + h, x, y, r); 
+                ctx.arcTo(x, y, x + w, y, r);
             }
+            ctx.closePath();
+            ctx.clip();
             
             let sX = 0, sY = 0, sW = img.width, sH = img.height;
             if (fit === 'cover') {
