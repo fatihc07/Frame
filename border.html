@@ -807,8 +807,49 @@
                     } else if (state.mode === 'collage') { 
                         const p = state.padding;
                         const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
-                        const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
-                        const clickedIndex = layout.findIndex(rect => mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h);
+                        const layout = getCollageLayout(state.collage.layout, collageImages, area, state.collage.gap);
+                        
+                        let clickedIndex = -1;
+
+                        // Iterate backwards to check top-most elements first (for overlapping layouts)
+                        for (let i = layout.length - 1; i >= 0; i--) {
+                            const rect = layout[i];
+                            let hit = false;
+
+                            if (rect.rotation) {
+                                const cx = rect.x + rect.w / 2;
+                                const cy = rect.y + rect.h / 2;
+                                const angle = -rect.rotation * Math.PI / 180; // Inverse rotation
+                                
+                                const tmx = mouse.x - cx;
+                                const tmy = mouse.y - cy;
+
+                                const rmx = tmx * Math.cos(angle) - tmy * Math.sin(angle);
+                                const rmy = tmx * Math.sin(angle) + tmy * Math.cos(angle);
+
+                                if (rmx >= -rect.w / 2 && rmx <= rect.w / 2 && rmy >= -rect.h / 2 && rmy <= rect.h / 2) {
+                                    hit = true;
+                                }
+                            } else if (rect.shape === 'circle') {
+                                const cx = rect.x + rect.w / 2;
+                                const cy = rect.y + rect.h / 2;
+                                const radius = Math.min(rect.w, rect.h) / 2;
+                                const dist = Math.sqrt(Math.pow(mouse.x - cx, 2) + Math.pow(mouse.y - cy, 2));
+                                if (dist <= radius) {
+                                    hit = true;
+                                }
+                            } else { // Standard rectangle
+                                if (mouse.x >= rect.x && mouse.x <= rect.x + rect.w && mouse.y >= rect.y && mouse.y <= rect.y + rect.h) {
+                                    hit = true;
+                                }
+                            }
+
+                            if (hit) {
+                                clickedIndex = i;
+                                break; // Stop after finding the first hit (from top)
+                            }
+                        }
+
                         if (clickedIndex > -1) {
                             isPanning = true;
                             activePanTarget = { type: 'collage', index: clickedIndex };
@@ -868,7 +909,8 @@
                 } else if (activePanTarget.type === 'collage') {
                     const p = state.padding;
                     const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
-                    const layout = getCollageLayout(state.collage.layout, collageImages.length, area, state.collage.gap);
+                    const layout = getCollageLayout(state.collage.layout, collageImages, area, state.collage.gap);
+                    if (!layout[activePanTarget.index]) return; // Safety check
                     container = layout[activePanTarget.index];
                     targetImage = collageImages[activePanTarget.index];
                     currentOffset = state.collage.imageOffsets[activePanTarget.index];
