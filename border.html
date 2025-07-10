@@ -563,7 +563,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- GÜNCELLEME: Pop-Out modundaki arka plan bulanıklığı artık ayarlanabilir bir seviyeye sahip. ---
+        // --- GÜNCELLEME: Pozlama ayarı, her modülün kendi içinde bağımsız çalışması için yeniden düzenlendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -1676,6 +1676,8 @@
                 if (drawableW <= 0 || drawableH <= 0) { targetCtx.restore(); return; }
 
                 if (state.mode === 'single' && mainImage) {
+                    targetCtx.save();
+                    targetCtx.filter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
                     if (state.fit === 'contain') {
                         const containerRatio = drawableW / drawableH;
                         const imgRatio = mainImage.width / mainImage.height;
@@ -1689,6 +1691,7 @@
                         const offset = state.imageOffset || { x: 0, y: 0 };
                         drawRoundedImage(targetCtx, mainImage, p.left, p.top, drawableW, drawableH, 0, 'cover', offset);
                     }
+                    targetCtx.restore();
                 } else if (state.mode === 'collage' && collageImages.length > 0) {
                     drawCollageLayout(targetCtx, w, h, scale);
                 }
@@ -1696,14 +1699,30 @@
             targetCtx.restore();
         }
 
+        /**
+         * DÜZELTME: Işık Efekti Modunda Pozlama Sorunu
+         * Bu fonksiyon, pozlama ayarını ve ışık desenini doğru sırada ve bağımsız olarak uygular.
+         * 1. Pozlama filtresi (`brightness`) tuvalin bağlamına (`targetCtx`) uygulanır.
+         * 2. Temel görüntü, bu filtre uygulanmış bağlama çizilir.
+         * 3. Filtre, ışık deseni katmanını etkilememesi için hemen sıfırlanır (`none`).
+         * 4. Işık deseni, harmanlama moduyla birlikte pozlaması ayarlanmış görüntünün üzerine çizilir.
+         * Bu yöntem, efektlerin birbirine karışmasını önler ve tutarlı bir sonuç sağlar.
+         */
         function drawLightEffect(targetCtx, w, h, scale = 1) {
             if (!mainImage) return;
             targetCtx.save();
 
-            // 1. Temel görüntüyü pozlama ayarı uygulanmış şekilde çizin.
+            // 1. Pozlama filtresini uygula
+            const exposure = state.imageAdjustments.exposure;
+            targetCtx.filter = `brightness(${1 + exposure / 100})`;
+
+            // 2. Temel görüntüyü filtrelenmiş bağlama çiz
             drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset);
 
-            // 2. Işık desenini ayarlanmış görüntünün üzerine çizin.
+            // 3. Filtreyi sıfırla
+            targetCtx.filter = 'none';
+
+            // 4. Işık deseni katmanını çiz
             const s = state.lightEffect;
             const patternCanvas = generateLightPattern(s.pattern, w, h, s.color);
             
@@ -1807,30 +1826,46 @@
 
         function drawDoubleExposureEffect(targetCtx, w, h, scale = 1) {
             if (!topImage || !bottomImage) return;
-            
+
+            const exposure = state.imageAdjustments.exposure;
+            const exposureFilter = `brightness(${1 + exposure / 100})`;
+
+            // Alt katmanı pozlama ile geçici bir tuvale çiz
+            const bottomCanvas = document.createElement('canvas');
+            bottomCanvas.width = w;
+            bottomCanvas.height = h;
+            const bottomCtx = bottomCanvas.getContext('2d');
+            bottomCtx.filter = exposureFilter;
+            drawRoundedImage(bottomCtx, bottomImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.bottomImageOffset);
+
+            // Üst katmanı pozlama ile geçici bir tuvale çiz
+            const topCanvas = document.createElement('canvas');
+            topCanvas.width = w;
+            topCanvas.height = h;
+            const topCtx = topCanvas.getContext('2d');
+            topCtx.filter = exposureFilter;
+            drawRoundedImage(topCtx, topImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.topImageOffset);
+
+            // Katmanları ana tuval üzerinde birleştir
             targetCtx.save();
-
-            // Draw bottom image
-            drawRoundedImage(targetCtx, bottomImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.bottomImageOffset);
-
-            // Apply blend mode and opacity
+            targetCtx.drawImage(bottomCanvas, 0, 0);
             targetCtx.globalCompositeOperation = state.doubleExposure.blendMode;
             targetCtx.globalAlpha = state.doubleExposure.opacity / 100;
-
-            // Draw top image
-            drawRoundedImage(targetCtx, topImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.topImageOffset);
-
-            targetCtx.restore(); // Resets globalAlpha and globalCompositeOperation
+            targetCtx.drawImage(topCanvas, 0, 0);
+            targetCtx.restore();
         }
 
         function drawMagnifyEffectOnContext(targetCtx, w, h, image, mState) {
             if (!image) return;
             const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
             const offset = state.imageOffset || { x: 0, y: 0 };
+            const exposureFilter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
             
+            // Arkaplanı çiz
             targetCtx.save();
             let filters = [];
             if (blur > 0) filters.push(`blur(${blur}px)`);
+            filters.push(exposureFilter);
             targetCtx.filter = filters.join(' ');
             drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
             targetCtx.restore();
@@ -1845,7 +1880,12 @@
             targetCtx.translate(centerX, centerY);
             targetCtx.scale(zoom, zoom);
             targetCtx.translate(-centerX, -centerY);
+            
+            targetCtx.save();
+            targetCtx.filter = exposureFilter;
             drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
+            targetCtx.restore();
+            
             targetCtx.restore();
 
             // Çerçeveyi çiz
@@ -1873,7 +1913,6 @@
             ctx.textBaseline = 'middle';
             const metrics = ctx.measureText(s.text);
             
-            // Return a simplified object with all necessary properties
             return {
                 width: metrics.width,
                 actualBoundingBoxAscent: metrics.actualBoundingBoxAscent,
@@ -1886,10 +1925,12 @@
         function drawPopOutEffect(targetCtx, w, h, scale = 1) {
             if (!mainImage) return;
             const s = state.popOut;
+            const exposureFilter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
 
             // 1. Arkaplanı çiz
             targetCtx.save();
-            targetCtx.filter = getPopOutBackgroundFilter(s.backgroundEffect);
+            const bgEffect = getPopOutBackgroundFilter(s.backgroundEffect);
+            targetCtx.filter = `${bgEffect} ${exposureFilter}`.trim();
             drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, 'cover', state.imageOffset);
             targetCtx.restore();
 
@@ -1901,7 +1942,6 @@
             const fgY = (h - fgH) / 2;
             const borderWidth = s.borderWidth * scale;
 
-            // Kenarlık
             if (borderWidth > 0) {
                 targetCtx.fillStyle = s.borderColor;
                 targetCtx.shadowColor = 'rgba(0,0,0,0.3)';
@@ -1911,12 +1951,13 @@
                 targetCtx.shadowColor = 'transparent';
             }
 
-            // Renkli ön plan resmi
+            targetCtx.save();
+            targetCtx.filter = exposureFilter;
             drawRoundedImage(targetCtx, mainImage, fgX, fgY, fgW, fgH, 0, 'cover', state.imageOffset);
+            targetCtx.restore();
             
-            // Metin
             if (s.text) {
-                const fontSize = w * 0.05; // Font size relative to the target canvas
+                const fontSize = w * 0.05;
                 targetCtx.font = `bold ${fontSize}px '${s.font}'`;
                 targetCtx.fillStyle = '#FFFFFF';
                 targetCtx.textAlign = 'center';
@@ -1927,11 +1968,10 @@
                 targetCtx.shadowOffsetY = 1 * scale;
                 
                 let textX, textY;
-
-                if (scale > 1) { // We are downloading
+                if (scale > 1) {
                     textX = s.textX === null ? w / 2 : s.textX * scale;
                     textY = s.textY === null ? h - (h * 0.1) : s.textY * scale;
-                } else { // We are in preview
+                } else {
                     if (s.textX === null || s.textY === null) {
                         s.textX = w / 2;
                         s.textY = h - (h * 0.1);
@@ -1981,7 +2021,12 @@
                 const photoH = h - 2 * margin;
                 const photoX = margin;
                 const photoY = margin;
+                
+                targetCtx.save();
+                targetCtx.filter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
                 drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
+                targetCtx.restore();
+
                 targetCtx.strokeStyle = 'rgba(255,255,255,0.9)';
                 targetCtx.lineWidth = margin * 0.05;
                 targetCtx.strokeRect(photoX, photoY, photoW, photoH);
@@ -2056,7 +2101,11 @@
             
             targetCtx.fillStyle = '#1a202c';
             targetCtx.fillRect(photoX, photoY, photoW, photoH);
+            
+            targetCtx.save();
+            targetCtx.filter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
             drawRoundedImage(targetCtx, mainImage, photoX, photoY, photoW, photoH, 0, 'cover', state.imageOffset, state.polaroid.zoom / 100);
+            targetCtx.restore();
 
             if (frameSpec.type === 'special' && state.polaroid.frame === 'film-kare') {
                 targetCtx.save();
@@ -2119,6 +2168,7 @@
                     const offset = state.collage.imageOffsets[i] || { x: 0, y: 0 };
                     
                     targetCtx.save();
+                    targetCtx.filter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
                     if (rect.rotation) {
                         targetCtx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
                         targetCtx.rotate(rect.rotation * Math.PI / 180);
@@ -2317,11 +2367,6 @@
         function drawRoundedImage(ctx, img, x, y, w, h, r, fit = 'contain', offset = { x: 0, y: 0 }, zoom = 1, shape = 'rect') {
             ctx.save();
             
-            const exposure = state.imageAdjustments.exposure;
-            const currentFilter = ctx.filter || '';
-            // Pozlama filtresini mevcut filtrelere ekle (örn. blur)
-            ctx.filter = `brightness(${1 + exposure / 100}) ${currentFilter}`.trim();
-
             ctx.beginPath();
             if (shape === 'circle') {
                 ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2, true);
@@ -2714,4 +2759,4 @@
     </script>
 </body>
 </html>
--- bulanıklık seviyesi eklendi
+-- ışık sorunu çözüldü -->
