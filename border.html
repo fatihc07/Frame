@@ -431,6 +431,13 @@
                                         <option value="none">Efekt Yok</option>
                                     </select>
                                 </div>
+                                <div id="popOutBlurContainer" class="hidden pt-2">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="popOutBlurAmount" class="text-xs">Bulanıklık Seviyesi</label>
+                                        <span id="popOutBlurAmountValue" class="text-sm font-semibold text-violet-300">10</span>
+                                    </div>
+                                    <input type="range" id="popOutBlurAmount" value="10" min="0" max="40" class="w-full">
+                                </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label for="popOutSize" class="mb-1 block text-sm">Ön Plan Boyutu</label>
@@ -556,7 +563,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- YENİ ÖZELLİKLER: Pop-Out modu için özelleştirilebilir ve sürüklenebilir metin, ayarlanabilir arka plan bulanıklığı eklendi. ---
+        // --- GÜNCELLEME: Pop-Out modundaki arka plan bulanıklığı artık ayarlanabilir bir seviyeye sahip. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -703,8 +710,9 @@
                     borderColor: '#FFFFFF',
                     text: 'New Post',
                     font: 'Playfair Display',
-                    textX: null, // Null to indicate it needs to be centered initially
+                    textX: null,
                     textY: null,
+                    blurAmount: 10 // Pop-out moduna özel bulanıklık değeri
                 },
                 text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
                 watermark: { opacity: 50, size: 20, position: 'bottom-right' }
@@ -793,6 +801,7 @@
             state.popOut.borderColor = document.getElementById('popOutBorderColor').value;
             state.popOut.text = document.getElementById('popOutText').value;
             state.popOut.font = document.getElementById('popOutFont').value;
+            state.popOut.blurAmount = parseInt(document.getElementById('popOutBlurAmount').value, 10);
 
             // Genel araçlar
             state.text = {
@@ -903,12 +912,16 @@
             document.getElementById('lightEffectScale').value = s.lightEffect.scale;
             document.getElementById('lightEffectBlendMode').value = s.lightEffect.blendMode;
 
+            // Pop-Out UI
             document.getElementById('popOutBackgroundEffect').value = s.popOut.backgroundEffect;
             document.getElementById('popOutSize').value = s.popOut.size;
             document.getElementById('popOutBorderWidth').value = s.popOut.borderWidth;
             document.getElementById('popOutBorderColor').value = s.popOut.borderColor;
             document.getElementById('popOutText').value = s.popOut.text;
             document.getElementById('popOutFont').value = s.popOut.font;
+            document.getElementById('popOutBlurContainer').style.display = s.popOut.backgroundEffect === 'blur' ? 'block' : 'none';
+            document.getElementById('popOutBlurAmount').value = s.popOut.blurAmount;
+            document.getElementById('popOutBlurAmountValue').textContent = s.popOut.blurAmount;
 
 
             document.getElementById('textInput').value = s.text.content; 
@@ -1846,7 +1859,7 @@
         function getPopOutBackgroundFilter(effect) {
             switch(effect) {
                 case 'grayscale': return 'grayscale(100%)';
-                case 'blur': return `blur(${state.bgBlurAmount}px)`;
+                case 'blur': return `blur(${state.popOut.blurAmount}px)`;
                 case 'sepia': return 'sepia(100%)';
                 default: return 'none';
             }
@@ -2701,4 +2714,4 @@
     </script>
 </body>
 </html>
-pop up v4
+-- bulanıklık seviyesi eklendi
