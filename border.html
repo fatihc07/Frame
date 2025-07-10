@@ -138,14 +138,13 @@
                     <p class="mt-2 text-gray-300">Fotoğraflarınıza sanatsal dokunuşlar katın.</p>
                 </div>
                 
-                <div class="grid grid-cols-3 md:grid-cols-4 gap-2 p-1 bg-black/10 rounded-lg">
+                <div class="grid grid-cols-3 md:grid-cols-3 gap-2 p-1 bg-black/10 rounded-lg">
                      <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold text-sm">Tekli</button>
                      <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Kolaj</button>
                      <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Polaroid</button>
                      <button id="magnifyModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Büyüteç</button>
                      <button id="doubleExposureModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Çift Pozlama</button>
                      <button id="popOutModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Pop-Out</button>
-                     <button id="motionBlurModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Hareket</button>
                 </div>
 
                 <div class="space-y-4">
@@ -271,7 +270,6 @@
                             </div>
                         </div>
                         
-                        <!-- === YENİ BÜYÜTEÇ AYARLARI BAŞLANGIÇ === -->
                         <div id="magnifySettings" class="hidden">
                             <div class="control-section">
                                 <label class="block text-sm font-medium text-gray-200 mb-2">Büyüteçler</label>
@@ -318,8 +316,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- === YENİ BÜYÜTEÇ AYARLARI BİTİŞ === -->
-
 
                         <div id="collageSettings" class="hidden control-section">
                              <label class="block text-sm font-medium text-gray-200 mb-4">Kolaj Ayarları</label>
@@ -390,31 +386,6 @@
                                         <option value="color">Color</option>
                                         <option value="luminosity">Luminosity</option>
                                     </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="motionBlurSettings" class="hidden control-section">
-                            <div class="space-y-6 text-gray-200">
-                                <p class="text-xs text-center text-gray-400">Bulanıklaştırmak istediğiniz alanları fırça ile boyayın.</p>
-                                <div>
-                                    <div class="flex justify-between items-center mb-1">
-                                        <label for="motionBlurStrength" class="text-xs">Bulanıklık Gücü</label>
-                                        <span id="motionBlurStrengthValue" class="text-sm font-semibold text-violet-300">50</span>
-                                    </div>
-                                    <input type="range" id="motionBlurStrength" min="0" max="100" value="50" class="w-full">
-                                </div>
-                                <div>
-                                    <div class="flex justify-between items-center mb-1">
-                                        <label for="motionBlurBrushSize" class="text-xs">Fırça Boyutu</label>
-                                        <span id="motionBlurBrushSizeValue" class="text-sm font-semibold text-violet-300">50</span>
-                                    </div>
-                                    <input type="range" id="motionBlurBrushSize" min="5" max="200" value="50" class="w-full">
-                                </div>
-                                <div>
-                                    <button id="clearMotionBlurMaskBtn" class="w-full bg-red-600/70 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600">
-                                        Bulanıklığı Temizle
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -535,7 +506,7 @@
                     <p class="font-semibold text-lg mt-4">Önizleme Alanı</p>
                     <p class="text-sm">Bir fotoğraf yüklediğinizde burada görünecektir.</p>
                 </div>
-                <div id="canvasWrapper" class="hidden w-full h-full items-center justify-center" style="cursor: none;">
+                <div id="canvasWrapper" class="hidden w-full h-full items-center justify-center cursor-default">
                     <canvas id="canvas" class="max-w-full max-h-full"></canvas>
                 </div>
             </div>
@@ -562,7 +533,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- GÜNCELLEME: Büyüteç modu, çoklu ve özelleştirilebilir büyüteç alanları eklenerek güncellendi. ---
+        // --- GÜNCELLEME: Hareket (Motion Blur) modu kaldırıldı. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -589,7 +560,6 @@
         const polaroidColorSection = document.getElementById('polaroidColorSection');
         const blurAmountContainer = document.getElementById('blurAmountContainer');
 
-        // === YENİ BÜYÜTEÇ DOM ELEMENTLERİ ===
         const magnifierSelectorContainer = document.getElementById('magnifierSelectorContainer');
         const addMagnifierBtn = document.getElementById('addMagnifierBtn');
         const deleteMagnifierBtn = document.getElementById('deleteMagnifierBtn');
@@ -615,19 +585,11 @@
         let draggedThumbnailIndex = null;
         let frameImageAssets = {};
         
-        // === GÜNCELLENMİŞ BÜYÜTEÇ SÜRÜKLEME DEĞİŞKENLERİ ===
         let draggedMagnifierId = null;
         let magnifyDragOffset = { x: 0, y: 0 };
         
         let isDraggingPopOutText = false;
         let popOutTextDragOffset = { x: 0, y: 0 };
-
-        // --- Yeni Fırça Özellikleri ---
-        let isBrushing = false;
-        let maskCanvas = null;
-        let maskCtx = null;
-        let brushCursor = { x: -1, y: -1, visible: false };
-        let lastBrushPoint = null;
 
         const presets = {
             'original': null, 
@@ -660,7 +622,6 @@
             }
         });
 
-        // === YENİ BÜYÜTEÇ VARSAYILAN DEĞERLERİ ===
         function getDefaultMagnifier(id, canvasW = 1080, canvasH = 1080) {
             return {
                 id: id,
@@ -696,22 +657,17 @@
                     rotation: 5,
                     zoom: 100
                 },
-                // === YENİ BÜYÜTEÇ STATE YAPISI ===
                 magnify: {
-                    magnifiers: [], // Büyüteç nesneleri dizisi
-                    activeMagnifierId: null, // Aktif olarak düzenlenen büyüteç ID'si
-                    nextId: 1, // Bir sonraki büyüteç için ID
-                    blur: 10, // Arkaplan bulanıklığı (tümü için ortak)
+                    magnifiers: [], 
+                    activeMagnifierId: null,
+                    nextId: 1,
+                    blur: 10,
                 },
                 doubleExposure: {
                     opacity: 50,
                     blendMode: 'screen',
                     topImageOffset: { x: 0, y: 0 },
                     bottomImageOffset: { x: 0, y: 0 }
-                },
-                motionBlur: {
-                    strength: 50,
-                    brushSize: 50,
                 },
                 popOut: {
                     backgroundEffect: 'grayscale',
@@ -730,13 +686,11 @@
         }
         
         function syncStateWithUI() {
-            // Modu belirle
             const activeModeBtn = document.querySelector('.mode-btn.active');
             if (activeModeBtn) {
                 state.mode = activeModeBtn.id.replace('ModeBtn', '');
             }
 
-            // Tekli mod ayarları
             const newFit = document.getElementById('fitContainBtn').classList.contains('active') ? 'contain' : 'cover';
             if (state.fit !== newFit) state.imageOffset = { x: 0, y: 0 };
             state.fit = newFit;
@@ -764,22 +718,18 @@
             state.color2 = document.getElementById('color2').value;
             state.bgBlurAmount = parseInt(document.getElementById('bgBlurAmount').value, 10);
 
-            // Genel Ayarlamalar
             state.imageAdjustments.exposure = parseInt(document.getElementById('exposure').value, 10);
             
-            // Kolaj ayarları
             state.collage.gap = parseInt(document.getElementById('collageGap').value, 10);
             state.collage.cornerRadius = parseInt(document.getElementById('cornerRadius').value, 10);
             state.collage.layout = document.querySelector('#collageLayoutContainer .active')?.dataset.layout;
             
-            // Polaroid ayarları
             state.polaroid.frame = document.querySelector('#polaroidFrameContainer .active')?.dataset.frame;
             state.polaroid.frameColor = document.getElementById('polaroidFrameColor').value;
             state.polaroid.text = document.getElementById('polaroidText').value;
             state.polaroid.rotation = parseInt(document.getElementById('polaroidRotation').value, 10);
             state.polaroid.zoom = parseInt(document.getElementById('polaroidZoom').value, 10);
 
-            // === GÜNCELLENMİŞ BÜYÜTEÇ STATE SYNC ===
             if (state.mode === 'magnify') {
                 state.magnify.blur = parseInt(document.getElementById('magnifyBlur').value, 10);
                 const activeMagnifier = state.magnify.magnifiers.find(m => m.id === state.magnify.activeMagnifierId);
@@ -792,15 +742,9 @@
                 }
             }
 
-            // Çift Pozlama ayarları
             state.doubleExposure.opacity = parseInt(document.getElementById('doubleExposureOpacity').value, 10);
             state.doubleExposure.blendMode = document.getElementById('blendMode').value;
 
-            // Hareket Bulanıklığı ayarları
-            state.motionBlur.strength = parseInt(document.getElementById('motionBlurStrength').value, 10);
-            state.motionBlur.brushSize = parseInt(document.getElementById('motionBlurBrushSize').value, 10);
-
-            // Pop-Out ayarları
             state.popOut.backgroundEffect = document.getElementById('popOutBackgroundEffect').value;
             state.popOut.size = parseInt(document.getElementById('popOutSize').value, 10);
             state.popOut.borderWidth = parseInt(document.getElementById('popOutBorderWidth').value, 10);
@@ -809,7 +753,6 @@
             state.popOut.font = document.getElementById('popOutFont').value;
             state.popOut.blurAmount = parseInt(document.getElementById('popOutBlurAmount').value, 10);
 
-            // Genel araçlar
             state.text = {
                 content: document.getElementById('textInput').value,
                 color: document.getElementById('textColor').value,
@@ -835,7 +778,6 @@
             const isCollage = s.mode === 'collage';
             const isSingle = s.mode === 'single';
             const isDoubleExposure = s.mode === 'doubleExposure';
-            const isMotionBlur = s.mode === 'motionBlur';
             const isPopOut = s.mode === 'popOut';
 
             const hasImage = mainImage || (collageImages && collageImages.length > 0) || (topImage && bottomImage);
@@ -848,7 +790,6 @@
             document.getElementById('collageSettings').style.display = isCollage ? 'block' : 'none';
             document.getElementById('magnifySettings').style.display = isMagnify ? 'block' : 'none';
             document.getElementById('doubleExposureSettings').style.display = isDoubleExposure ? 'block' : 'none';
-            document.getElementById('motionBlurSettings').style.display = isMotionBlur ? 'block' : 'none';
             document.getElementById('popOutSettings').style.display = isPopOut ? 'block' : 'none';
             document.getElementById('generalTools').style.display = isSingle || isCollage ? 'block' : 'none';
             
@@ -860,7 +801,6 @@
                  }
             }
 
-            // === YENİ BÜYÜTEÇ UI GÜNCELLEME ===
             if (isMagnify) {
                 updateMagnifierSelectorUI(s.magnify);
                 const activeMagnifier = s.magnify.magnifiers.find(m => m.id === s.magnify.activeMagnifierId);
@@ -880,12 +820,10 @@
                 }
             }
 
-
-            document.getElementById('fitFillContainer').style.visibility = (isSingle || isPopOut || isMotionBlur) ? 'visible' : 'hidden';
+            document.getElementById('fitFillContainer').style.visibility = (isSingle || isPopOut) ? 'visible' : 'hidden';
             document.getElementById('colorPickers').style.display = s.bgType === 'transparent' ? 'none' : 'grid';
             document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
             blurAmountContainer.style.display = s.bgType === 'blur' ? 'block' : 'none';
-
 
             document.getElementById('fitContainBtn').classList.toggle('active', s.fit === 'contain');
             document.getElementById('fitCoverBtn').classList.toggle('active', s.fit === 'cover');
@@ -925,13 +863,6 @@
             document.getElementById('doubleExposureOpacityValue').textContent = `${s.doubleExposure.opacity}%`;
             document.getElementById('blendMode').value = s.doubleExposure.blendMode;
 
-            // Motion Blur UI
-            document.getElementById('motionBlurStrength').value = s.motionBlur.strength;
-            document.getElementById('motionBlurStrengthValue').textContent = s.motionBlur.strength;
-            document.getElementById('motionBlurBrushSize').value = s.motionBlur.brushSize;
-            document.getElementById('motionBlurBrushSizeValue').textContent = s.motionBlur.brushSize;
-
-            // Pop-Out UI
             document.getElementById('popOutBackgroundEffect').value = s.popOut.backgroundEffect;
             document.getElementById('popOutSize').value = s.popOut.size;
             document.getElementById('popOutBorderWidth').value = s.popOut.borderWidth;
@@ -952,14 +883,14 @@
             document.getElementById('watermarkSize').value = s.watermark.size; 
             document.getElementById('watermarkPosition').value = s.watermark.position;
             
-            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify || isPopOut || isMotionBlur ? 'block' : 'none';
+            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify || isPopOut ? 'block' : 'none';
             collageUploaderDiv.style.display = isCollage ? 'block' : 'none';
             doubleExposureUploaderDiv.style.display = isDoubleExposure ? 'block' : 'none';
 
             document.getElementById('imageLoaderLabel').textContent = `1. ${isCollage ? 'Kolaj Fotoğrafları' : isDoubleExposure ? 'Katmanları Seçin' : 'Fotoğraf Seçin'}`;
-            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure || isPopOut || isMotionBlur;
-            if ((isPolaroid || isMagnify || isDoubleExposure || isPopOut || isMotionBlur) && s.sizePreset === 'original') {
-                s.sizePreset = 'square'; // Varsayılan boyut
+            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure || isPopOut;
+            if ((isPolaroid || isMagnify || isDoubleExposure || isPopOut) && s.sizePreset === 'original') {
+                s.sizePreset = 'square';
                 document.getElementById('sizePreset').value = 'square';
             }
         }
@@ -979,7 +910,6 @@
 
         function saveStateToHistory() {
             history = history.slice(0, historyIndex + 1);
-            // Don't save transient dragging states
             const stateToSave = JSON.parse(JSON.stringify(state));
             history.push(stateToSave);
             historyIndex++;
@@ -990,8 +920,6 @@
             if (historyIndex > 0) {
                 historyIndex--;
                 state = JSON.parse(JSON.stringify(history[historyIndex]));
-                // NOTE: Mask history is not implemented for simplicity.
-                // It will not be restored on undo.
                 updateUIFromState(state);
                 drawPreview();
                 if(state.mode === 'collage') displayCollageThumbnails();
@@ -1003,7 +931,6 @@
             if (historyIndex < history.length - 1) {
                 historyIndex++;
                 state = JSON.parse(JSON.stringify(history[historyIndex]));
-                // NOTE: Mask history is not implemented.
                 updateUIFromState(state);
                 drawPreview();
                 if(state.mode === 'collage') displayCollageThumbnails();
@@ -1078,9 +1005,7 @@
             bottomImageLoader.addEventListener('change', (e) => handleLayerUpload(e.target.files[0], 'bottom'));
             document.getElementById('swapLayersBtn').addEventListener('click', swapLayers);
             document.getElementById('watermarkLoader').addEventListener('change', handleWatermarkUpload);
-            document.getElementById('clearMotionBlurMaskBtn').addEventListener('click', clearMotionBlurMask);
 
-            // === YENİ BÜYÜTEÇ EVENT LISTENERS ===
             addMagnifierBtn.addEventListener('click', addMagnifier);
             deleteMagnifierBtn.addEventListener('click', deleteActiveMagnifier);
             magnifierSelectorContainer.addEventListener('click', (e) => {
@@ -1116,12 +1041,6 @@
             canvasWrapper.addEventListener('mousedown', e => {
                 const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0) || (state.mode === 'doubleExposure' && topImage && bottomImage);
                 if (!hasImage) return;
-
-                if (state.mode === 'motionBlur') {
-                    isBrushing = true;
-                    handleBrushStroke(e);
-                    return;
-                }
 
                 const canvasRect = canvas.getBoundingClientRect();
                 const mouse = {
@@ -1196,31 +1115,20 @@
                         }
                     }
                 } else if (state.mode === 'magnify') {
-                    // === GÜNCELLENMİŞ BÜYÜTEÇ TIKLAMA KONTROLÜ ===
-                    // En üstteki çerçeveyi bulmak için ters sırada döngü
                     for (let i = state.magnify.magnifiers.length - 1; i >= 0; i--) {
                         const mag = state.magnify.magnifiers[i];
                         if (mouse.x > mag.frameX && mouse.x < mag.frameX + mag.frameW && mouse.y > mag.frameY && mouse.y < mag.frameY + mag.frameH) {
                             draggedMagnifierId = mag.id;
                             magnifyDragOffset = { x: mouse.x - mag.frameX, y: mouse.y - mag.frameY };
                             canvasWrapper.style.cursor = 'grabbing';
-                            // Tıklanan büyüteci aktif hale getir
                             setActiveMagnifier(mag.id);
-                            return; // Başka çerçeve kontrol etme
+                            return;
                         }
                     }
                 }
             });
             
             window.addEventListener('mousemove', e => {
-                if (state.mode === 'motionBlur') {
-                    updateBrushCursor(e);
-                    if (isBrushing) {
-                        handleBrushStroke(e);
-                    }
-                    return;
-                }
-
                 const canvasRect = canvas.getBoundingClientRect();
                 if (canvasRect.width === 0) return;
                 const mouseX = (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width);
@@ -1233,13 +1141,11 @@
                     return;
                 }
 
-                // === GÜNCELLENMİŞ BÜYÜTEÇ SÜRÜKLEME MANTIĞI ===
                 if (draggedMagnifierId !== null) {
                     const activeMagnifier = state.magnify.magnifiers.find(m => m.id === draggedMagnifierId);
                     if (activeMagnifier) {
                         activeMagnifier.frameX = mouseX - magnifyDragOffset.x;
                         activeMagnifier.frameY = mouseY - magnifyDragOffset.y;
-                        // Kanvas sınırları içinde kalmasını sağla
                         activeMagnifier.frameX = Math.max(0, Math.min(activeMagnifier.frameX, canvas.width - activeMagnifier.frameW));
                         activeMagnifier.frameY = Math.max(0, Math.min(activeMagnifier.frameY, canvas.height - activeMagnifier.frameH));
                         drawPreview();
@@ -1337,11 +1243,6 @@
             });
 
             window.addEventListener('mouseup', () => {
-                if (isBrushing) {
-                    isBrushing = false;
-                    lastBrushPoint = null;
-                    saveStateToHistory(); 
-                }
                 if (isPanning || draggedMagnifierId !== null || isDraggingPopOutText) {
                     isPanning = false;
                     draggedMagnifierId = null;
@@ -1351,14 +1252,10 @@
                     saveStateToHistory();
                 }
             });
-            canvasWrapper.addEventListener('mouseenter', (e) => { 
-                brushCursor.visible = true;
-                updateBrushCursor(e);
+            canvasWrapper.addEventListener('mouseenter', () => { 
                 updateCursor(); 
             });
             canvasWrapper.addEventListener('mouseleave', () => { 
-                brushCursor.visible = false;
-                drawPreview(); 
                 canvasWrapper.style.cursor = 'default'; 
             });
             
@@ -1371,7 +1268,6 @@
         }
         
         function switchMode(mode) {
-            // Reset images when switching modes to avoid conflicts
             if (mode !== 'doubleExposure') {
                 topImage = null; bottomImage = null;
                 topImageLoader.value = null; bottomImageLoader.value = null;
@@ -1384,12 +1280,8 @@
                 collageThumbnailsWrapper.classList.add('hidden');
                 state.collage.imageOffsets = [];
             }
-            if (mode === 'motionBlur') {
-                initMotionBlurMask();
-            }
-            // === YENİ BÜYÜTEÇ MODUNA GEÇİŞ ===
             if (mode === 'magnify' && state.magnify.magnifiers.length === 0) {
-                addMagnifier(); // Eğer hiç büyüteç yoksa başlangıçta bir tane ekle
+                addMagnifier();
             }
             
             if (!mainImage && !topImage && !bottomImage && collageImages.length === 0) {
@@ -1411,10 +1303,6 @@
         }
 
         function updateCursor() {
-            if (state.mode === 'motionBlur') {
-                canvasWrapper.style.cursor = 'none';
-                return;
-            }
             canvasWrapper.style.cursor = 'default';
 
             if (draggedMagnifierId !== null || isPanning || isDraggingPopOutText) {
@@ -1464,9 +1352,6 @@
                     if (state.mode === 'popOut') {
                         state.popOut.textX = null; 
                         state.popOut.textY = null;
-                    }
-                    if (state.mode === 'motionBlur') {
-                        initMotionBlurMask();
                     }
                     updateAndDraw();
                 };
@@ -1674,22 +1559,12 @@
                 }
             }
 
-            if (state.mode !== 'magnify' && state.mode !== 'popOut' && state.mode !== 'motionBlur') {
+            if (state.mode !== 'magnify' && state.mode !== 'popOut') {
                 drawBackground(ctx, canvas.width, canvas.height);
             }
             drawMainContent(ctx, canvas.width, canvas.height);
             if (state.mode === 'single' || state.mode === 'collage') {
                  drawTextAndWatermark(ctx, canvas.width, canvas.height);
-            }
-
-            if (state.mode === 'motionBlur' && brushCursor.visible) {
-                ctx.save();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(brushCursor.x, brushCursor.y, state.motionBlur.brushSize / 2, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
             }
         }
 
@@ -1735,8 +1610,6 @@
                 drawMagnifyEffectOnContext(targetCtx, w, h, mainImage, state.magnify, scale);
             } else if (state.mode === 'doubleExposure' && topImage && bottomImage) {
                 drawDoubleExposureEffect(targetCtx, w, h, scale);
-            } else if (state.mode === 'motionBlur' && mainImage) {
-                drawMotionBlurEffect(targetCtx, w, h, scale);
             } else if (state.mode === 'popOut' && mainImage) {
                 drawPopOutEffect(targetCtx, w, h, scale);
             } else {
@@ -1769,59 +1642,6 @@
             targetCtx.restore();
         }
 
-        function drawMotionBlurEffect(targetCtx, w, h, scale = 1) {
-            if (!mainImage || !maskCanvas) return;
-
-            targetCtx.save();
-
-            const s = state.motionBlur;
-            const exposureFilter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
-            const centerX = w / 2;
-            const centerY = h / 2;
-            
-            const sharpCanvas = document.createElement('canvas');
-            sharpCanvas.width = w;
-            sharpCanvas.height = h;
-            const sharpCtx = sharpCanvas.getContext('2d');
-            sharpCtx.filter = exposureFilter;
-            drawRoundedImage(sharpCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset);
-
-            const blurCanvas = document.createElement('canvas');
-            blurCanvas.width = w;
-            blurCanvas.height = h;
-            const blurCtx = blurCanvas.getContext('2d');
-            const samples = s.strength / 2;
-            if (samples > 0) {
-                for (let i = 1; i <= samples; i++) {
-                    const ratio = i / samples;
-                    const scaleFactor = 1 + (1.1 - 1) * ratio; 
-                    blurCtx.globalAlpha = (1 / samples) * 0.4;
-                    blurCtx.drawImage(
-                        sharpCanvas,
-                        centerX - (centerX * scaleFactor),
-                        centerY - (centerY * scaleFactor),
-                        w * scaleFactor,
-                        h * scaleFactor
-                    );
-                }
-            }
-            blurCtx.globalAlpha = 1;
-
-            targetCtx.drawImage(sharpCanvas, 0, 0, w, h);
-
-            const compositeCanvas = document.createElement('canvas');
-            compositeCanvas.width = w;
-            compositeCanvas.height = h;
-            const compositeCtx = compositeCanvas.getContext('2d');
-            
-            compositeCtx.drawImage(blurCanvas, 0, 0, w, h);
-            compositeCtx.globalCompositeOperation = 'destination-in';
-            compositeCtx.drawImage(maskCanvas, 0, 0, w, h);
-            targetCtx.drawImage(compositeCanvas, 0, 0, w, h);
-
-            targetCtx.restore();
-        }
-
         function drawDoubleExposureEffect(targetCtx, w, h, scale = 1) {
             if (!topImage || !bottomImage) return;
 
@@ -1850,7 +1670,6 @@
             targetCtx.restore();
         }
 
-        // === GÜNCELLENMİŞ BÜYÜTEÇ ÇİZİM FONKSİYONU ===
         function drawMagnifyEffectOnContext(targetCtx, w, h, image, mState, scale = 1) {
             if (!image || !mState || mState.magnifiers.length === 0) return;
             
@@ -1858,7 +1677,6 @@
             const offset = state.imageOffset || { x: 0, y: 0 };
             const exposureFilter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
             
-            // 1. Arkaplanı bulanık çiz
             targetCtx.save();
             let filters = [];
             if (blur > 0) filters.push(`blur(${blur * scale}px)`);
@@ -1867,7 +1685,6 @@
             drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
             targetCtx.restore();
 
-            // 2. Her bir büyüteç çerçevesini çiz
             magnifiers.forEach(mag => {
                 drawSingleMagnifierFrame(targetCtx, image, w, h, mag, offset, exposureFilter, scale);
             });
@@ -1882,7 +1699,6 @@
             const scaledFrameH = frameH * scale;
             const scaledBorderWidth = borderWidth * scale;
 
-            // Odaklanmış ön planı çiz
             targetCtx.save();
             targetCtx.beginPath();
             targetCtx.rect(scaledFrameX, scaledFrameY, scaledFrameW, scaledFrameH);
@@ -1900,14 +1716,12 @@
             
             targetCtx.restore();
 
-            // Çerçeveyi çiz
             if (scaledBorderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
                 targetCtx.lineWidth = scaledBorderWidth;
                 targetCtx.strokeRect(scaledFrameX, scaledFrameY, scaledFrameW, scaledFrameH);
             }
 
-            // Büyüteç numarasını çiz
             const fontSize = 16 * scale;
             targetCtx.font = `bold ${fontSize}px Inter`;
             targetCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
@@ -2469,70 +2283,6 @@
             targetCtx.restore();
         }
 
-        // --- Yeni Fırça Fonksiyonları ---
-
-        function initMotionBlurMask() {
-            if (!canvas.width || !canvas.height) return;
-            maskCanvas = document.createElement('canvas');
-            maskCanvas.width = canvas.width;
-            maskCanvas.height = canvas.height;
-            maskCtx = maskCanvas.getContext('2d');
-            clearMotionBlurMask();
-        }
-
-        function clearMotionBlurMask() {
-            if (maskCtx) {
-                maskCtx.fillStyle = 'black';
-                maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-                drawPreview();
-                saveStateToHistory();
-            }
-        }
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return {
-                x: (e.clientX - rect.left) * scaleX,
-                y: (e.clientY - rect.top) * scaleY
-            };
-        }
-        
-        function updateBrushCursor(e) {
-            if (state.mode !== 'motionBlur') return;
-            const pos = getMousePos(e);
-            brushCursor.x = pos.x;
-            brushCursor.y = pos.y;
-            drawPreview();
-        }
-
-        function handleBrushStroke(e) {
-            if (!isBrushing || !maskCtx) return;
-            const pos = getMousePos(e);
-
-            maskCtx.fillStyle = 'white';
-            maskCtx.strokeStyle = 'white';
-            maskCtx.lineWidth = state.motionBlur.brushSize;
-            maskCtx.lineCap = 'round';
-            maskCtx.lineJoin = 'round';
-
-            if (lastBrushPoint) {
-                maskCtx.beginPath();
-                maskCtx.moveTo(lastBrushPoint.x, lastBrushPoint.y);
-                maskCtx.lineTo(pos.x, pos.y);
-                maskCtx.stroke();
-            } else {
-                 maskCtx.beginPath();
-                 maskCtx.arc(pos.x, pos.y, state.motionBlur.brushSize / 2, 0, Math.PI * 2);
-                 maskCtx.fill();
-            }
-            
-            lastBrushPoint = pos;
-            drawPreview();
-        }
-
-        // === YENİ BÜYÜTEÇ YÖNETİM FONKSİYONLARI ===
         function addMagnifier() {
             const preset = presets[state.sizePreset] || { width: 1080, height: 1080 };
             const newMagnifier = getDefaultMagnifier(state.magnify.nextId, preset.width, preset.height);
@@ -2551,9 +2301,7 @@
             const indexToDelete = magnifiers.findIndex(m => m.id === activeMagnifierId);
             if (indexToDelete > -1) {
                 magnifiers.splice(indexToDelete, 1);
-                // Yeni bir aktif büyüteç seç
                 if (magnifiers.length > 0) {
-                    // Silinenden bir önceki veya ilkini aktif yap
                     const newActiveIndex = Math.max(0, indexToDelete - 1);
                     state.magnify.activeMagnifierId = magnifiers[newActiveIndex].id;
                 } else {
@@ -2566,7 +2314,7 @@
         function setActiveMagnifier(id) {
             if (state.magnify.activeMagnifierId !== id) {
                 state.magnify.activeMagnifierId = id;
-                updateUIFromState(state); // Sadece UI'ı güncelle, yeniden çizmeye gerek yok
+                updateUIFromState(state);
             }
         }
 
@@ -2616,11 +2364,11 @@
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
                     tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    if (!['popOut', 'motionBlur'].includes(state.mode)) {
+                    if (!['popOut'].includes(state.mode)) {
                         drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
                     }
                     drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                    if (!['polaroid', 'doubleExposure', 'magnify', 'popOut', 'motionBlur'].includes(state.mode)) {
+                    if (!['polaroid', 'doubleExposure', 'magnify', 'popOut'].includes(state.mode)) {
                         drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                     }
                 } else {
@@ -2766,7 +2514,6 @@
                         canvasWrapper.style.display = 'flex';
                         canvasWrapper.classList.remove('hidden');
                         if (state.mode === 'collage') displayCollageThumbnails();
-                        if (state.mode === 'motionBlur') initMotionBlurMask();
                     }
                     if(watermarkImage) {
                          document.getElementById('watermarkControls').classList.remove('hidden');
@@ -2864,5 +2611,3 @@
     </script>
 </body>
 </html>
-büyüteç GÜNCELLEME
-ışık modülü silindi
