@@ -27,9 +27,9 @@
 
         .control-section { padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.2); }
         .focus-ring:focus { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.5); outline: none; }
-        .mode-btn, .fit-btn, .layout-btn, .pattern-btn { background-color: rgba(0, 0, 0, 0.1); color: #e2e8f0; transition: all 0.2s ease-in-out; }
-        .mode-btn:hover, .fit-btn:hover, .layout-btn:hover, .pattern-btn:hover { background-color: rgba(0, 0, 0, 0.2); }
-        .mode-btn.active, .fit-btn.active, .layout-btn.active, .pattern-btn.active { background-color: rgba(20, 10, 50, 0.6); color: white; box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.2); }
+        .mode-btn, .fit-btn, .layout-btn, .pattern-btn, .magnifier-select-btn { background-color: rgba(0, 0, 0, 0.1); color: #e2e8f0; transition: all 0.2s ease-in-out; }
+        .mode-btn:hover, .fit-btn:hover, .layout-btn:hover, .pattern-btn:hover, .magnifier-select-btn:hover { background-color: rgba(0, 0, 0, 0.2); }
+        .mode-btn.active, .fit-btn.active, .layout-btn.active, .pattern-btn.active, .magnifier-select-btn.active { background-color: rgba(20, 10, 50, 0.6); color: white; box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.2); }
         .upload-area { transition: all 0.2s ease-in-out; border-color: rgba(255, 255, 255, 0.3);}
         .upload-area.drag-over { border-color: #a78bfa; background-color: rgba(167, 139, 250, 0.2); }
 
@@ -138,14 +138,14 @@
                     <p class="mt-2 text-gray-300">Fotoğraflarınıza sanatsal dokunuşlar katın.</p>
                 </div>
                 
-                <div class="grid grid-cols-3 md:grid-cols-7 gap-2 p-1 bg-black/10 rounded-lg">
+                <div class="grid grid-cols-3 md:grid-cols-4 gap-2 p-1 bg-black/10 rounded-lg">
                      <button id="singleModeBtn" class="mode-btn active py-2 rounded-md font-semibold text-sm">Tekli</button>
                      <button id="collageModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Kolaj</button>
                      <button id="polaroidModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Polaroid</button>
                      <button id="magnifyModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Büyüteç</button>
                      <button id="doubleExposureModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Çift Pozlama</button>
-                     <button id="lightEffectModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Işık Efekti</button>
                      <button id="popOutModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Pop-Out</button>
+                     <button id="motionBlurModeBtn" class="mode-btn py-2 rounded-md font-semibold text-sm">Hareket</button>
                 </div>
 
                 <div class="space-y-4">
@@ -271,38 +271,55 @@
                             </div>
                         </div>
                         
+                        <!-- === YENİ BÜYÜTEÇ AYARLARI BAŞLANGIÇ === -->
                         <div id="magnifySettings" class="hidden">
-                            <div class="control-section space-y-4 text-gray-200 text-sm">
-                                <div>
-                                    <label for="magnifyBlur" class="block mb-1">Arkaplan Bulanıklığı</label>
-                                    <input type="range" id="magnifyBlur" min="0" max="40" value="10" class="w-full">
+                            <div class="control-section">
+                                <label class="block text-sm font-medium text-gray-200 mb-2">Büyüteçler</label>
+                                <div class="flex flex-wrap gap-2 mb-4" id="magnifierSelectorContainer">
+                                    <!-- Büyüteç seçme butonları JS ile eklenecek -->
                                 </div>
-                                <div>
-                                    <label for="magnifyZoom" class="block mb-1">Çerçeve İçi Yakınlaştırma</label>
-                                    <input type="range" id="magnifyZoom" min="1" max="5" value="1.5" step="0.1" class="w-full">
+                                <div class="flex gap-2">
+                                    <button id="addMagnifierBtn" class="flex-grow bg-green-600/80 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600">Yeni Büyüteç Ekle</button>
+                                    <button id="deleteMagnifierBtn" class="bg-red-600/80 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 disabled:opacity-50" disabled>Seçili Olanı Sil</button>
                                 </div>
-                                <div class="grid grid-cols-2 gap-4">
+                            </div>
+
+                            <div id="activeMagnifierSettings" class="hidden">
+                                <div class="control-section space-y-4 text-gray-200 text-sm">
+                                    <h3 class="text-md font-semibold text-violet-200 text-center" id="activeMagnifierLabel"></h3>
                                     <div>
-                                        <label for="magnifyFrameWidth" class="block mb-1">Çerçeve Genişliği</label>
-                                        <input type="range" id="magnifyFrameWidth" min="100" max="1000" value="300" class="w-full">
+                                        <label for="magnifyBlur" class="block mb-1">Arkaplan Bulanıklığı</label>
+                                        <input type="range" id="magnifyBlur" min="0" max="40" value="10" class="w-full">
                                     </div>
                                     <div>
-                                        <label for="magnifyFrameHeight" class="block mb-1">Çerçeve Yüksekliği</label>
-                                        <input type="range" id="magnifyFrameHeight" min="100" max="1000" value="450" class="w-full">
+                                        <label for="magnifyZoom" class="block mb-1">Çerçeve İçi Yakınlaştırma</label>
+                                        <input type="range" id="magnifyZoom" min="1" max="5" value="1.5" step="0.1" class="w-full">
                                     </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                     <div>
-                                        <label for="magnifyBorderWidth" class="block mb-1">Çerçeve Kalınlığı</label>
-                                        <input type="range" id="magnifyBorderWidth" min="0" max="50" value="10" class="w-full">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="magnifyFrameWidth" class="block mb-1">Çerçeve Genişliği</label>
+                                            <input type="range" id="magnifyFrameWidth" min="100" max="1000" value="300" class="w-full">
+                                        </div>
+                                        <div>
+                                            <label for="magnifyFrameHeight" class="block mb-1">Çerçeve Yüksekliği</label>
+                                            <input type="range" id="magnifyFrameHeight" min="100" max="1000" value="450" class="w-full">
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label for="magnifyBorderColor" class="block mb-1">Çerçeve Rengi</label>
-                                        <input type="color" id="magnifyBorderColor" value="#ffffff">
+                                    <div class="grid grid-cols-2 gap-4">
+                                         <div>
+                                            <label for="magnifyBorderWidth" class="block mb-1">Çerçeve Kalınlığı</label>
+                                            <input type="range" id="magnifyBorderWidth" min="0" max="50" value="10" class="w-full">
+                                        </div>
+                                        <div>
+                                            <label for="magnifyBorderColor" class="block mb-1">Çerçeve Rengi</label>
+                                            <input type="color" id="magnifyBorderColor" value="#ffffff">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        <!-- === YENİ BÜYÜTEÇ AYARLARI BİTİŞ === -->
+
 
                         <div id="collageSettings" class="hidden control-section">
                              <label class="block text-sm font-medium text-gray-200 mb-4">Kolaj Ayarları</label>
@@ -377,44 +394,27 @@
                             </div>
                         </div>
 
-                        <div id="lightEffectSettings" class="hidden control-section">
+                        <div id="motionBlurSettings" class="hidden control-section">
                             <div class="space-y-6 text-gray-200">
+                                <p class="text-xs text-center text-gray-400">Bulanıklaştırmak istediğiniz alanları fırça ile boyayın.</p>
                                 <div>
-                                    <label class="block text-sm font-medium mb-3">Işık Deseni</label>
-                                    <div id="lightPatternContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                                        <!-- Desenler JS ile eklenecek -->
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="motionBlurStrength" class="text-xs">Bulanıklık Gücü</label>
+                                        <span id="motionBlurStrengthValue" class="text-sm font-semibold text-violet-300">50</span>
                                     </div>
-                                </div>
-                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label for="lightEffectOpacity" class="mb-1 block text-sm">Yoğunluk (Opaklık)</label>
-                                        <input type="range" id="lightEffectOpacity" value="100" min="0" max="100" class="w-full">
-                                    </div>
-                                    <div>
-                                        <label for="lightEffectColor" class="mb-1 block text-sm">Işık Rengi</label>
-                                        <input type="color" id="lightEffectColor" value="#FFFFFF">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label for="lightEffectAngle" class="mb-1 block text-sm">Açı</label>
-                                        <input type="range" id="lightEffectAngle" value="0" min="0" max="360" class="w-full">
-                                    </div>
-                                    <div>
-                                        <label for="lightEffectScale" class="mb-1 block text-sm">Ölçek</label>
-                                        <input type="range" id="lightEffectScale" value="100" min="20" max="300" class="w-full">
-                                    </div>
+                                    <input type="range" id="motionBlurStrength" min="0" max="100" value="50" class="w-full">
                                 </div>
                                 <div>
-                                    <label for="lightEffectBlendMode" class="mb-1 block text-sm">Karışım Modu</label>
-                                    <select id="lightEffectBlendMode" class="w-full h-12 px-3 rounded-lg focus-ring">
-                                        <option value="screen" selected>Screen (Önerilen)</option>
-                                        <option value="color-dodge">Color Dodge (Daha Parlak)</option>
-                                        <option value="overlay">Overlay</option>
-                                        <option value="soft-light">Soft Light</option>
-                                        <option value="hard-light">Hard Light</option>
-                                        <option value="lighten">Lighten</option>
-                                    </select>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="motionBlurBrushSize" class="text-xs">Fırça Boyutu</label>
+                                        <span id="motionBlurBrushSizeValue" class="text-sm font-semibold text-violet-300">50</span>
+                                    </div>
+                                    <input type="range" id="motionBlurBrushSize" min="5" max="200" value="50" class="w-full">
+                                </div>
+                                <div>
+                                    <button id="clearMotionBlurMaskBtn" class="w-full bg-red-600/70 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600">
+                                        Bulanıklığı Temizle
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -535,7 +535,7 @@
                     <p class="font-semibold text-lg mt-4">Önizleme Alanı</p>
                     <p class="text-sm">Bir fotoğraf yüklediğinizde burada görünecektir.</p>
                 </div>
-                <div id="canvasWrapper" class="hidden w-full h-full items-center justify-center">
+                <div id="canvasWrapper" class="hidden w-full h-full items-center justify-center" style="cursor: none;">
                     <canvas id="canvas" class="max-w-full max-h-full"></canvas>
                 </div>
             </div>
@@ -562,7 +562,7 @@
 
     <script>
         // --- BU UYGULAMA GEMINI TARAFINDAN GELİŞTİRİLMİŞTİR ---
-        // --- GÜNCELLEME: Işık efekti pozlama sorunu kullanıcı geri bildirimine göre düzeltildi. ---
+        // --- GÜNCELLEME: Büyüteç modu, çoklu ve özelleştirilebilir büyüteç alanları eklenerek güncellendi. ---
         
         const imageLoader = document.getElementById('imageLoader');
         const collageImageLoader = document.getElementById('collageImageLoader');
@@ -587,9 +587,15 @@
         const collageThumbnailsContainer = document.getElementById('collageThumbnailsContainer');
         const polaroidFrameContainer = document.getElementById('polaroidFrameContainer');
         const polaroidColorSection = document.getElementById('polaroidColorSection');
-        const lightPatternContainer = document.getElementById('lightPatternContainer');
         const blurAmountContainer = document.getElementById('blurAmountContainer');
 
+        // === YENİ BÜYÜTEÇ DOM ELEMENTLERİ ===
+        const magnifierSelectorContainer = document.getElementById('magnifierSelectorContainer');
+        const addMagnifierBtn = document.getElementById('addMagnifierBtn');
+        const deleteMagnifierBtn = document.getElementById('deleteMagnifierBtn');
+        const activeMagnifierSettings = document.getElementById('activeMagnifierSettings');
+        const activeMagnifierLabel = document.getElementById('activeMagnifierLabel');
+        
         let db;
         let state = {};
         let history = [];
@@ -609,24 +615,19 @@
         let draggedThumbnailIndex = null;
         let frameImageAssets = {};
         
-        let isDraggingMagnifyFrame = false;
+        // === GÜNCELLENMİŞ BÜYÜTEÇ SÜRÜKLEME DEĞİŞKENLERİ ===
+        let draggedMagnifierId = null;
         let magnifyDragOffset = { x: 0, y: 0 };
         
         let isDraggingPopOutText = false;
         let popOutTextDragOffset = { x: 0, y: 0 };
 
-        const lightPatterns = {
-            'blinds': { name: 'Jaluzi' },
-            'window': { name: 'Pencere' },
-            'lines': { name: 'Çizgiler' },
-            'diagonal-lines': { name: 'Çapraz' },
-            'grid': { name: 'Izgara' },
-            'god-rays': { name: 'Hüzme' },
-            'bokeh': { name: 'Bokeh' },
-            'leak1': { name: 'Sızıntı 1' },
-            'leak2': { name: 'Sızıntı 2' },
-            'spotlight': { name: 'Spot Işığı' },
-        };
+        // --- Yeni Fırça Özellikleri ---
+        let isBrushing = false;
+        let maskCanvas = null;
+        let maskCtx = null;
+        let brushCursor = { x: -1, y: -1, visible: false };
+        let lastBrushPoint = null;
 
         const presets = {
             'original': null, 
@@ -659,6 +660,20 @@
             }
         });
 
+        // === YENİ BÜYÜTEÇ VARSAYILAN DEĞERLERİ ===
+        function getDefaultMagnifier(id, canvasW = 1080, canvasH = 1080) {
+            return {
+                id: id,
+                frameX: (canvasW / 2 - 150) + (id * 20),
+                frameY: (canvasH / 2 - 225) + (id * 20),
+                frameW: 300,
+                frameH: 450,
+                zoom: 1.5,
+                borderColor: '#ffffff',
+                borderWidth: 10
+            };
+        }
+
         function getDefaultState() {
             return {
                 mode: 'single', fit: 'contain', sizePreset: 'square',
@@ -681,11 +696,12 @@
                     rotation: 5,
                     zoom: 100
                 },
+                // === YENİ BÜYÜTEÇ STATE YAPISI ===
                 magnify: {
-                    frameX: 100, frameY: 100,
-                    frameW: 300, frameH: 450,
-                    zoom: 1.5, blur: 10,
-                    borderColor: '#ffffff', borderWidth: 10
+                    magnifiers: [], // Büyüteç nesneleri dizisi
+                    activeMagnifierId: null, // Aktif olarak düzenlenen büyüteç ID'si
+                    nextId: 1, // Bir sonraki büyüteç için ID
+                    blur: 10, // Arkaplan bulanıklığı (tümü için ortak)
                 },
                 doubleExposure: {
                     opacity: 50,
@@ -693,14 +709,9 @@
                     topImageOffset: { x: 0, y: 0 },
                     bottomImageOffset: { x: 0, y: 0 }
                 },
-                lightEffect: {
-                    pattern: 'blinds',
-                    opacity: 100,
-                    color: '#FFFFFF',
-                    angle: 0,
-                    scale: 100,
-                    blendMode: 'screen',
-                    offset: { x: 0, y: 0 }
+                motionBlur: {
+                    strength: 50,
+                    brushSize: 50,
                 },
                 popOut: {
                     backgroundEffect: 'grayscale',
@@ -711,7 +722,7 @@
                     font: 'Playfair Display',
                     textX: null,
                     textY: null,
-                    blurAmount: 10 // Pop-out moduna özel bulanıklık değeri
+                    blurAmount: 10 
                 },
                 text: { content: '', color: '#FFFFFF', size: 48, font: 'Inter', position: 'bottom-center' },
                 watermark: { opacity: 50, size: 20, position: 'bottom-right' }
@@ -736,7 +747,6 @@
                 if(state.collage.imageOffsets) {
                     state.collage.imageOffsets.forEach(offset => { offset.x = 0; offset.y = 0; });
                 }
-                // Reset popout text position on canvas resize
                 state.popOut.textX = null;
                 state.popOut.textY = null;
             }
@@ -769,29 +779,26 @@
             state.polaroid.rotation = parseInt(document.getElementById('polaroidRotation').value, 10);
             state.polaroid.zoom = parseInt(document.getElementById('polaroidZoom').value, 10);
 
-            // Büyüteç ayarları
-            state.magnify = {
-                frameX: state.magnify.frameX, // Pozisyon sürükleme ile güncellenir
-                frameY: state.magnify.frameY,
-                frameW: parseInt(document.getElementById('magnifyFrameWidth').value, 10),
-                frameH: parseInt(document.getElementById('magnifyFrameHeight').value, 10),
-                zoom: parseFloat(document.getElementById('magnifyZoom').value),
-                blur: parseInt(document.getElementById('magnifyBlur').value, 10),
-                borderColor: document.getElementById('magnifyBorderColor').value,
-                borderWidth: parseInt(document.getElementById('magnifyBorderWidth').value, 10)
-            };
+            // === GÜNCELLENMİŞ BÜYÜTEÇ STATE SYNC ===
+            if (state.mode === 'magnify') {
+                state.magnify.blur = parseInt(document.getElementById('magnifyBlur').value, 10);
+                const activeMagnifier = state.magnify.magnifiers.find(m => m.id === state.magnify.activeMagnifierId);
+                if (activeMagnifier) {
+                    activeMagnifier.zoom = parseFloat(document.getElementById('magnifyZoom').value);
+                    activeMagnifier.frameW = parseInt(document.getElementById('magnifyFrameWidth').value, 10);
+                    activeMagnifier.frameH = parseInt(document.getElementById('magnifyFrameHeight').value, 10);
+                    activeMagnifier.borderWidth = parseInt(document.getElementById('magnifyBorderWidth').value, 10);
+                    activeMagnifier.borderColor = document.getElementById('magnifyBorderColor').value;
+                }
+            }
 
             // Çift Pozlama ayarları
             state.doubleExposure.opacity = parseInt(document.getElementById('doubleExposureOpacity').value, 10);
             state.doubleExposure.blendMode = document.getElementById('blendMode').value;
 
-            // Işık Efekti ayarları
-            state.lightEffect.pattern = document.querySelector('#lightPatternContainer .active')?.dataset.pattern;
-            state.lightEffect.opacity = parseInt(document.getElementById('lightEffectOpacity').value, 10);
-            state.lightEffect.color = document.getElementById('lightEffectColor').value;
-            state.lightEffect.angle = parseInt(document.getElementById('lightEffectAngle').value, 10);
-            state.lightEffect.scale = parseInt(document.getElementById('lightEffectScale').value, 10);
-            state.lightEffect.blendMode = document.getElementById('lightEffectBlendMode').value;
+            // Hareket Bulanıklığı ayarları
+            state.motionBlur.strength = parseInt(document.getElementById('motionBlurStrength').value, 10);
+            state.motionBlur.brushSize = parseInt(document.getElementById('motionBlurBrushSize').value, 10);
 
             // Pop-Out ayarları
             state.popOut.backgroundEffect = document.getElementById('popOutBackgroundEffect').value;
@@ -828,7 +835,7 @@
             const isCollage = s.mode === 'collage';
             const isSingle = s.mode === 'single';
             const isDoubleExposure = s.mode === 'doubleExposure';
-            const isLightEffect = s.mode === 'lightEffect';
+            const isMotionBlur = s.mode === 'motionBlur';
             const isPopOut = s.mode === 'popOut';
 
             const hasImage = mainImage || (collageImages && collageImages.length > 0) || (topImage && bottomImage);
@@ -841,7 +848,7 @@
             document.getElementById('collageSettings').style.display = isCollage ? 'block' : 'none';
             document.getElementById('magnifySettings').style.display = isMagnify ? 'block' : 'none';
             document.getElementById('doubleExposureSettings').style.display = isDoubleExposure ? 'block' : 'none';
-            document.getElementById('lightEffectSettings').style.display = isLightEffect ? 'block' : 'none';
+            document.getElementById('motionBlurSettings').style.display = isMotionBlur ? 'block' : 'none';
             document.getElementById('popOutSettings').style.display = isPopOut ? 'block' : 'none';
             document.getElementById('generalTools').style.display = isSingle || isCollage ? 'block' : 'none';
             
@@ -853,7 +860,28 @@
                  }
             }
 
-            document.getElementById('fitFillContainer').style.visibility = (isSingle || isLightEffect || isPopOut) ? 'visible' : 'hidden';
+            // === YENİ BÜYÜTEÇ UI GÜNCELLEME ===
+            if (isMagnify) {
+                updateMagnifierSelectorUI(s.magnify);
+                const activeMagnifier = s.magnify.magnifiers.find(m => m.id === s.magnify.activeMagnifierId);
+                if (activeMagnifier) {
+                    activeMagnifierSettings.classList.remove('hidden');
+                    activeMagnifierLabel.textContent = `Büyüteç #${activeMagnifier.id} Ayarları`;
+                    document.getElementById('magnifyBlur').value = s.magnify.blur;
+                    document.getElementById('magnifyZoom').value = activeMagnifier.zoom;
+                    document.getElementById('magnifyFrameWidth').value = activeMagnifier.frameW;
+                    document.getElementById('magnifyFrameHeight').value = activeMagnifier.frameH;
+                    document.getElementById('magnifyBorderColor').value = activeMagnifier.borderColor;
+                    document.getElementById('magnifyBorderWidth').value = activeMagnifier.borderWidth;
+                    deleteMagnifierBtn.disabled = s.magnify.magnifiers.length <= 1;
+                } else {
+                    activeMagnifierSettings.classList.add('hidden');
+                    deleteMagnifierBtn.disabled = true;
+                }
+            }
+
+
+            document.getElementById('fitFillContainer').style.visibility = (isSingle || isPopOut || isMotionBlur) ? 'visible' : 'hidden';
             document.getElementById('colorPickers').style.display = s.bgType === 'transparent' ? 'none' : 'grid';
             document.getElementById('color2').style.display = s.bgType === 'gradient' ? 'block' : 'none';
             blurAmountContainer.style.display = s.bgType === 'blur' ? 'block' : 'none';
@@ -893,23 +921,15 @@
             document.getElementById('polaroidRotation').value = s.polaroid.rotation;
             document.getElementById('polaroidZoom').value = s.polaroid.zoom;
             
-            document.getElementById('magnifyBlur').value = s.magnify.blur;
-            document.getElementById('magnifyZoom').value = s.magnify.zoom;
-            document.getElementById('magnifyFrameWidth').value = s.magnify.frameW;
-            document.getElementById('magnifyFrameHeight').value = s.magnify.frameH;
-            document.getElementById('magnifyBorderColor').value = s.magnify.borderColor;
-            document.getElementById('magnifyBorderWidth').value = s.magnify.borderWidth;
-
             document.getElementById('doubleExposureOpacity').value = s.doubleExposure.opacity;
             document.getElementById('doubleExposureOpacityValue').textContent = `${s.doubleExposure.opacity}%`;
             document.getElementById('blendMode').value = s.doubleExposure.blendMode;
 
-            document.querySelectorAll('#lightPatternContainer button').forEach(b => b.classList.toggle('active', b.dataset.pattern === s.lightEffect.pattern));
-            document.getElementById('lightEffectOpacity').value = s.lightEffect.opacity;
-            document.getElementById('lightEffectColor').value = s.lightEffect.color;
-            document.getElementById('lightEffectAngle').value = s.lightEffect.angle;
-            document.getElementById('lightEffectScale').value = s.lightEffect.scale;
-            document.getElementById('lightEffectBlendMode').value = s.lightEffect.blendMode;
+            // Motion Blur UI
+            document.getElementById('motionBlurStrength').value = s.motionBlur.strength;
+            document.getElementById('motionBlurStrengthValue').textContent = s.motionBlur.strength;
+            document.getElementById('motionBlurBrushSize').value = s.motionBlur.brushSize;
+            document.getElementById('motionBlurBrushSizeValue').textContent = s.motionBlur.brushSize;
 
             // Pop-Out UI
             document.getElementById('popOutBackgroundEffect').value = s.popOut.backgroundEffect;
@@ -932,13 +952,13 @@
             document.getElementById('watermarkSize').value = s.watermark.size; 
             document.getElementById('watermarkPosition').value = s.watermark.position;
             
-            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify || isLightEffect || isPopOut ? 'block' : 'none';
+            document.getElementById('singleUploader').style.display = isSingle || isPolaroid || isMagnify || isPopOut || isMotionBlur ? 'block' : 'none';
             collageUploaderDiv.style.display = isCollage ? 'block' : 'none';
             doubleExposureUploaderDiv.style.display = isDoubleExposure ? 'block' : 'none';
 
             document.getElementById('imageLoaderLabel').textContent = `1. ${isCollage ? 'Kolaj Fotoğrafları' : isDoubleExposure ? 'Katmanları Seçin' : 'Fotoğraf Seçin'}`;
-            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure || isLightEffect || isPopOut;
-            if ((isPolaroid || isMagnify || isDoubleExposure || isLightEffect || isPopOut) && s.sizePreset === 'original') {
+            document.querySelector('#sizePreset option[value="original"]').disabled = isCollage || isPolaroid || isMagnify || isDoubleExposure || isPopOut || isMotionBlur;
+            if ((isPolaroid || isMagnify || isDoubleExposure || isPopOut || isMotionBlur) && s.sizePreset === 'original') {
                 s.sizePreset = 'square'; // Varsayılan boyut
                 document.getElementById('sizePreset').value = 'square';
             }
@@ -970,6 +990,8 @@
             if (historyIndex > 0) {
                 historyIndex--;
                 state = JSON.parse(JSON.stringify(history[historyIndex]));
+                // NOTE: Mask history is not implemented for simplicity.
+                // It will not be restored on undo.
                 updateUIFromState(state);
                 drawPreview();
                 if(state.mode === 'collage') displayCollageThumbnails();
@@ -981,6 +1003,7 @@
             if (historyIndex < history.length - 1) {
                 historyIndex++;
                 state = JSON.parse(JSON.stringify(history[historyIndex]));
+                // NOTE: Mask history is not implemented.
                 updateUIFromState(state);
                 drawPreview();
                 if(state.mode === 'collage') displayCollageThumbnails();
@@ -1042,15 +1065,6 @@
                 }
             });
 
-            lightPatternContainer.addEventListener('click', (e) => {
-                const button = e.target.closest('.pattern-btn');
-                if (button) {
-                    document.querySelector('#lightPatternContainer .active')?.classList.remove('active');
-                    button.classList.add('active');
-                    updateAndDraw();
-                }
-            });
-
             allUIInputs.forEach(el => {
                 const eventType = (el.type === 'range' || el.type === 'color') ? 'input' : 'change';
                  if (!el.classList.contains('padding-slider')) {
@@ -1064,6 +1078,17 @@
             bottomImageLoader.addEventListener('change', (e) => handleLayerUpload(e.target.files[0], 'bottom'));
             document.getElementById('swapLayersBtn').addEventListener('click', swapLayers);
             document.getElementById('watermarkLoader').addEventListener('change', handleWatermarkUpload);
+            document.getElementById('clearMotionBlurMaskBtn').addEventListener('click', clearMotionBlurMask);
+
+            // === YENİ BÜYÜTEÇ EVENT LISTENERS ===
+            addMagnifierBtn.addEventListener('click', addMagnifier);
+            deleteMagnifierBtn.addEventListener('click', deleteActiveMagnifier);
+            magnifierSelectorContainer.addEventListener('click', (e) => {
+                if (e.target.matches('.magnifier-select-btn')) {
+                    const id = parseInt(e.target.dataset.id, 10);
+                    setActiveMagnifier(id);
+                }
+            });
 
             document.body.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); });
             document.body.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
@@ -1092,6 +1117,12 @@
                 const hasImage = mainImage || (state.mode === 'collage' && collageImages.length > 0) || (state.mode === 'doubleExposure' && topImage && bottomImage);
                 if (!hasImage) return;
 
+                if (state.mode === 'motionBlur') {
+                    isBrushing = true;
+                    handleBrushStroke(e);
+                    return;
+                }
+
                 const canvasRect = canvas.getBoundingClientRect();
                 const mouse = {
                     x: (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width),
@@ -1099,7 +1130,6 @@
                 };
                 panStart = { x: e.clientX, y: e.clientY };
                 
-                // Check for PopOut text drag first
                 if (state.mode === 'popOut' && state.popOut.text) {
                     const metrics = getPopOutTextMetrics(canvas.width, canvas.height);
                     const textX = state.popOut.textX;
@@ -1119,17 +1149,12 @@
                             y: mouse.y - textY
                         };
                         canvasWrapper.style.cursor = 'grabbing';
-                        return; // Prioritize text dragging
+                        return;
                     }
                 }
 
                 if (isModifierDown) {
-                    if (state.mode === 'lightEffect') {
-                        isPanning = true;
-                        activePanTarget = { type: 'lightEffect' };
-                        initialImageOffset = { ...state.lightEffect.offset };
-                        canvasWrapper.style.cursor = 'grabbing';
-                    } else if (['single', 'polaroid', 'magnify', 'popOut'].includes(state.mode)) {
+                    if (['single', 'polaroid', 'magnify', 'popOut'].includes(state.mode)) {
                         isPanning = true;
                         activePanTarget = { type: 'main' };
                         initialImageOffset = { ...state.imageOffset };
@@ -1171,16 +1196,31 @@
                         }
                     }
                 } else if (state.mode === 'magnify') {
-                    const { frameX, frameY, frameW, frameH } = state.magnify;
-                    if (mouse.x > frameX && mouse.x < frameX + frameW && mouse.y > frameY && mouse.y < frameY + frameH) {
-                        isDraggingMagnifyFrame = true;
-                        magnifyDragOffset = { x: mouse.x - frameX, y: mouse.y - frameY };
-                        canvasWrapper.style.cursor = 'grabbing';
+                    // === GÜNCELLENMİŞ BÜYÜTEÇ TIKLAMA KONTROLÜ ===
+                    // En üstteki çerçeveyi bulmak için ters sırada döngü
+                    for (let i = state.magnify.magnifiers.length - 1; i >= 0; i--) {
+                        const mag = state.magnify.magnifiers[i];
+                        if (mouse.x > mag.frameX && mouse.x < mag.frameX + mag.frameW && mouse.y > mag.frameY && mouse.y < mag.frameY + mag.frameH) {
+                            draggedMagnifierId = mag.id;
+                            magnifyDragOffset = { x: mouse.x - mag.frameX, y: mouse.y - mag.frameY };
+                            canvasWrapper.style.cursor = 'grabbing';
+                            // Tıklanan büyüteci aktif hale getir
+                            setActiveMagnifier(mag.id);
+                            return; // Başka çerçeve kontrol etme
+                        }
                     }
                 }
             });
             
             window.addEventListener('mousemove', e => {
+                if (state.mode === 'motionBlur') {
+                    updateBrushCursor(e);
+                    if (isBrushing) {
+                        handleBrushStroke(e);
+                    }
+                    return;
+                }
+
                 const canvasRect = canvas.getBoundingClientRect();
                 if (canvasRect.width === 0) return;
                 const mouseX = (e.clientX - canvasRect.left) * (canvas.width / canvasRect.width);
@@ -1193,12 +1233,17 @@
                     return;
                 }
 
-                if (isDraggingMagnifyFrame) {
-                    state.magnify.frameX = mouseX - magnifyDragOffset.x;
-                    state.magnify.frameY = mouseY - magnifyDragOffset.y;
-                    state.magnify.frameX = Math.max(0, Math.min(state.magnify.frameX, canvas.width - state.magnify.frameW));
-                    state.magnify.frameY = Math.max(0, Math.min(state.magnify.frameY, canvas.height - state.magnify.frameH));
-                    drawPreview();
+                // === GÜNCELLENMİŞ BÜYÜTEÇ SÜRÜKLEME MANTIĞI ===
+                if (draggedMagnifierId !== null) {
+                    const activeMagnifier = state.magnify.magnifiers.find(m => m.id === draggedMagnifierId);
+                    if (activeMagnifier) {
+                        activeMagnifier.frameX = mouseX - magnifyDragOffset.x;
+                        activeMagnifier.frameY = mouseY - magnifyDragOffset.y;
+                        // Kanvas sınırları içinde kalmasını sağla
+                        activeMagnifier.frameX = Math.max(0, Math.min(activeMagnifier.frameX, canvas.width - activeMagnifier.frameW));
+                        activeMagnifier.frameY = Math.max(0, Math.min(activeMagnifier.frameY, canvas.height - activeMagnifier.frameH));
+                        drawPreview();
+                    }
                     return;
                 }
 
@@ -1209,13 +1254,6 @@
                 const dx_canvas = (e.clientX - panStart.x) * previewScale;
                 const dy_canvas = (e.clientY - panStart.y) * previewScale;
                 
-                if (activePanTarget.type === 'lightEffect') {
-                    state.lightEffect.offset.x = initialImageOffset.x + dx_canvas;
-                    state.lightEffect.offset.y = initialImageOffset.y + dy_canvas;
-                    drawPreview();
-                    return;
-                }
-
                 let targetImage, container, currentOffset, zoom = 1;
 
                 if (activePanTarget.type === 'main') {
@@ -1253,7 +1291,7 @@
                 const areaRatio = container.w / container.h;
                 let renderScale;
                 let fit = 'cover';
-                if (activePanTarget.type === 'main' && state.mode === 'single') fit = state.fit;
+                if (activePanTarget.type === 'main' && (state.mode === 'single')) fit = state.fit;
 
                 if (fit === 'cover') {
                     if (imgRatio > areaRatio) { renderScale = container.h / (targetImage.height / zoom); } 
@@ -1273,11 +1311,11 @@
                 
                 let sW, sH;
                 if (fit === 'cover') {
-                    if (imgRatio > areaRatio) { sH = targetImage.height; sW = sH * areaRatio; } 
-                    else { sW = targetImage.width; sH = sW / areaRatio; }
+                    if (imgRatio > areaRatio) { sH = img.height; sW = sH * areaRatio; } 
+                    else { sW = img.width; sH = sW / areaRatio; }
                 } else {
-                    if (imgRatio > areaRatio) { sW = targetImage.width; sH = sW / areaRatio; }
-                    else { sH = targetImage.height; sW = sH * areaRatio; }
+                    if (imgRatio > areaRatio) { sW = img.width; sH = sW / areaRatio; }
+                    else { sH = img.height; sW = sH * areaRatio; }
                 }
                 
                 sW /= zoom; sH /= zoom;
@@ -1299,17 +1337,30 @@
             });
 
             window.addEventListener('mouseup', () => {
-                if (isPanning || isDraggingMagnifyFrame || isDraggingPopOutText) {
+                if (isBrushing) {
+                    isBrushing = false;
+                    lastBrushPoint = null;
+                    saveStateToHistory(); 
+                }
+                if (isPanning || draggedMagnifierId !== null || isDraggingPopOutText) {
                     isPanning = false;
-                    isDraggingMagnifyFrame = false;
+                    draggedMagnifierId = null;
                     isDraggingPopOutText = false;
                     activePanTarget = { type: null, index: -1 };
                     updateCursor();
                     saveStateToHistory();
                 }
             });
-            canvasWrapper.addEventListener('mouseenter', updateCursor);
-            canvasWrapper.addEventListener('mouseleave', () => { canvasWrapper.style.cursor = 'default'; });
+            canvasWrapper.addEventListener('mouseenter', (e) => { 
+                brushCursor.visible = true;
+                updateBrushCursor(e);
+                updateCursor(); 
+            });
+            canvasWrapper.addEventListener('mouseleave', () => { 
+                brushCursor.visible = false;
+                drawPreview(); 
+                canvasWrapper.style.cursor = 'default'; 
+            });
             
             collageThumbnailsContainer.addEventListener('click', (e) => {
                 if(e.target.classList.contains('delete-thumb-btn')) {
@@ -1322,19 +1373,23 @@
         function switchMode(mode) {
             // Reset images when switching modes to avoid conflicts
             if (mode !== 'doubleExposure') {
-                topImage = null;
-                bottomImage = null;
-                topImageLoader.value = null;
-                bottomImageLoader.value = null;
+                topImage = null; bottomImage = null;
+                topImageLoader.value = null; bottomImageLoader.value = null;
                 state.doubleExposure.topImageOffset = { x: 0, y: 0 };
                 state.doubleExposure.bottomImageOffset = { x: 0, y: 0 };
             }
             if (mode !== 'collage') {
-                collageImages = [];
-                collageImageLoader.value = null;
+                collageImages = []; collageImageLoader.value = null;
                 collageThumbnailsContainer.innerHTML = '';
                 collageThumbnailsWrapper.classList.add('hidden');
                 state.collage.imageOffsets = [];
+            }
+            if (mode === 'motionBlur') {
+                initMotionBlurMask();
+            }
+            // === YENİ BÜYÜTEÇ MODUNA GEÇİŞ ===
+            if (mode === 'magnify' && state.magnify.magnifiers.length === 0) {
+                addMagnifier(); // Eğer hiç büyüteç yoksa başlangıçta bir tane ekle
             }
             
             if (!mainImage && !topImage && !bottomImage && collageImages.length === 0) {
@@ -1356,7 +1411,13 @@
         }
 
         function updateCursor() {
-            if (isDraggingMagnifyFrame || isPanning || isDraggingPopOutText) {
+            if (state.mode === 'motionBlur') {
+                canvasWrapper.style.cursor = 'none';
+                return;
+            }
+            canvasWrapper.style.cursor = 'default';
+
+            if (draggedMagnifierId !== null || isPanning || isDraggingPopOutText) {
                  canvasWrapper.style.cursor = 'grabbing';
                  return;
             } 
@@ -1364,9 +1425,8 @@
             const canPanMainImage = (state.mode === 'single' && state.fit === 'cover') || ['polaroid', 'magnify', 'popOut'].includes(state.mode);
             const canPanCollage = state.mode === 'collage' && collageImages.length > 0;
             const canPanDoubleExposure = state.mode === 'doubleExposure' && topImage;
-            const canPanLightEffectPattern = state.mode === 'lightEffect' && mainImage;
 
-            if (isModifierDown && mainImage && (canPanMainImage || canPanCollage || canPanDoubleExposure || canPanLightEffectPattern)) {
+            if (isModifierDown && mainImage && (canPanMainImage || canPanCollage || canPanDoubleExposure)) {
                 canvasWrapper.style.cursor = 'grab';
             } else if (!isModifierDown && state.mode === 'magnify' && mainImage) {
                 canvasWrapper.style.cursor = 'move';
@@ -1398,14 +1458,15 @@
                     canvasWrapper.style.display = 'flex';
                     canvasWrapper.classList.remove('hidden');
                     state.imageOffset = { x: 0, y: 0 };
-                     if (state.mode === 'magnify') {
-                         const preset = presets[state.sizePreset] || { width: 1080, height: 1080 };
-                         state.magnify.frameX = (preset.width - state.magnify.frameW) / 2;
-                         state.magnify.frameY = (preset.height - state.magnify.frameH) / 2;
+                     if (state.mode === 'magnify' && state.magnify.magnifiers.length === 0) {
+                         addMagnifier();
                     }
                     if (state.mode === 'popOut') {
-                        state.popOut.textX = null; // Reset for centering
+                        state.popOut.textX = null; 
                         state.popOut.textY = null;
+                    }
+                    if (state.mode === 'motionBlur') {
+                        initMotionBlurMask();
                     }
                     updateAndDraw();
                 };
@@ -1447,7 +1508,7 @@
                 return;
             }
             [topImage, bottomImage] = [bottomImage, topImage];
-            [topImageLoader.files, bottomImageLoader.files] = [bottomImageLoader.files, topImageLoader.files]; // This might not work perfectly due to security
+            [topImageLoader.files, bottomImageLoader.files] = [bottomImageLoader.files, topImageLoader.files];
             showToast("Katmanlar değiştirildi.", "info");
             updateAndDraw();
         }
@@ -1613,12 +1674,22 @@
                 }
             }
 
-            if (state.mode !== 'magnify' && state.mode !== 'lightEffect' && state.mode !== 'popOut') {
+            if (state.mode !== 'magnify' && state.mode !== 'popOut' && state.mode !== 'motionBlur') {
                 drawBackground(ctx, canvas.width, canvas.height);
             }
             drawMainContent(ctx, canvas.width, canvas.height);
             if (state.mode === 'single' || state.mode === 'collage') {
                  drawTextAndWatermark(ctx, canvas.width, canvas.height);
+            }
+
+            if (state.mode === 'motionBlur' && brushCursor.visible) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(brushCursor.x, brushCursor.y, state.motionBlur.brushSize / 2, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
             }
         }
 
@@ -1647,7 +1718,7 @@
                 targetCtx.drawImage(imgToBlur, x, y, finalW, finalH);
                 targetCtx.restore();
             } else if (state.bgType === 'transparent') {
-                // Do nothing, canvas is already cleared.
+                // Do nothing
             } else {
                 targetCtx.fillStyle = '#cccccc';
                 targetCtx.fillRect(0, 0, w, h);
@@ -1661,11 +1732,11 @@
             if (state.mode === 'polaroid' && mainImage) {
                 drawPolaroidFrame(targetCtx, w, h, scale);
             } else if (state.mode === 'magnify' && mainImage) {
-                drawMagnifyEffectOnContext(targetCtx, w, h, mainImage, state.magnify);
+                drawMagnifyEffectOnContext(targetCtx, w, h, mainImage, state.magnify, scale);
             } else if (state.mode === 'doubleExposure' && topImage && bottomImage) {
                 drawDoubleExposureEffect(targetCtx, w, h, scale);
-            } else if (state.mode === 'lightEffect' && mainImage) {
-                drawLightEffect(targetCtx, w, h, scale);
+            } else if (state.mode === 'motionBlur' && mainImage) {
+                drawMotionBlurEffect(targetCtx, w, h, scale);
             } else if (state.mode === 'popOut' && mainImage) {
                 drawPopOutEffect(targetCtx, w, h, scale);
             } else {
@@ -1698,130 +1769,57 @@
             targetCtx.restore();
         }
 
-        /**
-         * DÜZELTME 3: Işık Efekti Mantığı (Additive Blend)
-         * Bu fonksiyon, kullanıcının renk ve yoğunluk beklentisini karşılamak için yeniden düzenlenmiştir.
-         * Mantık:
-         * 1. Ana tuval üzerine, pozlama ayarı uygulanmış olan ana resim çizilir.
-         * 2. Geçici bir tuval üzerinde, kullanıcının seçtiği RENK ile ışık deseni oluşturulur.
-         * 3. Bu renkli desen katmanı, ana resmin üzerine, kullanıcının seçtiği
-         * aydınlatıcı harmanlama modu ('screen', 'color-dodge' vb.) ile çizilir.
-         * 4. Opaklık, bu aydınlatma efektinin genel yoğunluğunu kontrol eder.
-         * Bu yöntem, renkli bir ışığın karanlık bir yüzeyi aydınlatması efektini doğru bir şekilde simüle eder.
-         */
-        function drawLightEffect(targetCtx, w, h, scale = 1) {
-            if (!mainImage) return;
+        function drawMotionBlurEffect(targetCtx, w, h, scale = 1) {
+            if (!mainImage || !maskCanvas) return;
+
             targetCtx.save();
 
-            const s = state.lightEffect;
-            const exposure = state.imageAdjustments.exposure;
-
-            // 1. Adım: Pozlama ayarı yapılmış ana resmi çiz.
-            targetCtx.filter = `brightness(${1 + exposure / 100})`;
-            drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset);
-            targetCtx.filter = 'none'; // Sonraki işlemler için filtreyi sıfırla
-
-            // 2. Adım: Renkli ışık desenini geçici bir tuvalde oluştur.
-            const patternCanvas = generateLightPattern(s.pattern, w, h, s.color);
-
-            // 3. Adım: Renkli ışık katmanını, aydınlatıcı bir harmanlama moduyla ana resmin üzerine çiz.
-            targetCtx.globalAlpha = s.opacity / 100;
-            targetCtx.globalCompositeOperation = s.blendMode;
-
-            // Desen üzerinde kullanıcının seçtiği açı/ölçek gibi dönüşümleri uygula
-            targetCtx.translate(w / 2, h / 2);
-            targetCtx.rotate(s.angle * Math.PI / 180);
-            const scaleFactor = s.scale / 100;
-            targetCtx.scale(scaleFactor, scaleFactor);
-            targetCtx.translate(-w / 2, -h / 2);
+            const s = state.motionBlur;
+            const exposureFilter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
+            const centerX = w / 2;
+            const centerY = h / 2;
             
-            targetCtx.drawImage(patternCanvas, s.offset.x, s.offset.y, w, h);
+            const sharpCanvas = document.createElement('canvas');
+            sharpCanvas.width = w;
+            sharpCanvas.height = h;
+            const sharpCtx = sharpCanvas.getContext('2d');
+            sharpCtx.filter = exposureFilter;
+            drawRoundedImage(sharpCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset);
+
+            const blurCanvas = document.createElement('canvas');
+            blurCanvas.width = w;
+            blurCanvas.height = h;
+            const blurCtx = blurCanvas.getContext('2d');
+            const samples = s.strength / 2;
+            if (samples > 0) {
+                for (let i = 1; i <= samples; i++) {
+                    const ratio = i / samples;
+                    const scaleFactor = 1 + (1.1 - 1) * ratio; 
+                    blurCtx.globalAlpha = (1 / samples) * 0.4;
+                    blurCtx.drawImage(
+                        sharpCanvas,
+                        centerX - (centerX * scaleFactor),
+                        centerY - (centerY * scaleFactor),
+                        w * scaleFactor,
+                        h * scaleFactor
+                    );
+                }
+            }
+            blurCtx.globalAlpha = 1;
+
+            targetCtx.drawImage(sharpCanvas, 0, 0, w, h);
+
+            const compositeCanvas = document.createElement('canvas');
+            compositeCanvas.width = w;
+            compositeCanvas.height = h;
+            const compositeCtx = compositeCanvas.getContext('2d');
+            
+            compositeCtx.drawImage(blurCanvas, 0, 0, w, h);
+            compositeCtx.globalCompositeOperation = 'destination-in';
+            compositeCtx.drawImage(maskCanvas, 0, 0, w, h);
+            targetCtx.drawImage(compositeCanvas, 0, 0, w, h);
 
             targetCtx.restore();
-        }
-
-        function generateLightPattern(pattern, width, height, color) {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = width;
-            tempCanvas.height = height;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.fillStyle = color;
-
-            switch (pattern) {
-                case 'blinds':
-                    for (let i = -height; i < height * 2; i += 40) { tempCtx.fillRect(0, i, width, 20); }
-                    break;
-                case 'window':
-                    const barWidth = Math.min(width, height) * 0.05;
-                    tempCtx.fillRect(width / 2 - barWidth / 2, 0, barWidth, height);
-                    tempCtx.fillRect(0, height / 2 - barWidth / 2, width, barWidth);
-                    break;
-                case 'lines':
-                    for (let i = 0; i < width * 2; i += 15) { tempCtx.fillRect(i, -height, 3, height*2); }
-                    break;
-                case 'diagonal-lines':
-                    tempCtx.lineWidth = 8;
-                    tempCtx.strokeStyle = color;
-                    for (let i = -width; i < width * 1.5; i += 25) {
-                        tempCtx.beginPath();
-                        tempCtx.moveTo(i, 0);
-                        tempCtx.lineTo(i + height, height);
-                        tempCtx.stroke();
-                    }
-                    break;
-                case 'grid':
-                    for (let i = 0; i < width; i += 50) { tempCtx.fillRect(i, 0, 2, height); }
-                    for (let j = 0; j < height; j += 50) { tempCtx.fillRect(0, j, width, 2); }
-                    break;
-                case 'god-rays':
-                    const centerX = width / 2;
-                    for (let i = 0; i < 36; i++) {
-                        tempCtx.save();
-                        tempCtx.translate(centerX, -100);
-                        tempCtx.rotate((i * 10 + (Math.random() - 0.5) * 5) * Math.PI / 180);
-                        const gradient = tempCtx.createLinearGradient(0, 0, 0, height * 1.5);
-                        gradient.addColorStop(0, color);
-                        gradient.addColorStop(0.5 + Math.random() * 0.3, 'transparent');
-                        tempCtx.fillStyle = gradient;
-                        tempCtx.fillRect(-width * 0.02, 0, width * 0.04, height * 1.5);
-                        tempCtx.restore();
-                    }
-                    break;
-                case 'bokeh':
-                     for (let i = 0; i < 50; i++) {
-                        const x = Math.random() * width;
-                        const y = Math.random() * height;
-                        const radius = Math.random() * 50 + 10;
-                        tempCtx.globalAlpha = Math.random() * 0.5 + 0.1;
-                        tempCtx.beginPath();
-                        tempCtx.arc(x, y, radius, 0, Math.PI * 2);
-                        tempCtx.fill();
-                    }
-                    tempCtx.globalAlpha = 1.0;
-                    break;
-                case 'leak1':
-                    const gradient1 = tempCtx.createRadialGradient(0, 0, 0, 0, 0, Math.max(width, height) * 0.7);
-                    gradient1.addColorStop(0, color);
-                    gradient1.addColorStop(1, 'transparent');
-                    tempCtx.fillStyle = gradient1;
-                    tempCtx.fillRect(0, 0, width, height);
-                    break;
-                case 'leak2':
-                    const gradient2 = tempCtx.createRadialGradient(width, height, 0, width, height, Math.max(width, height));
-                    gradient2.addColorStop(0, color);
-                    gradient2.addColorStop(0.5, 'transparent');
-                    tempCtx.fillStyle = gradient2;
-                    tempCtx.fillRect(0, 0, width, height);
-                    break;
-                case 'spotlight':
-                    const gradient3 = tempCtx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.min(width,height)/2.5);
-                    gradient3.addColorStop(0, color);
-                    gradient3.addColorStop(1, 'transparent');
-                    tempCtx.fillStyle = gradient3;
-                    tempCtx.fillRect(0, 0, width, height);
-                    break;
-            }
-            return tempCanvas;
         }
 
         function drawDoubleExposureEffect(targetCtx, w, h, scale = 1) {
@@ -1830,7 +1828,6 @@
             const exposure = state.imageAdjustments.exposure;
             const exposureFilter = `brightness(${1 + exposure / 100})`;
 
-            // Alt katmanı pozlama ile geçici bir tuvale çiz
             const bottomCanvas = document.createElement('canvas');
             bottomCanvas.width = w;
             bottomCanvas.height = h;
@@ -1838,7 +1835,6 @@
             bottomCtx.filter = exposureFilter;
             drawRoundedImage(bottomCtx, bottomImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.bottomImageOffset);
 
-            // Üst katmanı pozlama ile geçici bir tuvale çiz
             const topCanvas = document.createElement('canvas');
             topCanvas.width = w;
             topCanvas.height = h;
@@ -1846,7 +1842,6 @@
             topCtx.filter = exposureFilter;
             drawRoundedImage(topCtx, topImage, 0, 0, w, h, 0, 'cover', state.doubleExposure.topImageOffset);
 
-            // Katmanları ana tuval üzerinde birleştir
             targetCtx.save();
             targetCtx.drawImage(bottomCanvas, 0, 0);
             targetCtx.globalCompositeOperation = state.doubleExposure.blendMode;
@@ -1855,46 +1850,80 @@
             targetCtx.restore();
         }
 
-        function drawMagnifyEffectOnContext(targetCtx, w, h, image, mState) {
-            if (!image) return;
-            const { frameX, frameY, frameW, frameH, zoom, blur, borderColor, borderWidth } = mState;
+        // === GÜNCELLENMİŞ BÜYÜTEÇ ÇİZİM FONKSİYONU ===
+        function drawMagnifyEffectOnContext(targetCtx, w, h, image, mState, scale = 1) {
+            if (!image || !mState || mState.magnifiers.length === 0) return;
+            
+            const { blur, magnifiers } = mState;
             const offset = state.imageOffset || { x: 0, y: 0 };
             const exposureFilter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
             
-            // Arkaplanı çiz
+            // 1. Arkaplanı bulanık çiz
             targetCtx.save();
             let filters = [];
-            if (blur > 0) filters.push(`blur(${blur}px)`);
+            if (blur > 0) filters.push(`blur(${blur * scale}px)`);
             filters.push(exposureFilter);
             targetCtx.filter = filters.join(' ');
             drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
             targetCtx.restore();
 
+            // 2. Her bir büyüteç çerçevesini çiz
+            magnifiers.forEach(mag => {
+                drawSingleMagnifierFrame(targetCtx, image, w, h, mag, offset, exposureFilter, scale);
+            });
+        }
+
+        function drawSingleMagnifierFrame(targetCtx, image, w, h, mag, imageOffset, exposureFilter, scale) {
+            const { frameX, frameY, frameW, frameH, zoom, borderColor, borderWidth, id } = mag;
+
+            const scaledFrameX = frameX * scale;
+            const scaledFrameY = frameY * scale;
+            const scaledFrameW = frameW * scale;
+            const scaledFrameH = frameH * scale;
+            const scaledBorderWidth = borderWidth * scale;
+
             // Odaklanmış ön planı çiz
             targetCtx.save();
             targetCtx.beginPath();
-            targetCtx.rect(frameX, frameY, frameW, frameH);
+            targetCtx.rect(scaledFrameX, scaledFrameY, scaledFrameW, scaledFrameH);
             targetCtx.clip();
-            const centerX = frameX + frameW / 2;
-            const centerY = frameY + frameH / 2;
+            const centerX = scaledFrameX + scaledFrameW / 2;
+            const centerY = scaledFrameY + scaledFrameH / 2;
             targetCtx.translate(centerX, centerY);
             targetCtx.scale(zoom, zoom);
             targetCtx.translate(-centerX, -centerY);
             
             targetCtx.save();
             targetCtx.filter = exposureFilter;
-            drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', offset);
+            drawRoundedImage(targetCtx, image, 0, 0, w, h, 0, 'cover', imageOffset);
             targetCtx.restore();
             
             targetCtx.restore();
 
             // Çerçeveyi çiz
-            if (borderWidth > 0) {
+            if (scaledBorderWidth > 0) {
                 targetCtx.strokeStyle = borderColor;
-                targetCtx.lineWidth = borderWidth;
-                targetCtx.strokeRect(frameX, frameY, frameW, frameH);
+                targetCtx.lineWidth = scaledBorderWidth;
+                targetCtx.strokeRect(scaledFrameX, scaledFrameY, scaledFrameW, scaledFrameH);
             }
+
+            // Büyüteç numarasını çiz
+            const fontSize = 16 * scale;
+            targetCtx.font = `bold ${fontSize}px Inter`;
+            targetCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            targetCtx.textAlign = 'center';
+            targetCtx.textBaseline = 'middle';
+            const textPadding = 8 * scale;
+            const textBGWidth = targetCtx.measureText(`#${id}`).width + textPadding * 2;
+            const textBGHeight = fontSize + textPadding;
+            
+            targetCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            targetCtx.fillRect(scaledFrameX, scaledFrameY, textBGWidth, textBGHeight);
+            
+            targetCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            targetCtx.fillText(`#${id}`, scaledFrameX + textBGWidth / 2, scaledFrameY + textBGHeight / 2);
         }
+
 
         function getPopOutBackgroundFilter(effect) {
             switch(effect) {
@@ -1927,14 +1956,12 @@
             const s = state.popOut;
             const exposureFilter = `brightness(${1 + state.imageAdjustments.exposure / 100})`;
 
-            // 1. Arkaplanı çiz
             targetCtx.save();
             const bgEffect = getPopOutBackgroundFilter(s.backgroundEffect);
             targetCtx.filter = `${bgEffect} ${exposureFilter}`.trim();
             drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, 'cover', state.imageOffset);
             targetCtx.restore();
 
-            // 2. Ön planı çiz
             const fgSizeRatio = s.size / 100;
             const fgW = w * fgSizeRatio;
             const fgH = h * fgSizeRatio;
@@ -2442,6 +2469,122 @@
             targetCtx.restore();
         }
 
+        // --- Yeni Fırça Fonksiyonları ---
+
+        function initMotionBlurMask() {
+            if (!canvas.width || !canvas.height) return;
+            maskCanvas = document.createElement('canvas');
+            maskCanvas.width = canvas.width;
+            maskCanvas.height = canvas.height;
+            maskCtx = maskCanvas.getContext('2d');
+            clearMotionBlurMask();
+        }
+
+        function clearMotionBlurMask() {
+            if (maskCtx) {
+                maskCtx.fillStyle = 'black';
+                maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+                drawPreview();
+                saveStateToHistory();
+            }
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+        
+        function updateBrushCursor(e) {
+            if (state.mode !== 'motionBlur') return;
+            const pos = getMousePos(e);
+            brushCursor.x = pos.x;
+            brushCursor.y = pos.y;
+            drawPreview();
+        }
+
+        function handleBrushStroke(e) {
+            if (!isBrushing || !maskCtx) return;
+            const pos = getMousePos(e);
+
+            maskCtx.fillStyle = 'white';
+            maskCtx.strokeStyle = 'white';
+            maskCtx.lineWidth = state.motionBlur.brushSize;
+            maskCtx.lineCap = 'round';
+            maskCtx.lineJoin = 'round';
+
+            if (lastBrushPoint) {
+                maskCtx.beginPath();
+                maskCtx.moveTo(lastBrushPoint.x, lastBrushPoint.y);
+                maskCtx.lineTo(pos.x, pos.y);
+                maskCtx.stroke();
+            } else {
+                 maskCtx.beginPath();
+                 maskCtx.arc(pos.x, pos.y, state.motionBlur.brushSize / 2, 0, Math.PI * 2);
+                 maskCtx.fill();
+            }
+            
+            lastBrushPoint = pos;
+            drawPreview();
+        }
+
+        // === YENİ BÜYÜTEÇ YÖNETİM FONKSİYONLARI ===
+        function addMagnifier() {
+            const preset = presets[state.sizePreset] || { width: 1080, height: 1080 };
+            const newMagnifier = getDefaultMagnifier(state.magnify.nextId, preset.width, preset.height);
+            state.magnify.magnifiers.push(newMagnifier);
+            state.magnify.activeMagnifierId = state.magnify.nextId;
+            state.magnify.nextId++;
+            updateAndDraw();
+        }
+
+        function deleteActiveMagnifier() {
+            const { magnifiers, activeMagnifierId } = state.magnify;
+            if (magnifiers.length <= 1) {
+                showToast("Son kalan büyüteç silinemez.", "error");
+                return;
+            }
+            const indexToDelete = magnifiers.findIndex(m => m.id === activeMagnifierId);
+            if (indexToDelete > -1) {
+                magnifiers.splice(indexToDelete, 1);
+                // Yeni bir aktif büyüteç seç
+                if (magnifiers.length > 0) {
+                    // Silinenden bir önceki veya ilkini aktif yap
+                    const newActiveIndex = Math.max(0, indexToDelete - 1);
+                    state.magnify.activeMagnifierId = magnifiers[newActiveIndex].id;
+                } else {
+                    state.magnify.activeMagnifierId = null;
+                }
+                updateAndDraw();
+            }
+        }
+
+        function setActiveMagnifier(id) {
+            if (state.magnify.activeMagnifierId !== id) {
+                state.magnify.activeMagnifierId = id;
+                updateUIFromState(state); // Sadece UI'ı güncelle, yeniden çizmeye gerek yok
+            }
+        }
+
+        function updateMagnifierSelectorUI(magnifyState) {
+            magnifierSelectorContainer.innerHTML = '';
+            magnifyState.magnifiers.forEach(mag => {
+                const btn = document.createElement('button');
+                btn.className = 'magnifier-select-btn py-2 px-4 rounded-md font-semibold text-sm';
+                btn.textContent = `Büyüteç #${mag.id}`;
+                btn.dataset.id = mag.id;
+                if (mag.id === magnifyState.activeMagnifierId) {
+                    btn.classList.add('active');
+                }
+                magnifierSelectorContainer.appendChild(btn);
+            });
+        }
+
+
         function downloadImage() {
             downloadBtn.disabled = true;
             downloadBtn.textContent = 'Oluşturuluyor...';
@@ -2461,16 +2604,7 @@
                 if (state.mode === 'magnify' && mainImage) {
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
-                    const scaleX = tempCanvas.width / canvas.width;
-                    const scaleY = tempCanvas.height / canvas.height;
-                    const renderMagnifyState = {
-                        ...state.magnify,
-                        frameX: state.magnify.frameX * scaleX, frameY: state.magnify.frameY * scaleY,
-                        frameW: state.magnify.frameW * scaleX, frameH: state.magnify.frameH * scaleY,
-                        borderWidth: state.magnify.borderWidth * Math.min(scaleX, scaleY),
-                        blur: state.magnify.blur * Math.min(scaleX, scaleY)
-                    };
-                    drawMagnifyEffectOnContext(tempCtx, tempCanvas.width, tempCanvas.height, mainImage, renderMagnifyState);
+                    drawMagnifyEffectOnContext(tempCtx, tempCanvas.width, tempCanvas.height, mainImage, state.magnify, qualityMultiplier);
                 } else if (state.sizePreset === 'original' && mainImage && state.mode === 'single') {
                     tempCanvas.width = (mainImage.width + state.padding.left + state.padding.right) * qualityMultiplier;
                     tempCanvas.height = (mainImage.height + state.padding.top + state.padding.bottom) * qualityMultiplier;
@@ -2482,11 +2616,11 @@
                     tempCanvas.width = preset.width * qualityMultiplier;
                     tempCanvas.height = preset.height * qualityMultiplier;
                     tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-                    if (!['lightEffect', 'popOut'].includes(state.mode)) {
+                    if (!['popOut', 'motionBlur'].includes(state.mode)) {
                         drawBackground(tempCtx, tempCanvas.width, tempCanvas.height);
                     }
                     drawMainContent(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
-                    if (!['polaroid', 'doubleExposure', 'lightEffect', 'magnify', 'popOut'].includes(state.mode)) {
+                    if (!['polaroid', 'doubleExposure', 'magnify', 'popOut', 'motionBlur'].includes(state.mode)) {
                         drawTextAndWatermark(tempCtx, tempCanvas.width, tempCanvas.height, qualityMultiplier);
                     }
                 } else {
@@ -2632,6 +2766,7 @@
                         canvasWrapper.style.display = 'flex';
                         canvasWrapper.classList.remove('hidden');
                         if (state.mode === 'collage') displayCollageThumbnails();
+                        if (state.mode === 'motionBlur') initMotionBlurMask();
                     }
                     if(watermarkImage) {
                          document.getElementById('watermarkControls').classList.remove('hidden');
@@ -2714,39 +2849,9 @@
             }
         }
         
-        function populateLightPatterns() {
-            lightPatternContainer.innerHTML = '';
-            for (const key in lightPatterns) {
-                const pattern = lightPatterns[key];
-                const button = document.createElement('button');
-                button.className = 'pattern-btn rounded-lg p-1 text-center';
-                button.dataset.pattern = key;
-
-                const previewCanvas = document.createElement('canvas');
-                previewCanvas.width = 60;
-                previewCanvas.height = 60;
-                previewCanvas.className = 'bg-gray-700 rounded-md mx-auto pointer-events-none';
-                const previewCtx = previewCanvas.getContext('2d');
-                previewCtx.save();
-                previewCtx.scale(0.2, 0.2); // Scale down for preview
-                const patternImg = generateLightPattern(key, 300, 300, '#FFF');
-                previewCtx.drawImage(patternImg, 0, 0);
-                previewCtx.restore();
-                
-                const span = document.createElement('span');
-                span.className = 'text-xs mt-1 block text-gray-200';
-                span.textContent = pattern.name;
-
-                button.appendChild(previewCanvas);
-                button.appendChild(span);
-                lightPatternContainer.appendChild(button);
-            }
-        }
-
         function init() {
             initDB();
             populatePolaroidFrames();
-            populateLightPatterns();
             preloadFrameAssets();
             state = getDefaultState();
             updateUIFromState(state);
@@ -2759,3 +2864,5 @@
     </script>
 </body>
 </html>
+büyüteç GÜNCELLEME
+ışık modülü silindi
