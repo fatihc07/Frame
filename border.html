@@ -387,12 +387,12 @@
                                 </div>
                                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label for="lightEffectOpacity" class="mb-1 block text-sm">Opaklık</label>
+                                        <label for="lightEffectOpacity" class="mb-1 block text-sm">Yoğunluk (Opaklık)</label>
                                         <input type="range" id="lightEffectOpacity" value="100" min="0" max="100" class="w-full">
                                     </div>
                                     <div>
-                                        <label for="lightEffectColor" class="mb-1 block text-sm">Işık Rengi (Artık kullanılmıyor)</label>
-                                        <input type="color" id="lightEffectColor" value="#FFFFFF" disabled class="opacity-50">
+                                        <label for="lightEffectColor" class="mb-1 block text-sm">Işık Rengi</label>
+                                        <input type="color" id="lightEffectColor" value="#FFFFFF">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -404,6 +404,17 @@
                                         <label for="lightEffectScale" class="mb-1 block text-sm">Ölçek</label>
                                         <input type="range" id="lightEffectScale" value="100" min="20" max="300" class="w-full">
                                     </div>
+                                </div>
+                                <div>
+                                    <label for="lightEffectBlendMode" class="mb-1 block text-sm">Karışım Modu</label>
+                                    <select id="lightEffectBlendMode" class="w-full h-12 px-3 rounded-lg focus-ring">
+                                        <option value="screen" selected>Screen (Önerilen)</option>
+                                        <option value="color-dodge">Color Dodge (Daha Parlak)</option>
+                                        <option value="overlay">Overlay</option>
+                                        <option value="soft-light">Soft Light</option>
+                                        <option value="hard-light">Hard Light</option>
+                                        <option value="lighten">Lighten</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -688,6 +699,7 @@
                     color: '#FFFFFF',
                     angle: 0,
                     scale: 100,
+                    blendMode: 'screen',
                     offset: { x: 0, y: 0 }
                 },
                 popOut: {
@@ -779,6 +791,7 @@
             state.lightEffect.color = document.getElementById('lightEffectColor').value;
             state.lightEffect.angle = parseInt(document.getElementById('lightEffectAngle').value, 10);
             state.lightEffect.scale = parseInt(document.getElementById('lightEffectScale').value, 10);
+            state.lightEffect.blendMode = document.getElementById('lightEffectBlendMode').value;
 
             // Pop-Out ayarları
             state.popOut.backgroundEffect = document.getElementById('popOutBackgroundEffect').value;
@@ -896,6 +909,7 @@
             document.getElementById('lightEffectColor').value = s.lightEffect.color;
             document.getElementById('lightEffectAngle').value = s.lightEffect.angle;
             document.getElementById('lightEffectScale').value = s.lightEffect.scale;
+            document.getElementById('lightEffectBlendMode').value = s.lightEffect.blendMode;
 
             // Pop-Out UI
             document.getElementById('popOutBackgroundEffect').value = s.popOut.backgroundEffect;
@@ -1685,58 +1699,43 @@
         }
 
         /**
-         * DÜZELTME 2: Işık Efekti Mantığı (Kullanıcı Örneğine Göre)
-         * Bu fonksiyon, kullanıcının sağladığı görsel örneğe birebir uyması için tamamen yeniden yazılmıştır.
+         * DÜZELTME 3: Işık Efekti Mantığı (Additive Blend)
+         * Bu fonksiyon, kullanıcının renk ve yoğunluk beklentisini karşılamak için yeniden düzenlenmiştir.
          * Mantık:
-         * 1. Ana tuval üzerine, kullanıcının pozlama ayarıyla karartılmış resim çizilir. Bu bizim karanlık zeminimizdir.
-         * 2. Geçici bir "aydınlık katman" tuvali oluşturulur.
-         * 3. Bu geçici tuvale, fotoğrafın ORİJİNAL, tam parlaklıktaki hali çizilir.
-         * 4. Işık deseni (jaluzi, pencere vb.) bu aydınlık katman için bir "maske" olarak kullanılır.
-         * 'globalCompositeOperation = "source-in"' kullanılarak, sadece desenin olduğu yerlerdeki
-         * orijinal parlaklıktaki resim pikselleri korunur, geri kalan her yer silinir.
-         * 5. Sonuç olarak, sadece ışık deseninin şeklinde orijinal resmin parlak bir kesitini içeren
-         * bu katman, ana tuvaldeki karanlık zeminin üzerine çizilir. Bu, ışığın vurduğu yerlerin
-         * net bir şekilde aydınlanması efektini yaratır.
+         * 1. Ana tuval üzerine, pozlama ayarı uygulanmış olan ana resim çizilir.
+         * 2. Geçici bir tuval üzerinde, kullanıcının seçtiği RENK ile ışık deseni oluşturulur.
+         * 3. Bu renkli desen katmanı, ana resmin üzerine, kullanıcının seçtiği
+         * aydınlatıcı harmanlama modu ('screen', 'color-dodge' vb.) ile çizilir.
+         * 4. Opaklık, bu aydınlatma efektinin genel yoğunluğunu kontrol eder.
+         * Bu yöntem, renkli bir ışığın karanlık bir yüzeyi aydınlatması efektini doğru bir şekilde simüle eder.
          */
         function drawLightEffect(targetCtx, w, h, scale = 1) {
             if (!mainImage) return;
             targetCtx.save();
-            
+
             const s = state.lightEffect;
             const exposure = state.imageAdjustments.exposure;
 
-            // 1. Adım: Karartılmış ana zemini ana tuvale çiz.
+            // 1. Adım: Pozlama ayarı yapılmış ana resmi çiz.
             targetCtx.filter = `brightness(${1 + exposure / 100})`;
             drawRoundedImage(targetCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset);
-            targetCtx.filter = 'none'; // Filtreyi sıfırla
+            targetCtx.filter = 'none'; // Sonraki işlemler için filtreyi sıfırla
 
-            // 2. Adım: Aydınlık "kesit" katmanını oluşturmak için geçici tuval hazırla.
-            const revealCanvas = document.createElement('canvas');
-            revealCanvas.width = w;
-            revealCanvas.height = h;
-            const revealCtx = revealCanvas.getContext('2d');
+            // 2. Adım: Renkli ışık desenini geçici bir tuvalde oluştur.
+            const patternCanvas = generateLightPattern(s.pattern, w, h, s.color);
 
-            // 3. Adım: Geçici tuvale ışık desenini (maskeyi) çiz.
-            const patternCanvas = generateLightPattern(s.pattern, w, h, '#FFFFFF'); // Maske için herhangi bir düz renk kullanılır.
-            
-            // Desen üzerinde kullanıcının seçtiği açı/ölçek gibi dönüşümleri uygula
-            revealCtx.translate(w / 2, h / 2);
-            revealCtx.rotate(s.angle * Math.PI / 180);
-            const scaleFactor = s.scale / 100;
-            revealCtx.scale(scaleFactor, scaleFactor);
-            revealCtx.translate(-w / 2, -h / 2);
-            revealCtx.drawImage(patternCanvas, s.offset.x, s.offset.y, w, h); // Maskeyi çiz
-            revealCtx.setTransform(1, 0, 0, 1, 0, 0); // Dönüşümleri sıfırla
-
-            // 4. Adım: Deseni, orijinal parlaklıktaki resim için maske olarak kullan.
-            // 'source-in' işlemi, yeni çizilecek olan (orijinal resim) piksellerini sadece
-            // mevcut piksellerin (desen) olduğu yerde korur.
-            revealCtx.globalCompositeOperation = 'source-in';
-            drawRoundedImage(revealCtx, mainImage, 0, 0, w, h, 0, state.fit, state.imageOffset); // Pozlama uygulanmamış orijinal resmi çiz
-
-            // 5. Adım: Hazırlanan aydınlık kesiti, ana tuvalin üzerine çiz.
+            // 3. Adım: Renkli ışık katmanını, aydınlatıcı bir harmanlama moduyla ana resmin üzerine çiz.
             targetCtx.globalAlpha = s.opacity / 100;
-            targetCtx.drawImage(revealCanvas, 0, 0, w, h);
+            targetCtx.globalCompositeOperation = s.blendMode;
+
+            // Desen üzerinde kullanıcının seçtiği açı/ölçek gibi dönüşümleri uygula
+            targetCtx.translate(w / 2, h / 2);
+            targetCtx.rotate(s.angle * Math.PI / 180);
+            const scaleFactor = s.scale / 100;
+            targetCtx.scale(scaleFactor, scaleFactor);
+            targetCtx.translate(-w / 2, -h / 2);
+            
+            targetCtx.drawImage(patternCanvas, s.offset.x, s.offset.y, w, h);
 
             targetCtx.restore();
         }
