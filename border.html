@@ -1080,8 +1080,14 @@
                         canvasWrapper.style.cursor = 'grabbing';
                     } else if (state.mode === 'doubleExposure') {
                         isPanning = true;
-                        activePanTarget = { type: 'doubleExposure_top' };
-                        initialImageOffset = { ...state.doubleExposure.topImageOffset };
+                        // YENİ: Shift tuşu ile birlikte basılırsa alt katmanı, sadece Cmd/Ctrl ile üst katmanı hareket ettirir.
+                        if (e.shiftKey) {
+                            activePanTarget = { type: 'doubleExposure_bottom' };
+                            initialImageOffset = { ...state.doubleExposure.bottomImageOffset };
+                        } else {
+                            activePanTarget = { type: 'doubleExposure_top' };
+                            initialImageOffset = { ...state.doubleExposure.topImageOffset };
+                        }
                         canvasWrapper.style.cursor = 'grabbing';
                     } else if (state.mode === 'collage') { 
                         const p = state.padding;
@@ -1179,6 +1185,10 @@
                     targetImage = topImage;
                     container = { w: canvas.width, h: canvas.height };
                     currentOffset = state.doubleExposure.topImageOffset;
+                } else if (activePanTarget.type === 'doubleExposure_bottom') { // YENİ: Alt katman hareketini yönet
+                    targetImage = bottomImage;
+                    container = { w: canvas.width, h: canvas.height };
+                    currentOffset = state.doubleExposure.bottomImageOffset;
                 } else if (activePanTarget.type === 'collage') {
                     const p = state.padding;
                     const area = { x: p.left, y: p.top, w: canvas.width - p.left - p.right, h: canvas.height - p.top - p.bottom };
@@ -1215,13 +1225,20 @@
                     y: initialImageOffset.y - dy_source,
                 };
                 
+                // DÜZELTME: Bu bloktaki `img` değişkeni tanımsızdı ve hataya neden oluyordu.
+                // `targetImage` olarak düzeltildi ve 'contain' modu için mantık hatası giderildi.
                 let sW, sH;
                 if (fit === 'cover') {
-                    if (imgRatio > areaRatio) { sH = img.height; sW = sH * areaRatio; } 
-                    else { sW = img.width; sH = sW / areaRatio; }
-                } else {
-                    if (imgRatio > areaRatio) { sW = img.width; sH = sW / areaRatio; }
-                    else { sH = img.height; sW = sH * areaRatio; }
+                    if (imgRatio > areaRatio) {
+                        sH = targetImage.height;
+                        sW = sH * areaRatio;
+                    } else {
+                        sW = targetImage.width;
+                        sH = sW / areaRatio;
+                    }
+                } else { // contain
+                    sW = targetImage.width;
+                    sH = targetImage.height;
                 }
                 
                 sW /= zoom; sH /= zoom;
@@ -1235,6 +1252,8 @@
                     state.imageOffset = newOffset;
                 } else if (activePanTarget.type === 'doubleExposure_top') {
                     state.doubleExposure.topImageOffset = newOffset;
+                } else if (activePanTarget.type === 'doubleExposure_bottom') { // YENİ: Alt katman pozisyonunu güncelle
+                    state.doubleExposure.bottomImageOffset = newOffset;
                 } else if (activePanTarget.type === 'collage') {
                     state.collage.imageOffsets[activePanTarget.index] = newOffset;
                 }
@@ -1394,6 +1413,8 @@
             }
             [topImage, bottomImage] = [bottomImage, topImage];
             [topImageLoader.files, bottomImageLoader.files] = [bottomImageLoader.files, topImageLoader.files];
+            // DÜZELTME: Katmanlar değiştirildiğinde, katmanların pozisyonları da (offset) değiştirilmelidir.
+            [state.doubleExposure.topImageOffset, state.doubleExposure.bottomImageOffset] = [state.doubleExposure.bottomImageOffset, state.doubleExposure.topImageOffset];
             showToast("Katmanlar değiştirildi.", "info");
             updateAndDraw();
         }
